@@ -84,6 +84,7 @@ class Query(object):
         self.limit_count = 0
         self.offset = 0
         self.args = {}
+        self.query = False
 
     def __init__(self):
         self.init_defaults()
@@ -141,7 +142,7 @@ class Query(object):
         return self.join(table, condition, fields, schema, join_type)
 
     def to_string(self):
-        return self.build_query()
+        return self.get_query()
 
     def group_by(self, group):
         if type(group) is str:
@@ -162,7 +163,7 @@ class Query(object):
         self.offset = offset
         return self
 
-    def build_query(self):
+    def get_query(self):
         query = self.build_select_fields()
         query += self.build_from_table()
         query += self.build_where()
@@ -170,7 +171,9 @@ class Query(object):
         query += self.build_groups()
         query += self.build_order()
         query += self.build_limit()
-        return query
+        self.query = query
+
+        return self.query
 
     def build_select_fields(self):
         parts = []
@@ -213,13 +216,13 @@ class Query(object):
                     field_alias = field_alias or 'W{0}'.format(Query.window_index)
                     Query.window_index += 1
                     if field.lookup:
-                        field_name = '{0}({1}.{2}) OVER({3})'.format(field.name, table_alias, field.lookup, field.over.build_query())
+                        field_name = '{0}({1}.{2}) OVER({3})'.format(field.name, table_alias, field.lookup, field.over.get_query())
                     else:
-                        field_name = '{0}() OVER({1})'.format(field.name, field.over.build_query())
+                        field_name = '{0}() OVER({1})'.format(field.name, field.over.get_query())
                     parts.append('{0} AS {1}'.format(field_name, field_alias))
                 elif type(field) is Query:
                     field_alias = field_alias or 'F{0}'.format(Query.field_index)
-                    field_name = '({0})'.format(field.build_query())
+                    field_name = '({0})'.format(field.get_query())
                     Query.field_index += 1
                     parts.append('{0}.{1} AS {2}'.format(table_alias, field_name, field_alias))
 
@@ -231,7 +234,7 @@ class Query(object):
         parts = []
         for table_alias, table_dict in self.table.items():
             if type(table_dict['name']) is Query:
-                parts.append('({0}) AS {1}'.format(table_dict['name'].build_query(), table_alias))
+                parts.append('({0}) AS {1}'.format(table_dict['name'].get_query(), table_alias))
             else:
                 if table_dict['name'] == table_alias:
                     parts.append('{0}'.format(table_dict['name'], table_alias))
@@ -251,7 +254,7 @@ class Query(object):
 
         for table_alias, table_dict in self.joins.items():
             if type(table_dict['name']) is Query:
-                parts.append('{0} ({1}) AS {2} ON {3} '.format(table_dict['join_type'], table_dict['name'].build_query(), table_alias, table_dict['condition']))
+                parts.append('{0} ({1}) AS {2} ON {3} '.format(table_dict['join_type'], table_dict['name'].get_query(), table_alias, table_dict['condition']))
             else:
                 if table_dict['name'] == table_alias:
                     parts.append('{0} {1} ON {2} '.format(table_dict['join_type'], table_alias, table_dict['condition']))
@@ -285,7 +288,7 @@ class Query(object):
 
     def fetch_rows(self):
         cursor = connection.cursor()
-        cursor.execute(self.build_query(), self.args)
+        cursor.execute(self.get_query(), self.args)
         return self._fetch_all_as_dict(cursor)
 
     def _fetch_all_as_dict(self, cursor):
@@ -301,7 +304,7 @@ class QueryWindow(Query):
     def partition_by(self, group):
         return super(QueryWindow, self).group_by(group)
 
-    def build_query(self):
+    def get_query(self):
         query = self.build_partition_by_fields()
         query += self.build_order()
         query += self.build_limit()
