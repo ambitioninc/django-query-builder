@@ -3,6 +3,7 @@ from django.db import connection
 from collections import OrderedDict
 from django.db.models import Aggregate
 from django.db.models.base import ModelBase
+from querybuilder.helpers import set_value_for_keypath
 
 
 class WindowFunction(object):
@@ -88,6 +89,7 @@ class Query(object):
         self.offset = 0
         self.args = {}
         self.query = False
+        self.join_format = 'flatten'
 
     def __init__(self):
         self.init_defaults()
@@ -95,11 +97,13 @@ class Query(object):
     def mark_dirty(self):
         self.query = False
 
-    def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None):
+    def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None, join_format=None):
         table_alias = False
         table_name = False
         model = None
         query = None
+        if join_format:
+            self.join_format = join_format
 
         if type(table) is dict:
             table_alias = table.keys()[0]
@@ -172,9 +176,9 @@ class Query(object):
 
         return table_dict
 
-    def from_table(self, table, fields=['*'], schema=None):
+    def from_table(self, table, fields=['*'], schema=None, join_format=None):
         self.mark_dirty()
-        self.table.update(self.create_table_dict(table, fields=fields, schema=schema))
+        self.table.update(self.create_table_dict(table, fields=fields, schema=schema, join_format=join_format))
         self.table_alias = self.table.keys()[0]
         self.table_dict = self.table.values()[0]
         return self
@@ -188,13 +192,13 @@ class Query(object):
             condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
         self.wheres.append(condition)
 
-    def join(self, table, fields=['*'], condition=None, join_type='JOIN', schema=None, flatten=False):
+    def join(self, table, fields=['*'], condition=None, join_type='JOIN', schema=None):
         self.mark_dirty()
         self.joins.update(self.create_table_dict(table, fields=fields, schema=schema, condition=condition, join_type=join_type))
         return self
 
-    def join_left(self, table, condition, fields=['*'], schema=None, join_type='LEFT JOIN', flatten=False):
-        return self.join(table, fields=fields, condition=condition, join_type=join_type, schema=schema, flatten=flatten)
+    def join_left(self, table, fields=['*'], condition=None, join_type='LEFT JOIN', schema=None):
+        return self.join(table, fields=fields, condition=condition, join_type=join_type, schema=schema)
 
     def group_by(self, group):
         if type(group) is str:
@@ -346,7 +350,15 @@ class Query(object):
     def fetch_rows(self):
         cursor = connection.cursor()
         cursor.execute(self.get_query(), self.args)
-        return self._fetch_all_as_dict(cursor)
+        rows = self._fetch_all_as_dict(cursor)
+        if self.join_format == 'nest':
+            for row in rows:
+                for key, value in row.items():
+                    set_value_for_keypath(row, key, value, True, '__')
+                    row.pop(key)
+
+
+        return rows
 
     def _fetch_all_as_dict(self, cursor):
         desc = cursor.description
