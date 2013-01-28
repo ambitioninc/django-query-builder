@@ -89,6 +89,9 @@ class Query(object):
     def __init__(self):
         self.init_defaults()
 
+    def mark_dirty(self):
+        self.query = False
+
     def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None):
         table_alias = False
         table_name = False
@@ -123,10 +126,12 @@ class Query(object):
         return table_dict
 
     def from_table(self, table, fields=['*'], schema=None):
+        self.mark_dirty()
         self.table.update(self.create_table_dict(table, fields=fields, schema=schema))
         return self
 
     def where(self, condition, *args):
+        self.mark_dirty()
         for arg in args:
             named_arg = 'A{0}'.format(Query.arg_index)
             self.args[named_arg] = arg
@@ -135,13 +140,19 @@ class Query(object):
         self.wheres.append(condition)
 
     def join(self, table, condition=None, fields=['*'], schema=None, join_type='JOIN'):
+        self.mark_dirty()
         self.joins.update(self.create_table_dict(table, fields=fields, schema=schema, condition=condition, join_type=join_type))
         return self
 
     def join_left(self, table, condition, fields=['*'], schema=None, join_type='LEFT JOIN'):
+        self.mark_dirty()
         return self.join(table, condition, fields, schema, join_type)
 
-    def to_string(self):
+
+    def __str__(self):
+        return self.get_query()
+
+    def __unicode__(self):
         return self.get_query()
 
     def group_by(self, group):
@@ -164,6 +175,9 @@ class Query(object):
         return self
 
     def get_query(self):
+        if self.query:
+            return self.query
+
         query = self.build_select_fields()
         query += self.build_from_table()
         query += self.build_where()
