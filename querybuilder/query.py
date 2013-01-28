@@ -139,21 +139,13 @@ class Query(object):
             condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
         self.wheres.append(condition)
 
-    def join(self, table, condition=None, fields=['*'], schema=None, join_type='JOIN'):
+    def join(self, table, fields=['*'], condition=None, join_type='JOIN', schema=None, flatten=False):
         self.mark_dirty()
         self.joins.update(self.create_table_dict(table, fields=fields, schema=schema, condition=condition, join_type=join_type))
         return self
 
-    def join_left(self, table, condition, fields=['*'], schema=None, join_type='LEFT JOIN'):
-        self.mark_dirty()
-        return self.join(table, condition, fields, schema, join_type)
-
-
-    def __str__(self):
-        return self.get_query()
-
-    def __unicode__(self):
-        return self.get_query()
+    def join_left(self, table, condition, fields=['*'], schema=None, join_type='LEFT JOIN', flatten=False):
+        return self.join(table, fields=fields, condition=condition, join_type=join_type, schema=schema, flatten=flatten)
 
     def group_by(self, group):
         if type(group) is str:
