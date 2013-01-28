@@ -1,3 +1,4 @@
+from pprint import pprint
 from django.db import connection
 from collections import OrderedDict
 from django.db.models import Aggregate
@@ -77,6 +78,8 @@ class Query(object):
 
     def init_defaults(self):
         self.table = {}
+        self.table_alias = ''
+        self.table_dict = {}
         self.wheres = []
         self.joins = OrderedDict()
         self.groups = []
@@ -95,6 +98,8 @@ class Query(object):
     def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None):
         table_alias = False
         table_name = False
+        model = None
+        query = None
 
         if type(table) is dict:
             table_alias = table.keys()[0]
@@ -103,9 +108,10 @@ class Query(object):
         if type(table) is ModelBase:
             table_alias = table_alias or table._meta.db_table
             table_name = table._meta.db_table
+            model = table
         elif type(table) is Query:
             table_alias = table_alias or 'Q{0}'.format(Query.query_index)
-            table_name = table
+            query = table
             Query.query_index += 1
         elif type(table) is str:
             table_alias = table_alias or table
@@ -114,20 +120,44 @@ class Query(object):
             #TODO: throw error
             pass
 
+
+
+        if join_type:
+            if condition is None:
+                if model:
+                    # Build join condition
+                    # Loop through fields to find the field for this model
+                    table_join_field = ''
+                    for field in self.table_dict['model']._meta.fields:
+                        if field.get_internal_type() == 'OneToOneField' or field.get_internal_type() == 'ForeignKey':
+                            if field.rel.to == model:
+                                table_join_field = field.name
+                    condition = '{0}.{1} = {2}.{3}_id'.format(table_name, model._meta.pk.name, self.table_dict['name'], table_join_field)
+
+                    if fields[0] == '*':
+                        fields = [field.name for field in model._meta.fields]
+
+                    fields = [{'{0}__{1}'.format(table_join_field, field): field} for field in fields]
+
         table_dict = {
             table_alias: {
                 'name': table_name,
                 'fields': fields,
                 'schema': schema,
                 'condition': condition,
-                'join_type': join_type
+                'join_type': join_type,
+                'model': model,
+                'query': query
             }
         }
+
         return table_dict
 
     def from_table(self, table, fields=['*'], schema=None):
         self.mark_dirty()
         self.table.update(self.create_table_dict(table, fields=fields, schema=schema))
+        self.table_alias = self.table.keys()[0]
+        self.table_dict = self.table.values()[0]
         return self
 
     def where(self, condition, *args):
@@ -239,13 +269,15 @@ class Query(object):
     def build_from_table(self):
         parts = []
         for table_alias, table_dict in self.table.items():
-            if type(table_dict['name']) is Query:
+            if table_dict['query']:
                 parts.append('({0}) AS {1}'.format(table_dict['name'].get_query(), table_alias))
             else:
                 if table_dict['name'] == table_alias:
                     parts.append('{0}'.format(table_dict['name'], table_alias))
                 else:
                     parts.append('{0} AS {1}'.format(table_dict['name'], table_alias))
+
+
         table = ', '.join(parts)
         str = 'FROM {0} '.format(table)
         return str
@@ -259,7 +291,7 @@ class Query(object):
         parts = []
 
         for table_alias, table_dict in self.joins.items():
-            if type(table_dict['name']) is Query:
+            if table_dict['query']:
                 parts.append('{0} ({1}) AS {2} ON {3} '.format(table_dict['join_type'], table_dict['name'].get_query(), table_alias, table_dict['condition']))
             else:
                 if table_dict['name'] == table_alias:
