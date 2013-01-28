@@ -1,3 +1,4 @@
+from pprint import pprint
 from django.db import connection
 from collections import OrderedDict
 from django.db.models import Aggregate
@@ -128,15 +129,26 @@ class Query(object):
                     # Loop through fields to find the field for this model
                     table_join_field = ''
                     table_join_name = ''
+
+                    # check if this join type is for a related field
+                    for field in self.table_dict['model']._meta.get_all_related_objects():
+                        if field.model == model:
+                            table_join_field = field.field.column
+                            table_join_name = field.get_accessor_name()
+                            condition = '{0}.{1} = {2}.{3}'.format(table_name, table_join_field, self.table_dict['name'], model._meta.pk.name)
+                            break
+
+                    # check if this join type is for a foreign key
                     for field in self.table_dict['model']._meta.fields:
                         if field.get_internal_type() == 'OneToOneField' or field.get_internal_type() == 'ForeignKey':
                             if field.rel.to == model:
                                 table_join_field = field.column
                                 table_join_name = field.name
-                    condition = '{0}.{1} = {2}.{3}'.format(table_name, model._meta.pk.name, self.table_dict['name'], table_join_field)
+                                condition = '{0}.{1} = {2}.{3}'.format(table_name, model._meta.pk.name, self.table_dict['name'], table_join_field)
+                                break
 
                     if fields[0] == '*':
-                        fields = [field.name for field in model._meta.fields]
+                        fields = [field.column for field in model._meta.fields]
 
                     new_fields = []
                     for field in fields:
