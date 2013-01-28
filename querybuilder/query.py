@@ -89,22 +89,27 @@ class Query(object):
         self.init_defaults()
 
     def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None):
-        table_alias = ''
-        table_name = ''
-        if type(table) is ModelBase:
-            table = table._meta.db_table
+        table_alias = False
+        table_name = False
 
         if type(table) is dict:
             table_alias = table.keys()[0]
-            table_name = table.values()[0]
+            table = table.values()[0]
+
+        if type(table) is ModelBase:
+            table_alias = table_alias or table._meta.db_table
+            table_name = table._meta.db_table
+        elif type(table) is Query:
+            table_alias = table_alias or 'Q{0}'.format(Query.query_index)
+            table_name = table
+            Query.query_index += 1
+        elif type(table) is str:
+            table_alias = table_alias or table
+            table_name = table
         else:
-            if type(table) is Query:
-                table_alias = 'Q{0}'.format(Query.query_index)
-                table_name = table
-                Query.query_index += 1
-            elif type(table) is str:
-                table_alias = table
-                table_name = table
+            #TODO: throw error
+            pass
+
         table_dict = {
             table_alias: {
                 'name': table_name,
