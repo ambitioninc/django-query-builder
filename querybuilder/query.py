@@ -139,7 +139,7 @@ class Query(object):
                         if field.model == model:
                             table_join_field = field.field.column
                             table_join_name = field.get_accessor_name()
-                            condition = '{0}.{1} = {2}.{3}'.format(table_name, table_join_field, self.table_dict['name'], model._meta.pk.name)
+                            condition = '{0}.{1} = {2}.{3}'.format(table_alias, table_join_field, self.table_dict['name'], model._meta.pk.name)
                             break
 
                     # check if this join type is for a foreign key
@@ -148,7 +148,7 @@ class Query(object):
                             if field.rel.to == model:
                                 table_join_field = field.column
                                 table_join_name = field.name
-                                condition = '{0}.{1} = {2}.{3}'.format(table_name, model._meta.pk.name, self.table_dict['name'], table_join_field)
+                                condition = '{0}.{1} = {2}.{3}'.format(table_alias, model._meta.pk.name, self.table_dict['name'], table_join_field)
                                 break
 
                     if fields[0] == '*':
@@ -178,6 +178,8 @@ class Query(object):
 
     def from_table(self, table, fields=['*'], schema=None, join_format=None):
         self.mark_dirty()
+        if type(fields) is not list:
+            fields = [fields]
         self.table.update(self.create_table_dict(table, fields=fields, schema=schema, join_format=join_format))
         self.table_alias = self.table.keys()[0]
         self.table_dict = self.table.values()[0]
@@ -225,8 +227,8 @@ class Query(object):
 
         query = self.build_select_fields()
         query += self.build_from_table()
-        query += self.build_where()
         query += self.build_joins()
+        query += self.build_where()
         query += self.build_groups()
         query += self.build_order()
         query += self.build_limit()
@@ -293,7 +295,7 @@ class Query(object):
         parts = []
         for table_alias, table_dict in self.table.items():
             if table_dict['query']:
-                parts.append('({0}) AS {1}'.format(table_dict['name'].get_query(), table_alias))
+                parts.append('({0}) AS {1}'.format(table_dict['query'].get_query(), table_alias))
             else:
                 if table_dict['name'] == table_alias:
                     parts.append('{0}'.format(table_dict['name'], table_alias))
@@ -315,7 +317,7 @@ class Query(object):
 
         for table_alias, table_dict in self.joins.items():
             if table_dict['query']:
-                parts.append('{0} ({1}) AS {2} ON {3} '.format(table_dict['join_type'], table_dict['name'].get_query(), table_alias, table_dict['condition']))
+                parts.append('{0} ({1}) AS {2} ON {3} '.format(table_dict['join_type'], table_dict['query'].get_query(), table_alias, table_dict['condition']))
             else:
                 if table_dict['name'] == table_alias:
                     parts.append('{0} {1} ON {2} '.format(table_dict['join_type'], table_alias, table_dict['condition']))
