@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name = "querybuilder",
-    version = "0.1.3",
+    version = "0.1.4",
     packages = [
         "querybuilder",
     ],

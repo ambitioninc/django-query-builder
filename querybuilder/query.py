@@ -105,6 +105,9 @@ class Query(object):
         self.window_index = 0
 
     def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None, join_format=None):
+        """
+        @return: dict
+        """
         table_alias = False
         table_name = False
         model = None
@@ -185,6 +188,9 @@ class Query(object):
         return table_dict
 
     def from_table(self, table, fields=['*'], schema=None, join_format=None):
+        """
+        @return: self
+        """
         self.mark_dirty()
         if type(fields) is not list:
             fields = [fields]
@@ -194,21 +200,34 @@ class Query(object):
         return self
 
     def where(self, condition, *args):
+        """
+        @return: self
+        """
         self.mark_dirty()
         self.wheres.append({
             'condition': condition,
             'args': args
         })
+        return self
 
     def join(self, table, fields=['*'], condition=None, join_type='JOIN', schema=None):
+        """
+        @return: self
+        """
         self.mark_dirty()
         self.joins.update(self.create_table_dict(table, fields=fields, schema=schema, condition=condition, join_type=join_type))
         return self
 
     def join_left(self, table, fields=['*'], condition=None, join_type='LEFT JOIN', schema=None):
+        """
+        @return: self
+        """
         return self.join(table, fields=fields, condition=condition, join_type=join_type, schema=schema)
 
     def group_by(self, group):
+        """
+        @return: self
+        """
         if type(group) is str:
             self.groups.append(group)
         elif type(group) is list:
@@ -216,6 +235,9 @@ class Query(object):
         return self
 
     def order_by(self, order):
+        """
+        @return: self
+        """
         if type(order) is str:
             self.order.append(order)
         elif type(order) is list:
@@ -223,11 +245,17 @@ class Query(object):
         return self
 
     def limit(self, limit_count, offset=0):
+        """
+        @return: self
+        """
         self.limit_count = limit_count
         self.offset = offset
         return self
 
     def get_query(self):
+        """
+        @return: self
+        """
         if self.query:
             return self.query
 
@@ -261,6 +289,9 @@ class Query(object):
         return self.query
 
     def build_select_fields(self):
+        """
+        @return: str
+        """
         parts = []
         items = self.table.items() + self.joins.items()
         for table_alias, table_dict in items:
@@ -319,6 +350,9 @@ class Query(object):
         return query
 
     def build_from_table(self):
+        """
+        @return: str
+        """
         parts = []
         for table_alias, table_dict in self.table.items():
             if table_dict['query']:
@@ -335,6 +369,9 @@ class Query(object):
         return str
 
     def build_where(self):
+        """
+        @return: str
+        """
         if len(self.wheres):
             wheres = []
             for where in self.wheres:
@@ -349,6 +386,9 @@ class Query(object):
         return ''
 
     def build_joins(self):
+        """
+        @return: str
+        """
         parts = []
 
         for table_alias, table_dict in self.joins.items():
@@ -363,11 +403,17 @@ class Query(object):
         return ' '.join(parts)
 
     def build_groups(self):
+        """
+        @return: str
+        """
         if len(self.groups):
             return 'GROUP BY {0} '.format(', '.join(self.groups))
         return ''
 
     def build_order(self):
+        """
+        @return: str
+        """
         if len(self.order):
             orders = []
             for order in self.order:
@@ -378,6 +424,9 @@ class Query(object):
         return ''
 
     def build_limit(self):
+        """
+        @return: str
+        """
         limit_str = ''
         if self.limit_count > 0:
             limit_str += 'LIMIT {0} '.format(self.limit_count)
@@ -386,6 +435,9 @@ class Query(object):
         return limit_str
 
     def fetch_rows(self):
+        """
+        @return: list
+        """
         cursor = connection.cursor()
         cursor.execute(self.get_query(), self.args)
         rows = self._fetch_all_as_dict(cursor)
@@ -394,16 +446,18 @@ class Query(object):
                 for key, value in row.items():
                     set_value_for_keypath(row, key, value, True, '__')
                     row.pop(key)
-
-
         return rows
 
     def _fetch_all_as_dict(self, cursor):
+        """
+        @return: list
+        """
         desc = cursor.description
         return [
             dict(zip([col[0] for col in desc], row))
             for row in cursor.fetchall()
         ]
+
 
 
 class QueryWindow(Query):
@@ -412,11 +466,17 @@ class QueryWindow(Query):
         return super(QueryWindow, self).group_by(group)
 
     def get_query(self):
+        """
+        @return: self
+        """
         query = self.build_partition_by_fields()
         query += self.build_order()
         query += self.build_limit()
         return query
 
     def build_partition_by_fields(self):
+        """
+        @return: str
+        """
         select_sql = super(QueryWindow, self).build_groups()
         return select_sql.replace('GROUP BY', 'PARTITION BY', 1)
