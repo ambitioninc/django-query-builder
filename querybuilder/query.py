@@ -33,9 +33,10 @@ class DatePart(object):
 
     name = ''
 
-    def __init__(self, lookup, auto=False):
+    def __init__(self, lookup, auto=False, desc=False):
         self.lookup = lookup
         self.auto = auto
+        self.desc = desc
 
     def get_select(self, name=None):
         return 'CAST(extract({0} from {1}) as INT)'.format(name or self.name, self.lookup)
@@ -289,7 +290,10 @@ class Query(object):
                             field_name = field.get_select(group_name)
                             parts.append('{0} AS {1}'.format(field_name, field_alias))
                             self.group_by(field_alias)
-                            self.order_by(field_alias)
+                            if field.desc:
+                                self.order_by('-{0}'.format(field_alias))
+                            else:
+                                self.order_by(field_alias)
                             if group_name == field.name:
                                 break
                     else:
