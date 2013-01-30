@@ -71,10 +71,6 @@ class Week(DatePart):
 
 class Query(object):
 
-    query_index = 0
-    field_index = 0
-    window_index = 0
-
     def init_defaults(self):
         self.table = {}
         self.table_alias = ''
@@ -85,6 +81,9 @@ class Query(object):
         self.order = []
         self.limit_count = 0
         self.offset = 0
+        self.window_index = 0
+        self.field_index = 0
+        self.query_index = 0
         self.query_prefix = False
         self.arg_index = 0
         self.args = {}
@@ -116,9 +115,9 @@ class Query(object):
             table_name = table._meta.db_table
             model = table
         elif type(table) is Query:
-            table_alias = table_alias or 'Q{0}'.format(Query.query_index)
+            table_alias = table_alias or 'Q{0}'.format(self.query_index)
             query = table
-            Query.query_index += 1
+            self.query_index += 1
             self.subqueries.append(table)
         elif type(table) is str:
             table_alias = table_alias or table
@@ -287,17 +286,17 @@ class Query(object):
                         field_name = field.get_select()
                         parts.append('{0} AS {1}'.format(field_name, field_alias))
                 elif isinstance(field, WindowFunction):
-                    field_alias = field_alias or 'W{0}'.format(Query.window_index)
-                    Query.window_index += 1
+                    field_alias = field_alias or 'W{0}'.format(self.window_index)
+                    self.window_index += 1
                     if field.lookup:
                         field_name = '{0}({1}.{2}) OVER({3})'.format(field.name, table_alias, field.lookup, field.over.get_query())
                     else:
                         field_name = '{0}() OVER({1})'.format(field.name, field.over.get_query())
                     parts.append('{0} AS {1}'.format(field_name, field_alias))
                 elif type(field) is Query:
-                    field_alias = field_alias or 'F{0}'.format(Query.field_index)
+                    field_alias = field_alias or 'F{0}'.format(self.field_index)
                     field_name = '({0})'.format(field.get_query())
-                    Query.field_index += 1
+                    self.field_index += 1
                     parts.append('{0}.{1} AS {2}'.format(table_alias, field_name, field_alias))
 
         fields = ', '.join(parts)
