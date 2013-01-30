@@ -1,4 +1,3 @@
-from pprint import pprint
 from django.db import connection
 from collections import OrderedDict
 from django.db.models import Aggregate
@@ -74,7 +73,6 @@ class Query(object):
 
     query_index = 0
     field_index = 0
-    arg_index = 0
     window_index = 0
 
     def init_defaults(self):
@@ -87,15 +85,19 @@ class Query(object):
         self.order = []
         self.limit_count = 0
         self.offset = 0
+        self.query_prefix = False
+        self.arg_index = 0
         self.args = {}
         self.query = False
         self.join_format = 'flatten'
+        self.subqueries = []
 
     def __init__(self):
         self.init_defaults()
 
     def mark_dirty(self):
         self.query = False
+        self.arg_index = 0
 
     def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None, join_format=None):
         table_alias = False
@@ -117,6 +119,7 @@ class Query(object):
             table_alias = table_alias or 'Q{0}'.format(Query.query_index)
             query = table
             Query.query_index += 1
+            self.subqueries.append(table)
         elif type(table) is str:
             table_alias = table_alias or table
             table_name = table
@@ -187,12 +190,10 @@ class Query(object):
 
     def where(self, condition, *args):
         self.mark_dirty()
-        for arg in args:
-            named_arg = 'A{0}'.format(Query.arg_index)
-            self.args[named_arg] = arg
-            Query.arg_index += 1
-            condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
-        self.wheres.append(condition)
+        self.wheres.append({
+            'condition': condition,
+            'args': args
+        })
 
     def join(self, table, fields=['*'], condition=None, join_type='JOIN', schema=None):
         self.mark_dirty()
@@ -224,6 +225,18 @@ class Query(object):
     def get_query(self):
         if self.query:
             return self.query
+
+        # assign query prefix
+        self.query_prefix = self.query_prefix or 'ID0'
+
+        # assign subquery prefixes
+        subquery_index = 0
+        for subquery in self.subqueries:
+            subquery.mark_dirty()
+            subquery.query_prefix = '{0}_{1}'.format(self.query_prefix, subquery_index)
+            subquery.get_query()
+            self.args.update(subquery.args)
+            subquery_index += 1
 
         query = self.build_select_fields()
         query += self.build_from_table()
@@ -309,7 +322,16 @@ class Query(object):
 
     def build_where(self):
         if len(self.wheres):
-            return 'WHERE {0} '.format(' AND '.join(self.wheres))
+            wheres = []
+            for where in self.wheres:
+                condition = where['condition']
+                for arg in where['args']:
+                    named_arg = '{0}_A{1}'.format(self.query_prefix, self.arg_index)
+                    self.args[named_arg] = arg
+                    self.arg_index += 1
+                    condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
+                wheres.append(condition)
+            return 'WHERE {0} '.format(' AND '.join(wheres))
         return ''
 
     def build_joins(self):
