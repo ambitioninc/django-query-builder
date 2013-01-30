@@ -89,7 +89,7 @@ class Query(object):
         self.args = {}
         self.query = False
         self.join_format = 'flatten'
-        self.subqueries = []
+        self.inner_queries = []
 
     def __init__(self):
         self.init_defaults()
@@ -118,7 +118,7 @@ class Query(object):
             table_alias = table_alias or 'Q{0}'.format(self.query_index)
             query = table
             self.query_index += 1
-            self.subqueries.append(table)
+            self.inner_queries.append(table)
         elif type(table) is str:
             table_alias = table_alias or table
             table_name = table
@@ -228,14 +228,14 @@ class Query(object):
         # assign query prefix
         self.query_prefix = self.query_prefix or 'ID0'
 
-        # assign subquery prefixes
-        subquery_index = 0
-        for subquery in self.subqueries:
-            subquery.mark_dirty()
-            subquery.query_prefix = '{0}_{1}'.format(self.query_prefix, subquery_index)
-            subquery.get_query()
-            self.args.update(subquery.args)
-            subquery_index += 1
+        # assign inner_query prefixes
+        inner_query_index = 0
+        for inner_query in self.inner_queries:
+            inner_query.mark_dirty()
+            inner_query.query_prefix = '{0}_{1}'.format(self.query_prefix, inner_query_index)
+            inner_query.get_query()
+            self.args.update(inner_query.args)
+            inner_query_index += 1
 
         query = self.build_select_fields()
         query += self.build_from_table()
