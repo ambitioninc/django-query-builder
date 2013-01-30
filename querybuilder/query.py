@@ -81,11 +81,13 @@ class Query(object):
         self.order = []
         self.limit_count = 0
         self.offset = 0
-        self.window_index = 0
-        self.field_index = 0
+
         self.query_index = 0
-        self.query_prefix = False
+        self.field_index = 0
         self.arg_index = 0
+        self.window_index = 0
+
+        self.query_prefix = False
         self.args = {}
         self.query = False
         self.join_format = 'flatten'
@@ -96,7 +98,10 @@ class Query(object):
 
     def mark_dirty(self):
         self.query = False
+        self.query_index = 0
+        self.field_index = 0
         self.arg_index = 0
+        self.window_index = 0
 
     def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None, join_format=None):
         table_alias = False
@@ -229,6 +234,7 @@ class Query(object):
         #TODO: add query prefix in front of window names
         #TODO: build query alias in the generation of the query instead of the from_table method
         #TODO: add query prefix in front of query names
+        #TODO: use self.table_alias as the query prefix
 
         # assign query prefix
         self.query_prefix = self.query_prefix or 'ID0'
