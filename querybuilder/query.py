@@ -74,6 +74,7 @@ class Query(object):
 
     def init_defaults(self):
         self.table = {}
+        self.fields = []
         self.table_alias = ''
         self.table_dict = {}
         self.wheres = []
@@ -135,8 +136,6 @@ class Query(object):
             #TODO: throw error
             pass
 
-
-
         if join_type:
             if condition is None:
                 if model:
@@ -194,9 +193,14 @@ class Query(object):
         self.mark_dirty()
         if type(fields) is not list:
             fields = [fields]
+
+        self.fields = fields
+        self.schema = schema
+
         self.table.update(self.create_table_dict(table, fields=fields, schema=schema, join_format=join_format))
         self.table_alias = self.table.keys()[0]
         self.table_dict = self.table.values()[0]
+
         return self
 
     def where(self, condition, *args):
