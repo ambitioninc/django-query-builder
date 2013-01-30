@@ -225,6 +225,11 @@ class Query(object):
         if self.query:
             return self.query
 
+        #TODO: add query prefix in front of field names
+        #TODO: add query prefix in front of window names
+        #TODO: build query alias in the generation of the query instead of the from_table method
+        #TODO: add query prefix in front of query names
+
         # assign query prefix
         self.query_prefix = self.query_prefix or 'ID0'
 
