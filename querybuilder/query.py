@@ -1,3 +1,4 @@
+from pprint import pprint
 from django.db import connection
 from django.db.models import Aggregate
 from django.db.models.base import ModelBase
@@ -96,6 +97,8 @@ class Query(object):
         self.query = False
         self.inner_queries = []
 
+        self.table_alias_map = {}
+
     def __init__(self):
         self.init_defaults()
 
@@ -105,6 +108,7 @@ class Query(object):
         self.field_index = 0
         self.arg_index = 0
         self.window_index = 0
+        self.table_alias_map = {}
 
     def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None):
         """
@@ -241,13 +245,14 @@ class Query(object):
             # mark dirty so the args can be namespaced
             inner_query['table'].mark_dirty()
 
-
             if inner_query['static_alias'] is False:
                 inner_query['alias'] = '{0}_{1}'.format(self.table['alias'], inner_query_index)
             inner_query['table'].get_query()
             self.args.update(inner_query['table'].args)
             inner_query_index += 1
             inner_query['table'].mark_dirty()
+
+        self.build_alias_maps()
 
         query = self.build_select_fields()
         query += self.build_from_table()
@@ -259,6 +264,13 @@ class Query(object):
         self.query = query
 
         return self.query
+
+    def build_alias_maps(self):
+        tables = [self.table] + self.joins
+
+        # loop through table list
+        for table_dict in tables:
+            self.table_alias_map[table_dict['name']] = table_dict['alias']
 
     def build_select_fields(self):
         """
@@ -394,6 +406,7 @@ class Query(object):
             table_dict['name'] = table_dict['table']
         elif table_dict['type'] is Query:
             table_dict['name'] = '({0})'.format(table_dict['table'].get_query())
+
         if table_dict['alias']:
             table_identifier = '{0} AS {1}'.format(table_dict['name'], table_dict['alias'])
         else:
@@ -416,6 +429,12 @@ class Query(object):
             wheres = []
             for where in self.wheres:
                 condition = where['condition']
+                # TODO: handle more than one table in the condition
+                condition_parts = condition.split('.')
+                if len(condition_parts) > 1:
+                    condition_parts[0] = self.table_alias_map.get(condition_parts[0], condition_parts[0])
+                condition = '.'.join(condition_parts)
+
                 for arg in where['args']:
                     named_arg = '{0}_A{1}'.format(self.table['alias'], self.arg_index)
                     self.args[named_arg] = arg
@@ -449,7 +468,15 @@ class Query(object):
         @return: str
         """
         if len(self.groups):
-            return 'GROUP BY {0} '.format(', '.join(self.groups))
+            groups = []
+            for group in self.groups:
+                if type(group) is str:
+                    group_parts = group.split('.')
+                    if len(group_parts) > 1:
+                        group_parts[0] = self.table_alias_map.get(group_parts[0], group_parts[0])
+                    groups.append('.'.join(group_parts))
+
+            return 'GROUP BY {0} '.format(', '.join(groups))
         return ''
 
     def build_order(self):
@@ -459,9 +486,18 @@ class Query(object):
         if len(self.order):
             orders = []
             for order in self.order:
+                is_desc = False
                 if order[0] == '-':
-                    order = '{0} DESC'.format(order[1:])
-                orders.append(order)
+                    is_desc = True
+                    order = order[1:]
+
+                order_parts = order.split('.')
+                if len(order_parts) > 1:
+                    order_parts[0] = self.table_alias_map.get(order_parts[0], order_parts[0])
+                if is_desc:
+                    order_parts[0] = '{0} DESC'.format(order_parts[0])
+                orders.append('.'.join(order_parts))
+
             return 'ORDER BY {0} '.format(', '.join(orders))
         return ''
 
