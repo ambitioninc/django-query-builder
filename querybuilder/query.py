@@ -137,12 +137,15 @@ class Query(object):
             pass
 
         if join_type:
+            table_join_field = ''
+            table_join_name = ''
+
             if condition is None:
+
                 if model:
                     # Build join condition
                     # Loop through fields to find the field for this model
-                    table_join_field = ''
-                    table_join_name = ''
+
 
                     # check if this join type is for a related field
                     for field in self.table_dict['model']._meta.get_all_related_objects():
@@ -161,16 +164,20 @@ class Query(object):
                                 condition = '{0}.{1} = {2}.{3}'.format(table_alias, model._meta.pk.name, self.table_dict['name'], table_join_field)
                                 break
 
-                    if fields[0] == '*':
-                        fields = [field.column for field in model._meta.fields]
+            if model:
+                if len(table_join_name) == 0:
+                    table_join_name = model._meta.db_table
 
-                    new_fields = []
-                    for field in fields:
-                        if type(field) is dict:
-                            new_fields.append(field)
-                        else:
-                            new_fields.append({'{0}__{1}'.format(table_join_name, field): field})
-                    fields = new_fields
+                if fields[0] == '*':
+                    fields = [field.column for field in model._meta.fields]
+
+                new_fields = []
+                for field in fields:
+                    if type(field) is dict:
+                        new_fields.append(field)
+                    else:
+                        new_fields.append({'{0}__{1}'.format(table_join_name, field): field})
+                fields = new_fields
 
         table_dict = {
             table_alias: {
