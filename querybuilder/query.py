@@ -452,7 +452,14 @@ class Query(object):
 
         for table_dict in self.joins:
 
-            join_parts.append('{0} {1} ON {2} '.format(table_dict['join_type'], self.get_table_identifier(table_dict), table_dict['condition']))
+            condition = table_dict['condition']
+            # TODO: handle more than one table in the condition
+            condition_parts = condition.split('.')
+            if len(condition_parts) > 1:
+                condition_parts[0] = self.table_alias_map.get(condition_parts[0], condition_parts[0])
+            condition = '.'.join(condition_parts)
+
+            join_parts.append('{0} {1} ON {2} '.format(table_dict['join_type'], self.get_table_identifier(table_dict), condition))
 #            if table_dict['type'] is Query:
 #                join_parts.append('{0} ({1}) AS {2} ON {3} '.format(table_dict['join_type'], table_dict['query'].get_query(), table_alias, table_dict['condition']))
 #            else:
