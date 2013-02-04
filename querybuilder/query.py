@@ -1,3 +1,4 @@
+from pprint import pprint
 from django.db import connection
 from collections import OrderedDict
 from django.db.models import Aggregate
@@ -78,7 +79,7 @@ class Query(object):
         self.table_alias = ''
         self.table_dict = {}
         self.wheres = []
-        self.joins = OrderedDict()
+        self.joins = []
         self.groups = []
         self.order = []
         self.limit_count = 0
@@ -154,48 +155,7 @@ class Query(object):
             #TODO: throw error
             pass
 
-        if join_type:
-            table_join_field = ''
-            table_join_name = ''
 
-            if condition is None:
-
-                if model:
-                    # Build join condition
-                    # Loop through fields to find the field for this model
-
-
-                    # check if this join type is for a related field
-                    for field in self.table_dict['model']._meta.get_all_related_objects():
-                        if field.model == model:
-                            table_join_field = field.field.column
-                            table_join_name = field.get_accessor_name()
-                            condition = '{0}.{1} = {2}.{3}'.format(table_alias, table_join_field, self.table_dict['name'], model._meta.pk.name)
-                            break
-
-                    # check if this join type is for a foreign key
-                    for field in self.table_dict['model']._meta.fields:
-                        if field.get_internal_type() == 'OneToOneField' or field.get_internal_type() == 'ForeignKey':
-                            if field.rel.to == model:
-                                table_join_field = field.column
-                                table_join_name = field.name
-                                condition = '{0}.{1} = {2}.{3}'.format(table_alias, model._meta.pk.name, self.table_dict['name'], table_join_field)
-                                break
-
-            if model:
-                if len(table_join_name) == 0:
-                    table_join_name = model._meta.db_table
-
-                if fields[0] == '*':
-                    fields = [field.column for field in model._meta.fields]
-
-                new_fields = []
-                for field in fields:
-                    if type(field) is dict:
-                        new_fields.append(field)
-                    else:
-                        new_fields.append({'{0}__{1}'.format(table_join_name, field): field})
-                fields = new_fields
 
         table_dict = {
             table_alias: {
@@ -248,7 +208,7 @@ class Query(object):
         @return: self
         """
         self.mark_dirty()
-        self.joins.update(self.create_table_dict(table, fields=fields, schema=schema, condition=condition, join_type=join_type))
+        self.joins.append(self.create_table_dict(table, fields=fields, schema=schema, condition=condition, join_type=join_type))
         return self
 
     def join_left(self, table, fields=['*'], condition=None, join_type='LEFT JOIN', schema=None):
@@ -301,7 +261,12 @@ class Query(object):
         #TODO: use self.table_alias as the query prefix
 
         # assign query prefix
-        self.table['alias'] = self.table['alias'] or 'Q0'
+        table_dicts = [self.table] + self.joins
+        for table_dict in table_dicts:
+            self.get_table_identifier(table_dict)
+            if table_dict['alias'] is None:
+                table_dict['alias'] = 'Q{0}'.format(self.query_index)
+                self.query_index += 1
 
         # assign inner_query prefixes
         inner_query_index = 0
@@ -315,7 +280,7 @@ class Query(object):
 
         query = self.build_select_fields()
         query += self.build_from_table()
-#        query += self.build_joins()
+        query += self.build_joins()
         query += self.build_where()
         query += self.build_groups()
         query += self.build_order()
@@ -329,10 +294,54 @@ class Query(object):
         @return: str
         """
         fields = []
-        tables = [self.table] + self.joins.items()
+        tables = [self.table] + self.joins
 
         # loop through table list
         for table_dict in tables:
+
+            # generate fields if this is a join table
+            if table_dict['join_type']:
+                table_dict['alias'] = table_dict['alias'] or True
+
+                table_join_field = ''
+                table_join_name = ''
+
+                if table_dict['condition'] is None:
+
+                    if table_dict['type'] is ModelBase:
+                        # Build join condition
+                        # Loop through fields to find the field for this model
+
+                        # check if this join type is for a related field
+                        for field in self.table['table']._meta.get_all_related_objects():
+                            if field.model == table_dict['table']:
+                                table_join_field = field.field.column
+                                table_join_name = field.get_accessor_name()
+                                table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(table_dict['alias'], table_join_field, self.table['name'], table_dict['table']._meta.pk.name)
+                                break
+
+                        # check if this join type is for a foreign key
+                        for field in self.table['table']._meta.fields:
+                            if field.get_internal_type() == 'OneToOneField' or field.get_internal_type() == 'ForeignKey':
+                                if field.rel.to == table_dict['table']:
+                                    table_join_field = field.column
+                                    table_join_name = field.name
+                                    table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(table_dict['alias'], table_dict['table']._meta.pk.name, self.table['name'], table_join_field)
+                                    break
+
+                if len(table_join_name) == 0:
+                    table_join_name = table_dict['table']._meta.db_table
+
+                if table_dict['fields'][0] == '*':
+                    table_dict['fields'] = [field.column for field in table_dict['table']._meta.fields]
+
+                new_fields = []
+                for field in table_dict['fields']:
+                    if type(field) is dict:
+                        new_fields.append(field)
+                    else:
+                        new_fields.append({'{0}__{1}'.format(table_join_name, field): field})
+                table_dict['fields'] = new_fields
 
             # loop through each field for this table
             for field in table_dict['fields']:
@@ -437,18 +446,22 @@ class Query(object):
         """
         @return: str
         """
-        parts = []
+        join_parts = []
 
-        for table_alias, table_dict in self.joins.items():
-            if table_dict['query']:
-                parts.append('{0} ({1}) AS {2} ON {3} '.format(table_dict['join_type'], table_dict['query'].get_query(), table_alias, table_dict['condition']))
-            else:
-                if table_dict['name'] == table_alias:
-                    parts.append('{0} {1} ON {2} '.format(table_dict['join_type'], table_alias, table_dict['condition']))
-                else:
-                    parts.append('{0} {1} AS {2} ON {3} '.format(table_dict['join_type'], table_dict['name'], table_alias, table_dict['condition']))
+        for table_dict in self.joins:
 
-        return ' '.join(parts)
+
+
+            join_parts.append('{0} {1} ON {2} '.format(table_dict['join_type'], self.get_table_identifier(table_dict), table_dict['condition']))
+#            if table_dict['type'] is Query:
+#                join_parts.append('{0} ({1}) AS {2} ON {3} '.format(table_dict['join_type'], table_dict['query'].get_query(), table_alias, table_dict['condition']))
+#            else:
+#                if table_dict['alias']:
+#                    join_parts.append('{0} {1} AS {2} ON {3} '.format(table_dict['join_type'], table_dict['name'], table_alias, table_dict['condition']))
+#                else:
+#                    join_parts.append('{0} {1} ON {2} '.format(table_dict['join_type'], table_alias, table_dict['condition']))
+
+        return ' '.join(join_parts)
 
     def build_groups(self):
         """
