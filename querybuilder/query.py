@@ -271,7 +271,6 @@ class Query(object):
 
             # generate fields if this is a join table
             if table_dict['join_type']:
-                table_join_field = ''
                 table_join_name = ''
 
                 if table_dict['condition'] is None:
@@ -375,9 +374,6 @@ class Query(object):
         return query
 
     def get_table_identifier(self, table_dict):
-        table_identifier = ''
-        table_name = ''
-
         if table_dict['type'] is ModelBase:
             table_dict['name'] = table_dict['table']._meta.db_table
         elif table_dict['type'] is str:
