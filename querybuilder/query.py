@@ -113,12 +113,15 @@ class Query(object):
             fields = [fields]
 
         table_alias = None
+        static_alias = False
         if type(table) is dict:
             table_alias = table.keys()[0]
             table = table.values()[0]
+            static_alias = True
 
         table_dict = {
             'alias': table_alias,
+            'static_alias': static_alias,
             'table': table,
             'name': None,
             'fields': fields,
@@ -128,46 +131,8 @@ class Query(object):
             'type': type(table),
         }
 
-        return table_dict
-
-        table_alias = False
-        table_name = False
-        model = None
-        query = None
-
-        if type(table) is dict:
-            table_alias = table.keys()[0]
-            table = table.values()[0]
-
-        if type(table) is ModelBase:
-            table_alias = table_alias or table._meta.db_table
-            table_name = table._meta.db_table
-            model = table
-        elif type(table) is Query:
-            table_alias = table_alias or 'Q{0}'.format(self.query_index)
-            query = table
-            self.query_index += 1
-            self.inner_queries.append(table)
-        elif type(table) is str:
-            table_alias = table_alias or table
-            table_name = table
-        else:
-            #TODO: throw error
-            pass
-
-
-
-        table_dict = {
-            table_alias: {
-                'name': table_name,
-                'fields': fields,
-                'schema': schema,
-                'condition': condition,
-                'join_type': join_type,
-                'model': model,
-                'query': query
-            }
-        }
+        if type(table) is Query:
+            self.inner_queries.append(table_dict)
 
         return table_dict
 
@@ -260,23 +225,28 @@ class Query(object):
         #TODO: add query prefix in front of query names
         #TODO: use self.table_alias as the query prefix
 
-        # assign query prefix
+        # assign query alias
         table_dicts = [self.table] + self.joins
         for table_dict in table_dicts:
-            self.get_table_identifier(table_dict)
             if table_dict['alias'] is None:
                 table_dict['alias'] = 'Q{0}'.format(self.query_index)
                 self.query_index += 1
 
+#            self.get_table_identifier(table_dict)
+
         # assign inner_query prefixes
         inner_query_index = 0
         for inner_query in self.inner_queries:
-            inner_query.mark_dirty()
-            if inner_query.table['alias'] is None:
-                inner_query.table['alias'] = '{0}_{1}'.format(self.table['alias'], inner_query_index)
-            inner_query.get_query()
-            self.args.update(inner_query.args)
+            # mark dirty so the args can be namespaced
+            inner_query['table'].mark_dirty()
+
+
+            if inner_query['static_alias'] is False:
+                inner_query['alias'] = '{0}_{1}'.format(self.table['alias'], inner_query_index)
+            inner_query['table'].get_query()
+            self.args.update(inner_query['table'].args)
             inner_query_index += 1
+            inner_query['table'].mark_dirty()
 
         query = self.build_select_fields()
         query += self.build_from_table()
@@ -301,8 +271,6 @@ class Query(object):
 
             # generate fields if this is a join table
             if table_dict['join_type']:
-                table_dict['alias'] = table_dict['alias'] or True
-
                 table_join_field = ''
                 table_join_name = ''
 
@@ -329,18 +297,24 @@ class Query(object):
                                     table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(table_dict['alias'], table_dict['table']._meta.pk.name, self.table['name'], table_join_field)
                                     break
 
-                if len(table_join_name) == 0:
-                    table_join_name = table_dict['table']._meta.db_table
+                if table_dict['type'] is ModelBase:
+                    if len(table_join_name) == 0:
+                        table_join_name = table_dict['table']._meta.db_table
 
                 if table_dict['fields'][0] == '*':
-                    table_dict['fields'] = [field.column for field in table_dict['table']._meta.fields]
+                    if table_dict['type'] is ModelBase:
+                        table_dict['fields'] = [field.column for field in table_dict['table']._meta.fields]
 
                 new_fields = []
                 for field in table_dict['fields']:
                     if type(field) is dict:
                         new_fields.append(field)
+                    elif field == '*':
+                        new_fields.append(field)
                     else:
-                        new_fields.append({'{0}__{1}'.format(table_join_name, field): field})
+                        new_fields.append({
+                            '{0}__{1}'.format(table_join_name, field): field
+                        })
                 table_dict['fields'] = new_fields
 
             # loop through each field for this table
@@ -410,7 +384,6 @@ class Query(object):
             table_dict['name'] = table_dict['table']
         elif table_dict['type'] is Query:
             table_dict['name'] = '({0})'.format(table_dict['table'].get_query())
-
         if table_dict['alias']:
             table_identifier = '{0} AS {1}'.format(table_dict['name'], table_dict['alias'])
         else:
@@ -449,8 +422,6 @@ class Query(object):
         join_parts = []
 
         for table_dict in self.joins:
-
-
 
             join_parts.append('{0} {1} ON {2} '.format(table_dict['join_type'], self.get_table_identifier(table_dict), table_dict['condition']))
 #            if table_dict['type'] is Query:
