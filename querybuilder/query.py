@@ -211,6 +211,15 @@ class Query(object):
 
         return table_dict
 
+    def select_fields(self, fields=None):
+        """
+        @return: self
+        """
+        if type(fields) is not list:
+            fields = [fields]
+        self.table['fields'] = fields
+        return self
+
     def from_table(self, table=None, fields=['*'], schema=None):
         """
         @return: self
@@ -221,6 +230,8 @@ class Query(object):
 
         return self
 
+    #TODO: parse named arg conditions and convert to string
+    # ex: Account__id__gt=5
     def where(self, condition, *args):
         """
         @return: self
@@ -246,7 +257,7 @@ class Query(object):
         """
         return self.join(table, fields=fields, condition=condition, join_type=join_type, schema=schema)
 
-    def group_by(self, group):
+    def group_by(self, group, *args):
         """
         @return: self
         """
@@ -254,6 +265,8 @@ class Query(object):
             self.groups.append(group)
         elif type(group) is list:
             self.groups += group
+        if len(args):
+            self.group += args
         return self
 
     def order_by(self, order):
