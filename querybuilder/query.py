@@ -317,7 +317,7 @@ class Query(object):
         query += self.build_from_table()
 #        query += self.build_joins()
         query += self.build_where()
-#        query += self.build_groups()
+        query += self.build_groups()
         query += self.build_order()
         query += self.build_limit()
         self.query = query
@@ -350,8 +350,11 @@ class Query(object):
                     else:
                         fields.append('{0}.{1}'.format(table_dict['alias'], field_name))
                 elif isinstance(field, Aggregate):
-                    field_alias = field_alias or '{0}_{1}'.format(field.name, field.lookup)
-                    field_name = '{0}({1}.{2})'.format(field.name, table_alias, field.lookup)
+                    field_name = field.lookup
+                    if field_name == '*':
+                        field_name = 'all'
+                    field_alias = field_alias or '{0}_{1}'.format(field.name.lower(), field_name)
+                    field_name = '{0}({1}.{2})'.format(field.name, table_dict['alias'], field.lookup)
                     fields.append('{0} AS {1}'.format(field_name, field_alias))
                 elif isinstance(field, DatePart):
                     if field.auto:
