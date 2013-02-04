@@ -1,4 +1,3 @@
-from pprint import pprint
 from django.db import connection
 from collections import OrderedDict
 from django.db.models import Aggregate
@@ -229,10 +228,10 @@ class Query(object):
         table_dicts = [self.table] + self.joins
         for table_dict in table_dicts:
             if table_dict['alias'] is None:
-                table_dict['alias'] = 'Q{0}'.format(self.query_index)
+                table_dict['alias'] = 'T{0}'.format(self.query_index)
                 self.query_index += 1
 
-#            self.get_table_identifier(table_dict)
+            self.get_table_identifier(table_dict)
 
         # assign inner_query prefixes
         inner_query_index = 0
@@ -285,7 +284,7 @@ class Query(object):
                             if field.model == table_dict['table']:
                                 table_join_field = field.field.column
                                 table_join_name = field.get_accessor_name()
-                                table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(table_dict['alias'], table_join_field, self.table['name'], table_dict['table']._meta.pk.name)
+                                table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(table_dict['alias'], table_join_field, self.table['alias'], table_dict['table']._meta.pk.name)
                                 break
 
                         # check if this join type is for a foreign key
@@ -294,7 +293,7 @@ class Query(object):
                                 if field.rel.to == table_dict['table']:
                                     table_join_field = field.column
                                     table_join_name = field.name
-                                    table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(table_dict['alias'], table_dict['table']._meta.pk.name, self.table['name'], table_join_field)
+                                    table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(table_dict['alias'], table_dict['table']._meta.pk.name, self.table['alias'], table_join_field)
                                     break
 
                 if table_dict['type'] is ModelBase:
@@ -466,18 +465,19 @@ class Query(object):
             limit_str += 'OFFSET {0} '.format(self.offset)
         return limit_str
 
-    def fetch_rows(self):
+    def select(self, nest=False):
         """
         @return: list
         """
         cursor = connection.cursor()
         cursor.execute(self.get_query(), self.args)
         rows = self._fetch_all_as_dict(cursor)
-        if False == 'nest':
+        if nest:
             for row in rows:
                 for key, value in row.items():
                     set_value_for_keypath(row, key, value, True, '__')
-                    row.pop(key)
+                    if '__' in key:
+                        row.pop(key)
         return rows
 
     def _fetch_all_as_dict(self, cursor):
