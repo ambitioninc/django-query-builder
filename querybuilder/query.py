@@ -1,5 +1,4 @@
 from django.db import connection
-from collections import OrderedDict
 from django.db.models import Aggregate
 from django.db.models.base import ModelBase
 from querybuilder.helpers import set_value_for_keypath
@@ -10,6 +9,9 @@ class WindowFunction(object):
     name = ''
 
     def __init__(self, over, lookup=None):
+        """
+        :type lookup: str
+        """
         self.over = over
         self.lookup = lookup
 
@@ -105,6 +107,7 @@ class Query(object):
 
     def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None):
         """
+        :type fields: list
         @return: dict
         """
 
@@ -357,15 +360,15 @@ class Query(object):
                     field_alias = field_alias or 'W{0}'.format(self.window_index)
                     self.window_index += 1
                     if field.lookup:
-                        field_name = '{0}({1}.{2}) OVER({3})'.format(field.name, table_alias, field.lookup, field.over.get_query())
+                        field_name = '{0}({1}.{2}) OVER({3})'.format(field.name, table_dict['alias'], field.lookup, field.over.get_query())
                     else:
                         field_name = '{0}() OVER({1})'.format(field.name, field.over.get_query())
                     fields.append('{0} AS {1}'.format(field_name, field_alias))
                 elif type(field) is Query:
-                    field_alias = field_alias or 'F{0}'.format(self.field_index)
+                    field_alias = field_alias or '{0}_F{1}'.format(table_dict['alias'], self.field_index)
                     field_name = '({0})'.format(field.get_query())
                     self.field_index += 1
-                    fields.append('{0}.{1} AS {2}'.format(table_alias, field_name, field_alias))
+                    fields.append('{0}.{1} AS {2}'.format(table_dict['alias'], field_name, field_alias))
 
         fields = ', '.join(fields)
         query = 'SELECT {0} '.format(fields)
