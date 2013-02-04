@@ -35,10 +35,11 @@ class DatePart(object):
 
     name = ''
 
-    def __init__(self, lookup, auto=False, desc=False):
+    def __init__(self, lookup, auto=False, desc=False, include_datetime=False):
         self.lookup = lookup
         self.auto = auto
         self.desc = desc
+        self.include_datetime = include_datetime
 
     def get_select(self, name=None):
         return 'CAST(extract({0} from {1}) as INT)'.format(name or self.name, self.lookup)
@@ -349,7 +350,20 @@ class Query(object):
                                 self.order_by('-{0}'.format(field_alias))
                             else:
                                 self.order_by(field_alias)
+
+                            # check if this is the last date grouping
                             if group_name == field.name:
+                                # add the datetime object
+                                datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
+                                datetime_str = 'date_trunc(\'{0}\', {1})'.format(group_name, field.lookup)
+                                if field.include_datetime:
+                                    fields.append('{0} AS {1}'.format(datetime_str, datetime_alias))
+                                    self.group_by(datetime_alias)
+
+                                # add the epoch time
+                                epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
+                                fields.append('EXTRACT(EPOCH FROM {0}) AS {1}'.format(datetime_str, epoch_alias))
+                                self.group_by(epoch_alias)
                                 break
                     else:
                         field_alias = field_alias or '{0}__{1}'.format(field.lookup, field.name)
