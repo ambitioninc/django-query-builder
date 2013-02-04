@@ -84,7 +84,7 @@ class Query(object):
         self.limit_count = 0
         self.offset = 0
 
-        self.query_index = 0
+        self.table_index = 0
         self.field_index = 0
         self.arg_index = 0
         self.window_index = 0
@@ -98,7 +98,7 @@ class Query(object):
 
     def mark_dirty(self):
         self.query = False
-        self.query_index = 0
+        self.table_index = 0
         self.field_index = 0
         self.arg_index = 0
         self.window_index = 0
@@ -220,16 +220,14 @@ class Query(object):
 
         #TODO: add query prefix in front of field names
         #TODO: add query prefix in front of window names
-        #TODO: build query alias in the generation of the query instead of the from_table method
-        #TODO: add query prefix in front of query names
         #TODO: use self.table_alias as the query prefix
 
         # assign query alias
         table_dicts = [self.table] + self.joins
         for table_dict in table_dicts:
             if table_dict['alias'] is None:
-                table_dict['alias'] = 'T{0}'.format(self.query_index)
-                self.query_index += 1
+                table_dict['alias'] = 'T{0}'.format(self.table_index)
+                self.table_index += 1
 
             self.get_table_identifier(table_dict)
 
