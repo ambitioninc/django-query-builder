@@ -89,10 +89,8 @@ class Query(object):
         self.arg_index = 0
         self.window_index = 0
 
-        self.query_prefix = False
         self.args = {}
         self.query = False
-        self.join_format = 'flatten'
         self.inner_queries = []
 
     def __init__(self):
@@ -105,16 +103,36 @@ class Query(object):
         self.arg_index = 0
         self.window_index = 0
 
-    def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None, join_format=None):
+    def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None):
         """
         @return: dict
         """
+
+        if type(fields) is not list:
+            fields = [fields]
+
+        table_alias = None
+        if type(table) is dict:
+            table_alias = table.keys()[0]
+            table = table.values()[0]
+
+        table_dict = {
+            'alias': table_alias,
+            'table': table,
+            'name': None,
+            'fields': fields,
+            'schema': schema,
+            'condition': condition,
+            'join_type': join_type,
+            'type': type(table),
+        }
+
+        return table_dict
+
         table_alias = False
         table_name = False
         model = None
         query = None
-        if join_format:
-            self.join_format = join_format
 
         if type(table) is dict:
             table_alias = table.keys()[0]
@@ -193,20 +211,13 @@ class Query(object):
 
         return table_dict
 
-    def from_table(self, table, fields=['*'], schema=None, join_format=None):
+    def from_table(self, table=None, fields=['*'], schema=None):
         """
         @return: self
         """
         self.mark_dirty()
-        if type(fields) is not list:
-            fields = [fields]
 
-        self.fields = fields
-        self.schema = schema
-
-        self.table.update(self.create_table_dict(table, fields=fields, schema=schema, join_format=join_format))
-        self.table_alias = self.table.keys()[0]
-        self.table_dict = self.table.values()[0]
+        self.table = self.create_table_dict(table, fields=fields, schema=schema)
 
         return self
 
@@ -277,24 +288,25 @@ class Query(object):
         #TODO: use self.table_alias as the query prefix
 
         # assign query prefix
-        self.query_prefix = self.query_prefix or 'ID0'
+        self.table['alias'] = self.table['alias'] or 'Q0'
 
         # assign inner_query prefixes
         inner_query_index = 0
         for inner_query in self.inner_queries:
             inner_query.mark_dirty()
-            inner_query.query_prefix = '{0}_{1}'.format(self.query_prefix, inner_query_index)
+            if inner_query.table['alias'] is None:
+                inner_query.table['alias'] = '{0}_{1}'.format(self.table['alias'], inner_query_index)
             inner_query.get_query()
             self.args.update(inner_query.args)
             inner_query_index += 1
 
         query = self.build_select_fields()
         query += self.build_from_table()
-        query += self.build_joins()
-        query += self.build_where()
-        query += self.build_groups()
-        query += self.build_order()
-        query += self.build_limit()
+#        query += self.build_joins()
+#        query += self.build_where()
+#        query += self.build_groups()
+#        query += self.build_order()
+#        query += self.build_limit()
         self.query = query
 
         return self.query
@@ -303,34 +315,37 @@ class Query(object):
         """
         @return: str
         """
-        parts = []
-        items = self.table.items() + self.joins.items()
-        for table_alias, table_dict in items:
-            for field in table_dict['fields']:
-                field_alias = False
-                field_name = False
+        fields = []
+        tables = [self.table] + self.joins.items()
 
+        # loop through table list
+        for table_dict in tables:
+
+            # loop through each field for this table
+            for field in table_dict['fields']:
+                field_alias = None
+
+                # check if this field has an alias
                 if type(field) is dict:
                     field_alias = field.keys()[0]
                     field = field.values()[0]
 
                 if type(field) is str:
-                    field_alias = field_alias or field
                     field_name = field
-                    if field_name == field_alias:
-                        parts.append('{0}.{1}'.format(table_alias, field_alias))
+                    if field_alias:
+                        fields.append('{0}.{1} AS {2}'.format(table_dict['alias'], field_name, field_alias))
                     else:
-                        parts.append('{0}.{1} AS {2}'.format(table_alias, field_name, field_alias))
+                        fields.append('{0}.{1}'.format(table_dict['alias'], field_name))
                 elif isinstance(field, Aggregate):
                     field_alias = field_alias or '{0}_{1}'.format(field.name, field.lookup)
                     field_name = '{0}({1}.{2})'.format(field.name, table_alias, field.lookup)
-                    parts.append('{0} AS {1}'.format(field_name, field_alias))
+                    fields.append('{0} AS {1}'.format(field_name, field_alias))
                 elif isinstance(field, DatePart):
                     if field.auto:
                         for group_name in default_group_names:
                             field_alias = '{0}__{1}'.format(field.lookup, group_name)
                             field_name = field.get_select(group_name)
-                            parts.append('{0} AS {1}'.format(field_name, field_alias))
+                            fields.append('{0} AS {1}'.format(field_name, field_alias))
                             self.group_by(field_alias)
                             if field.desc:
                                 self.order_by('-{0}'.format(field_alias))
@@ -341,7 +356,7 @@ class Query(object):
                     else:
                         field_alias = field_alias or '{0}__{1}'.format(field.lookup, field.name)
                         field_name = field.get_select()
-                        parts.append('{0} AS {1}'.format(field_name, field_alias))
+                        fields.append('{0} AS {1}'.format(field_name, field_alias))
                 elif isinstance(field, WindowFunction):
                     field_alias = field_alias or 'W{0}'.format(self.window_index)
                     self.window_index += 1
@@ -349,34 +364,40 @@ class Query(object):
                         field_name = '{0}({1}.{2}) OVER({3})'.format(field.name, table_alias, field.lookup, field.over.get_query())
                     else:
                         field_name = '{0}() OVER({1})'.format(field.name, field.over.get_query())
-                    parts.append('{0} AS {1}'.format(field_name, field_alias))
+                    fields.append('{0} AS {1}'.format(field_name, field_alias))
                 elif type(field) is Query:
                     field_alias = field_alias or 'F{0}'.format(self.field_index)
                     field_name = '({0})'.format(field.get_query())
                     self.field_index += 1
-                    parts.append('{0}.{1} AS {2}'.format(table_alias, field_name, field_alias))
+                    fields.append('{0}.{1} AS {2}'.format(table_alias, field_name, field_alias))
 
-        fields = ', '.join(parts)
+        fields = ', '.join(fields)
         query = 'SELECT {0} '.format(fields)
         return query
+
+    def get_table_identifier(self, table_dict):
+        table_identifier = ''
+        table_name = ''
+
+        if table_dict['type'] is ModelBase:
+            table_dict['name'] = table_dict['table']._meta.db_table
+        elif table_dict['type'] is str:
+            table_dict['name'] = table_dict['table']
+        elif table_dict['type'] is Query:
+            table_dict['name'] = '({0})'.format(table_dict['table'].get_query())
+
+        if table_dict['alias']:
+            table_identifier = '{0} AS {1}'.format(table_dict['name'], table_dict['alias'])
+        else:
+            table_identifier = '{0}'.format(table_dict['name'])
+
+        return table_identifier
 
     def build_from_table(self):
         """
         @return: str
         """
-        parts = []
-        for table_alias, table_dict in self.table.items():
-            if table_dict['query']:
-                parts.append('({0}) AS {1}'.format(table_dict['query'].get_query(), table_alias))
-            else:
-                if table_dict['name'] == table_alias:
-                    parts.append('{0}'.format(table_dict['name'], table_alias))
-                else:
-                    parts.append('{0} AS {1}'.format(table_dict['name'], table_alias))
-
-
-        table = ', '.join(parts)
-        str = 'FROM {0} '.format(table)
+        str = 'FROM {0} '.format(self.get_table_identifier(self.table))
         return str
 
     def build_where(self):
@@ -388,7 +409,7 @@ class Query(object):
             for where in self.wheres:
                 condition = where['condition']
                 for arg in where['args']:
-                    named_arg = '{0}_A{1}'.format(self.query_prefix, self.arg_index)
+                    named_arg = '{0}_A{1}'.format(self.table['alias'], self.arg_index)
                     self.args[named_arg] = arg
                     self.arg_index += 1
                     condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
@@ -452,7 +473,7 @@ class Query(object):
         cursor = connection.cursor()
         cursor.execute(self.get_query(), self.args)
         rows = self._fetch_all_as_dict(cursor)
-        if self.join_format == 'nest':
+        if False == 'nest':
             for row in rows:
                 for key, value in row.items():
                     set_value_for_keypath(row, key, value, True, '__')
