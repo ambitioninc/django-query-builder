@@ -303,10 +303,10 @@ class Query(object):
         query = self.build_select_fields()
         query += self.build_from_table()
 #        query += self.build_joins()
-#        query += self.build_where()
+        query += self.build_where()
 #        query += self.build_groups()
-#        query += self.build_order()
-#        query += self.build_limit()
+        query += self.build_order()
+        query += self.build_limit()
         self.query = query
 
         return self.query
