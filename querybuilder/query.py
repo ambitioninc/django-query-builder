@@ -77,6 +77,7 @@ class Week(DatePart):
 class Query(object):
 
     def init_defaults(self):
+        self._distinct = False
         self.table = {}
         self.fields = []
         self.table_alias = ''
@@ -101,6 +102,13 @@ class Query(object):
 
     def __init__(self):
         self.init_defaults()
+
+    def distinct(self, distinct=True):
+        """
+        @return: self
+        """
+        self._distinct = distinct
+        return self
 
     def mark_dirty(self):
         self.query = False
@@ -396,7 +404,10 @@ class Query(object):
                     fields.append('{0}.{1} AS {2}'.format(table_dict['alias'], field_name, field_alias))
 
         fields = ', '.join(fields)
-        query = 'SELECT {0} '.format(fields)
+        if self._distinct:
+            query = 'SELECT DISTINCT {0} '.format(fields)
+        else:
+            query = 'SELECT {0} '.format(fields)
         return query
 
     def get_table_identifier(self, table_dict):
@@ -547,7 +558,6 @@ class Query(object):
             dict(zip([col[0] for col in desc], row))
             for row in cursor.fetchall()
         ]
-
 
 
 class QueryWindow(Query):
