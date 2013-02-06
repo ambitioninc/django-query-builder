@@ -1,3 +1,4 @@
+from pprint import pprint
 from django.db import connection
 from django.db.models import Aggregate
 from django.db.models.base import ModelBase
@@ -294,6 +295,7 @@ class Query(object):
         query += self.build_groups()
         query += self.build_order()
         query += self.build_limit()
+
         self.query = query
 
         return self.query
@@ -320,11 +322,15 @@ class Query(object):
 
         for inner_query in self.get_inner_queries():
             withs.append('{0} as ({1})'.format(inner_query['alias'] or inner_query['temp_alias'], inner_query['table'].get_query()))
+            self.args.update(inner_query['table'].args)
 
         withs.reverse()
         if len(withs) and self.managed_by is None:
             return 'WITH {0} '.format(', '.join(withs))
         return ''
+
+    def build_args(self):
+        pass
 
     def build_select_fields(self):
         """
@@ -351,7 +357,7 @@ class Query(object):
                             if field.model == table_dict['table']:
                                 table_join_field = field.field.column
                                 table_join_name = field.get_accessor_name()
-                                table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(table_dict['alias'], table_join_field, self.table['alias'], table_dict['table']._meta.pk.name)
+                                table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(self.get_name(table_dict), table_join_field, self.get_name(self.table), table_dict['table']._meta.pk.name)
                                 break
 
                         # check if this join type is for a foreign key
@@ -360,7 +366,7 @@ class Query(object):
                                 if field.rel.to == table_dict['table']:
                                     table_join_field = field.column
                                     table_join_name = field.name
-                                    table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(table_dict['alias'], table_dict['table']._meta.pk.name, self.table['alias'], table_join_field)
+                                    table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(self.get_name(table_dict), table_dict['table']._meta.pk.name, self.get_name(self.table), table_join_field)
                                     break
 
                 if table_dict['type'] is ModelBase:
@@ -412,7 +418,7 @@ class Query(object):
                     if field_name == '*':
                         field_name = 'all'
                     field_alias = field_alias or '{0}_{1}'.format(field.name.lower(), field_name)
-                    field_name = '{0}({1}.{2})'.format(field.name, table_dict['alias'], field.lookup)
+                    field_name = '{0}({1}.{2})'.format(field.name, self.get_name(table_dict), field.lookup)
                     fields.append('{0} AS {1}'.format(field_name, field_alias))
                 elif isinstance(field, DatePart):
                     if field.auto:
@@ -512,7 +518,7 @@ class Query(object):
                 condition = '.'.join(condition_parts)
 
                 for arg in where['args']:
-                    named_arg = '{0}_A{1}'.format(self.table['alias'], self.arg_index)
+                    named_arg = '{0}_A{1}'.format(self.get_name(self.table), self.arg_index)
                     self.args[named_arg] = arg
                     self.arg_index += 1
                     condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
