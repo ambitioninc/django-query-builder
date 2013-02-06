@@ -1,4 +1,3 @@
-from pprint import pprint
 from django.db import connection
 from django.db.models import Aggregate
 from django.db.models.base import ModelBase
@@ -80,8 +79,6 @@ class Query(object):
         self._distinct = False
         self.table = {}
         self.fields = []
-        self.table_alias = ''
-        self.table_dict = {}
         self.wheres = []
         self.joins = []
         self.groups = []
@@ -99,8 +96,12 @@ class Query(object):
         self.inner_queries = []
 
         self.table_alias_map = {}
+        self.managed_by = None
 
     def __init__(self):
+        """
+        @return: self
+        """
         self.init_defaults()
 
     def distinct(self, distinct=True):
@@ -118,7 +119,7 @@ class Query(object):
         self.window_index = 0
         self.table_alias_map = {}
 
-    def create_table_dict(self, table, fields=['*'], schema=None, condition=None, join_type=None):
+    def create_table_dict(self, table=None, fields=['*'], schema=None, condition=None, join_type=None):
         """
         :type fields: list
         @return: dict
@@ -128,28 +129,40 @@ class Query(object):
             fields = [fields]
 
         table_alias = None
-        static_alias = False
         if type(table) is dict:
             table_alias = table.keys()[0]
             table = table.values()[0]
-            static_alias = True
+
+        table_type = type(table)
+        table_name = None
+        if table_type is ModelBase:
+            table_name = table._meta.db_table
+        elif table_type is str:
+            table_name = table
+        elif table_type is Query:
+            pass
+#            table_name = '({0})'.format(table.get_query())
 
         table_dict = {
             'alias': table_alias,
-            'static_alias': static_alias,
+            'temp_alias': None,
             'table': table,
-            'name': None,
+            'name': table_name,
             'fields': fields,
             'schema': schema,
             'condition': condition,
             'join_type': join_type,
-            'type': type(table),
+            'type': table_type,
         }
 
-        if type(table) is Query:
-            self.inner_queries.append(table_dict)
+        if table_type is Query:
+            self.add_inner_query(table_dict)
 
         return table_dict
+
+    def add_inner_query(self, table_dict):
+        table_dict['table'].managed_by = self
+        self.inner_queries.append(table_dict)
 
     def select_fields(self, fields=None):
         """
@@ -166,7 +179,7 @@ class Query(object):
         """
         self.mark_dirty()
 
-        self.table = self.create_table_dict(table, fields=fields, schema=schema)
+        self.table = self.create_table_dict(table=table, fields=fields, schema=schema)
 
         return self
 
@@ -183,12 +196,12 @@ class Query(object):
         })
         return self
 
-    def join(self, table, fields=['*'], condition=None, join_type='JOIN', schema=None):
+    def join(self, table=None, fields=['*'], condition=None, join_type='JOIN', schema=None):
         """
         @return: self
         """
         self.mark_dirty()
-        self.joins.append(self.create_table_dict(table, fields=fields, schema=schema, condition=condition, join_type=join_type))
+        self.joins.append(self.create_table_dict(table=table, fields=fields, schema=schema, condition=condition, join_type=join_type))
         return self
 
     def join_left(self, table, fields=['*'], condition=None, join_type='LEFT JOIN', schema=None):
@@ -205,11 +218,13 @@ class Query(object):
             self.groups.append(group)
         elif type(group) is list:
             self.groups += group
+
         if len(args):
             self.group += args
+
         return self
 
-    def order_by(self, order):
+    def order_by(self, order, *args):
         """
         @return: self
         """
@@ -217,6 +232,10 @@ class Query(object):
             self.order.append(order)
         elif type(order) is list:
             self.order += order
+
+        if len(args):
+            self.order += args
+
         return self
 
     def limit(self, limit_count, offset=0):
@@ -238,31 +257,37 @@ class Query(object):
         #TODO: add query prefix in front of window names
         #TODO: use self.table_alias as the query prefix
 
-        # assign query alias
-        table_dicts = [self.table] + self.joins
-        for table_dict in table_dicts:
-            if table_dict['alias'] is None:
-                table_dict['alias'] = 'T{0}'.format(self.table_index)
-                self.table_index += 1
 
-            self.get_table_identifier(table_dict)
+
+
+        # assign query alias
+#        table_dicts = [self.table] + self.joins
+#        for table_dict in table_dicts:
+#            if table_dict['alias'] is None:
+#                table_dict['alias'] = 'T{0}'.format(self.table_index)
+#                self.table_index += 1
+
+#            self.get_table_identifier(table_dict)
 
         # assign inner_query prefixes
-        inner_query_index = 0
-        for inner_query in self.inner_queries:
-            # mark dirty so the args can be namespaced
-            inner_query['table'].mark_dirty()
 
-            if inner_query['static_alias'] is False:
-                inner_query['alias'] = '{0}_{1}'.format(self.table['alias'], inner_query_index)
-            inner_query['table'].get_query()
-            self.args.update(inner_query['table'].args)
-            inner_query_index += 1
-            inner_query['table'].mark_dirty()
+#        inner_query_index = 0
+#        for inner_query in self.inner_queries:
+#            # mark dirty so the args can be namespaced
+#            inner_query['table'].mark_dirty()
+#
+##            if inner_query['static_alias'] is False:
+##                inner_query['alias'] = '{0}_{1}'.format(self.table['alias'], inner_query_index)
+#            inner_query['table'].get_query()
+#            self.args.update(inner_query['table'].args)
+#            inner_query_index += 1
+#            inner_query['table'].mark_dirty()
+#
+#        self.build_alias_maps()
 
-        self.build_alias_maps()
-
-        query = self.build_select_fields()
+        query = ''
+        query += self.build_withs()
+        query += self.build_select_fields()
         query += self.build_from_table()
         query += self.build_joins()
         query += self.build_where()
@@ -279,6 +304,27 @@ class Query(object):
         # loop through table list
         for table_dict in tables:
             self.table_alias_map[table_dict['name']] = table_dict['alias']
+
+    def build_withs(self):
+        withs = []
+
+        for inner_query in self.get_inner_queries():
+            if inner_query['type'] is Query:
+                inner_query['table'].mark_dirty()
+                if inner_query['alias'] is None and self.managed_by is None:
+                    inner_query['temp_alias'] = 'T{0}'.format(self.table_index)
+                    self.table_index += 1
+
+        for inner_query in self.get_inner_queries():
+            inner_query['table'].get_query()
+
+        for inner_query in self.get_inner_queries():
+            withs.append('{0} as ({1})'.format(inner_query['alias'] or inner_query['temp_alias'], inner_query['table'].get_query()))
+
+        withs.reverse()
+        if len(withs) and self.managed_by is None:
+            return 'WITH {0} '.format(', '.join(withs))
+        return ''
 
     def build_select_fields(self):
         """
@@ -346,12 +392,21 @@ class Query(object):
                     field_alias = field.keys()[0]
                     field = field.values()[0]
 
+                # determine how to reference the table for field selection
+                table_prefix = ''
+                if table_dict['alias']:
+                    table_prefix = '{0}.'.format(table_dict['alias'])
+                elif table_dict['temp_alias']:
+                    table_prefix = '{0}.'.format(table_dict['temp_alias'])
+                elif table_dict['name']:
+                    table_prefix = '{0}.'.format(table_dict['name'])
+
                 if type(field) is str:
                     field_name = field
                     if field_alias:
-                        fields.append('{0}.{1} AS {2}'.format(table_dict['alias'], field_name, field_alias))
+                        fields.append('{0}{1} AS {2}'.format(table_prefix, field_name, field_alias))
                     else:
-                        fields.append('{0}.{1}'.format(table_dict['alias'], field_name))
+                        fields.append('{0}{1}'.format(table_prefix, field_name))
                 elif isinstance(field, Aggregate):
                     field_name = field.lookup
                     if field_name == '*':
@@ -410,18 +465,28 @@ class Query(object):
             query = 'SELECT {0} '.format(fields)
         return query
 
-    def get_table_identifier(self, table_dict):
-        if table_dict['type'] is ModelBase:
-            table_dict['name'] = table_dict['table']._meta.db_table
-        elif table_dict['type'] is str:
-            table_dict['name'] = table_dict['table']
-        elif table_dict['type'] is Query:
-            table_dict['name'] = '({0})'.format(table_dict['table'].get_query())
-
-        if table_dict['alias']:
-            table_identifier = '{0} AS {1}'.format(table_dict['name'], table_dict['alias'])
+    def get_name(self, table_dict):
+        if table_dict['type'] is Query:
+            table_dict['table'].mark_dirty()
+            return table_dict['alias'] or table_dict['temp_alias']
+#            return '({0})'.format(table_dict['table'].get_query())
         else:
-            table_identifier = '{0}'.format(table_dict['name'])
+            return table_dict['name']
+
+    def get_table_identifier(self, table_dict):
+#        if table_dict['type'] is ModelBase:
+#            table_dict['name'] = table_dict['table']._meta.db_table
+#        elif table_dict['type'] is str:
+#            table_dict['name'] = table_dict['table']
+#        elif table_dict['type'] is Query:
+#            table_dict['name'] = '({0})'.format(table_dict['table'].get_query())
+
+        table_name = self.get_name(table_dict)
+        table_alias = table_dict['alias'] or table_dict['temp_alias']
+        if table_alias and table_alias != table_name:
+            table_identifier = '{0} AS {1}'.format(table_name, table_alias)
+        else:
+            table_identifier = '{0}'.format(table_name)
 
         return table_identifier
 
@@ -464,7 +529,7 @@ class Query(object):
         for table_dict in self.joins:
 
             # map table names
-            condition = table_dict['condition']
+            condition = table_dict['condition'] or ''
             segments = []
             for segment in condition.split(' '):
                 condition_parts = segment.split('.')
@@ -558,6 +623,14 @@ class Query(object):
             dict(zip([col[0] for col in desc], row))
             for row in cursor.fetchall()
         ]
+
+    def get_inner_queries(self):
+        inner_queries = []
+        for inner_query in self.inner_queries:
+            if inner_query['type'] is Query:
+                inner_queries.append(inner_query)
+                inner_queries += inner_query['table'].get_inner_queries()
+        return inner_queries
 
 
 class QueryWindow(Query):
