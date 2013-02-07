@@ -1,4 +1,3 @@
-from pprint import pprint
 from django.db import connection
 from django.db.models import Aggregate
 from django.db.models.base import ModelBase
@@ -49,6 +48,7 @@ class DatePart(object):
 
     def get_select(self, name=None):
         return 'CAST(extract({0} from {1}) as INT)'.format(name or self.name, self.lookup)
+
 
 class AllTime(DatePart):
     name = 'all'
@@ -214,7 +214,13 @@ class Query(object):
         @return: self
         """
         self.mark_dirty()
-        self.joins.append(self.create_table_dict(table=table, fields=fields, schema=schema, condition=condition, join_type=join_type))
+        self.joins.append(self.create_table_dict(
+            table=table,
+            fields=fields,
+            schema=schema,
+            condition=condition,
+            join_type=join_type
+        ))
         return self
 
     def join_left(self, table, fields=['*'], condition=None, join_type='LEFT JOIN', schema=None):
@@ -268,38 +274,6 @@ class Query(object):
         if self.query:
             return self.query
 
-        #TODO: add query prefix in front of field names
-        #TODO: add query prefix in front of window names
-        #TODO: use self.table_alias as the query prefix
-
-
-
-
-        # assign query alias
-#        table_dicts = [self.table] + self.joins
-#        for table_dict in table_dicts:
-#            if table_dict['alias'] is None:
-#                table_dict['alias'] = 'T{0}'.format(self.table_index)
-#                self.table_index += 1
-
-#            self.get_table_identifier(table_dict)
-
-        # assign inner_query prefixes
-
-#        inner_query_index = 0
-#        for inner_query in self.inner_queries:
-#            # mark dirty so the args can be namespaced
-#            inner_query['table'].mark_dirty()
-#
-##            if inner_query['static_alias'] is False:
-##                inner_query['alias'] = '{0}_{1}'.format(self.table['alias'], inner_query_index)
-#            inner_query['table'].get_query()
-#            self.args.update(inner_query['table'].args)
-#            inner_query_index += 1
-#            inner_query['table'].mark_dirty()
-#
-#        self.build_alias_maps()
-
         query = ''
         query += self.build_withs()
         query += self.build_select_fields()
@@ -335,7 +309,10 @@ class Query(object):
             inner_query['table'].get_query()
 
         for inner_query in self.get_inner_queries():
-            withs.append('{0} as ({1})'.format(inner_query['alias'] or inner_query['temp_alias'], inner_query['table'].get_query()))
+            withs.append('{0} as ({1})'.format(
+                inner_query['alias'] or inner_query['temp_alias'],
+                inner_query['table'].get_query()
+            ))
             self.args.update(inner_query['table'].args)
 
         withs.reverse()
@@ -371,16 +348,29 @@ class Query(object):
                             if field.model == table_dict['table']:
                                 table_join_field = field.field.column
                                 table_join_name = field.get_accessor_name()
-                                table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(self.get_name(table_dict), table_join_field, self.get_name(self.table), table_dict['table']._meta.pk.name)
+                                table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(
+                                    self.get_name(table_dict),
+                                    table_join_field,
+                                    self.get_name(self.table),
+                                    table_dict['table']._meta.pk.name
+                                )
                                 break
 
                         # check if this join type is for a foreign key
                         for field in self.table['table']._meta.fields:
-                            if field.get_internal_type() == 'OneToOneField' or field.get_internal_type() == 'ForeignKey':
+                            if (
+                                field.get_internal_type() == 'OneToOneField' or
+                                field.get_internal_type() == 'ForeignKey'
+                            ):
                                 if field.rel.to == table_dict['table']:
                                     table_join_field = field.column
                                     table_join_name = field.name
-                                    table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(self.get_name(table_dict), table_dict['table']._meta.pk.name, self.get_name(self.table), table_join_field)
+                                    table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(
+                                        self.get_name(table_dict),
+                                        table_dict['table']._meta.pk.name,
+                                        self.get_name(self.table),
+                                        table_join_field
+                                    )
                                     break
 
                 if table_dict['type'] is ModelBase:
@@ -495,7 +485,12 @@ class Query(object):
                     field_alias = field_alias or 'W{0}'.format(self.window_index)
                     self.window_index += 1
                     if field.lookup:
-                        field_name = '{0}({1}.{2}) OVER({3})'.format(field.name, table_dict['alias'], field.lookup, field.over.get_query())
+                        field_name = '{0}({1}.{2}) OVER({3})'.format(
+                            field.name,
+                            table_dict['alias'],
+                            field.lookup,
+                            field.over.get_query()
+                        )
                     else:
                         field_name = '{0}() OVER({1})'.format(field.name, field.over.get_query())
                     fields.append('{0} AS {1}'.format(field_name, field_alias))
@@ -586,14 +581,11 @@ class Query(object):
             condition = ' '.join(segments)
 
             # add the join condition to the join list
-            join_parts.append('{0} {1} ON {2} '.format(table_dict['join_type'], self.get_table_identifier(table_dict), condition))
-#            if table_dict['type'] is Query:
-#                join_parts.append('{0} ({1}) AS {2} ON {3} '.format(table_dict['join_type'], table_dict['query'].get_query(), table_alias, table_dict['condition']))
-#            else:
-#                if table_dict['alias']:
-#                    join_parts.append('{0} {1} AS {2} ON {3} '.format(table_dict['join_type'], table_dict['name'], table_alias, table_dict['condition']))
-#                else:
-#                    join_parts.append('{0} {1} ON {2} '.format(table_dict['join_type'], table_alias, table_dict['condition']))
+            join_parts.append('{0} {1} ON {2} '.format(
+                table_dict['join_type'],
+                self.get_table_identifier(table_dict),
+                condition
+            ))
 
         return ' '.join(join_parts)
 
