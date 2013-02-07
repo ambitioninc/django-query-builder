@@ -46,7 +46,7 @@ def value_for_keypath(dict, keypath):
     return value
 
 
-def set_value_for_keypath(dict_, keypath, value, create_if_needed=False, delimeter='.'):
+def set_value_for_keypath(item, keypath, value, create_if_needed=False, delimeter='.'):
     """
     Sets the value for a keypath in a dictionary
     if the keypath exists. This modifies the
@@ -93,20 +93,20 @@ def set_value_for_keypath(dict_, keypath, value, create_if_needed=False, delimet
         key = keys[0]
 
         if create_if_needed:
-            dict_[key] = dict_.get(key, {})
+            item[key] = item.get(key, {})
 
-        if key in dict_:
-            if set_value_for_keypath(dict_[key], delimeter.join(keys[1:]), value,
+        if key in item:
+            if set_value_for_keypath(item[key], delimeter.join(keys[1:]), value,
                                      create_if_needed=create_if_needed, delimeter=delimeter):
-                return dict_
+                return item
 
         return None
 
     if create_if_needed:
-        dict_[keypath] = dict_.get(keypath, {})
+        item[keypath] = item.get(keypath, {})
 
-    if keypath in dict_:
-        dict_[keypath] = value
-        return dict_
+    if keypath in item:
+        item[keypath] = value
+        return item
     else:
         return None
