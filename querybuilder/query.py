@@ -31,6 +31,11 @@ default_group_names = (
     'second',
 )
 
+week_group_names = (
+    'year',
+    'week',
+)
+
 
 class DatePart(object):
 
@@ -44,6 +49,13 @@ class DatePart(object):
 
     def get_select(self, name=None):
         return 'CAST(extract({0} from {1}) as INT)'.format(name or self.name, self.lookup)
+
+class AllTime(DatePart):
+    name = 'all'
+
+
+class NoneTime(DatePart):
+    name = 'none'
 
 
 class Year(DatePart):
@@ -215,13 +227,14 @@ class Query(object):
         """
         @return: self
         """
-        if type(group) is str:
-            self.groups.append(group)
-        elif type(group) is list:
-            self.groups += group
-
+        if type(group) is not list:
+            group = [group]
         if len(args):
-            self.group += args
+            group += args
+
+        for item in group:
+            if item not in self.groups:
+                self.groups.append(item)
 
         return self
 
@@ -229,13 +242,14 @@ class Query(object):
         """
         @return: self
         """
-        if type(order) is str:
-            self.order.append(order)
-        elif type(order) is list:
-            self.order += order
-
+        if type(order) is not list:
+            order = [order]
         if len(args):
-            self.order += args
+            order += args
+
+        for item in order:
+            if item not in self.order:
+                self.order.append(item)
 
         return self
 
@@ -422,30 +436,57 @@ class Query(object):
                     fields.append('{0} AS {1}'.format(field_name, field_alias))
                 elif isinstance(field, DatePart):
                     if field.auto:
-                        for group_name in default_group_names:
-                            field_alias = '{0}__{1}'.format(field.lookup, group_name)
-                            field_name = field.get_select(group_name)
-                            fields.append('{0} AS {1}'.format(field_name, field_alias))
-                            self.group_by(field_alias)
-                            if field.desc:
-                                self.order_by('-{0}'.format(field_alias))
-                            else:
-                                self.order_by(field_alias)
+                        if field.name == 'all':
+                            # add the datetime object
+                            datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
+                            datetime_str = field.lookup
+                            if field.include_datetime:
+                                fields.append('{0} AS {1}'.format(datetime_str, datetime_alias))
+                                self.group_by(datetime_alias)
 
-                            # check if this is the last date grouping
-                            if group_name == field.name:
-                                # add the datetime object
-                                datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
-                                datetime_str = 'date_trunc(\'{0}\', {1})'.format(group_name, field.lookup)
-                                if field.include_datetime:
-                                    fields.append('{0} AS {1}'.format(datetime_str, datetime_alias))
-                                    self.group_by(datetime_alias)
+                            # add the epoch time
+                            epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
+                            fields.append('EXTRACT(EPOCH FROM MAX({0})) AS {1}'.format(datetime_str, epoch_alias))
+                        elif field.name == 'none':
+                            # add the datetime object
+                            datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
+                            datetime_str = field.lookup
+                            if field.include_datetime:
+                                fields.append('{0} AS {1}'.format(datetime_str, datetime_alias))
+                                self.group_by(datetime_alias)
 
-                                # add the epoch time
-                                epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
-                                fields.append('EXTRACT(EPOCH FROM {0}) AS {1}'.format(datetime_str, epoch_alias))
-                                self.group_by(epoch_alias)
-                                break
+                            # add the epoch time
+                            epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
+                            fields.append('EXTRACT(EPOCH FROM {0}) AS {1}'.format(datetime_str, epoch_alias))
+                            self.group_by(epoch_alias)
+                        else:
+                            group_names = default_group_names
+                            if field.name == 'week':
+                                group_names = week_group_names
+                            for group_name in group_names:
+                                field_alias = '{0}__{1}'.format(field.lookup, group_name)
+                                field_name = field.get_select(group_name)
+                                fields.append('{0} AS {1}'.format(field_name, field_alias))
+                                self.group_by(field_alias)
+                                if field.desc:
+                                    self.order_by('-{0}'.format(field_alias))
+                                else:
+                                    self.order_by(field_alias)
+
+                                # check if this is the last date grouping
+                                if group_name == field.name:
+                                    # add the datetime object
+                                    datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
+                                    datetime_str = 'date_trunc(\'{0}\', {1})'.format(group_name, field.lookup)
+                                    if field.include_datetime:
+                                        fields.append('{0} AS {1}'.format(datetime_str, datetime_alias))
+                                        self.group_by(datetime_alias)
+
+                                    # add the epoch time
+                                    epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
+                                    fields.append('EXTRACT(EPOCH FROM {0}) AS {1}'.format(datetime_str, epoch_alias))
+                                    self.group_by(epoch_alias)
+                                    break
                     else:
                         field_alias = field_alias or '{0}__{1}'.format(field.lookup, field.name)
                         field_name = field.get_select()
