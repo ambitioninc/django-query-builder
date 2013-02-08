@@ -21,6 +21,28 @@ class Rank(WindowFunction):
     name = 'rank'
 
 
+all_group_names = (
+    'year',
+    'month',
+    'day',
+    'hour',
+    'minute',
+    'second',
+    'week',
+    'all',
+    'none',
+)
+
+allowed_group_names = (
+    'year',
+    'month',
+    'day',
+    'hour',
+    'minute',
+    'second',
+    'week',
+)
+
 default_group_names = (
     'year',
     'month',
@@ -436,7 +458,7 @@ class Query(object):
 
                             # add the epoch time
                             epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
-                            fields.append('EXTRACT(EPOCH FROM MAX({0})) AS {1}'.format(datetime_str, epoch_alias))
+                            fields.append('CAST(EXTRACT(EPOCH FROM MIN({0})) AS INT) AS {1}'.format(datetime_str, epoch_alias))
                         elif field.name == 'none':
                             # add the datetime object
                             datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
@@ -447,7 +469,7 @@ class Query(object):
 
                             # add the epoch time
                             epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
-                            fields.append('EXTRACT(EPOCH FROM {0}) AS {1}'.format(datetime_str, epoch_alias))
+                            fields.append('CAST(EXTRACT(EPOCH FROM {0}) AS INT) AS {1}'.format(datetime_str, epoch_alias))
                             self.group_by(epoch_alias)
                         else:
                             group_names = default_group_names
@@ -474,7 +496,7 @@ class Query(object):
 
                                     # add the epoch time
                                     epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
-                                    fields.append('EXTRACT(EPOCH FROM {0}) AS {1}'.format(datetime_str, epoch_alias))
+                                    fields.append('CAST(EXTRACT(EPOCH FROM {0}) AS INT) AS {1}'.format(datetime_str, epoch_alias))
                                     self.group_by(epoch_alias)
                                     break
                     else:
