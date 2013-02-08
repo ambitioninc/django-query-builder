@@ -110,6 +110,9 @@ class Week(DatePart):
 
 class Query(object):
 
+    enable_safe_limit = False
+    safe_limit = 1000
+
     def init_defaults(self):
         self._distinct = False
         self.table = {}
@@ -660,10 +663,15 @@ class Query(object):
             limit_str += 'OFFSET {0} '.format(self.offset)
         return limit_str
 
-    def select(self, nest=False):
+    def select(self, nest=False, bypass_safe_limit=False):
         """
         @return: list
         """
+        # Check if we need to set a safe limit
+        if bypass_safe_limit == False:
+            if Query.enable_safe_limit:
+                if self.count() > Query.safe_limit:
+                    self.limit(Query.safe_limit)
         cursor = connection.cursor()
         cursor.execute(self.get_query(), self.args)
         rows = self._fetch_all_as_dict(cursor)
@@ -688,35 +696,35 @@ class Query(object):
         q = Query().from_table(self, fields=[
             Count(field)
         ])
-        rows = q.select()
+        rows = q.select(bypass_safe_limit=True)
         return rows[0].values()[0]
 
     def max(self, field):
         q = Query().from_table(self, fields=[
             Max(field)
         ])
-        rows = q.select()
+        rows = q.select(bypass_safe_limit=True)
         return rows[0].values()[0]
 
     def min(self, field):
         q = Query().from_table(self, fields=[
             Min(field)
         ])
-        rows = q.select()
+        rows = q.select(bypass_safe_limit=True)
         return rows[0].values()[0]
 
     def sum(self, field):
         q = Query().from_table(self, fields=[
             Sum(field)
         ])
-        rows = q.select()
+        rows = q.select(bypass_safe_limit=True)
         return rows[0].values()[0]
 
     def avg(self, field):
         q = Query().from_table(self, fields=[
             Avg(field)
         ])
-        rows = q.select()
+        rows = q.select(bypass_safe_limit=True)
         return rows[0].values()[0]
 
     def _fetch_all_as_dict(self, cursor):
