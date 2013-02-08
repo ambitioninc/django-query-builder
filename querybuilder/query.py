@@ -1,5 +1,5 @@
 from django.db import connection
-from django.db.models import Aggregate
+from django.db.models import Aggregate, Count, Max, Min, Sum, Avg
 from django.db.models.base import ModelBase
 from querybuilder.helpers import set_value_for_keypath
 
@@ -674,6 +674,50 @@ class Query(object):
                     if '__' in key:
                         row.pop(key)
         return rows
+
+    def sql_insert(self):
+        pass
+
+    def sql_update(self):
+        pass
+
+    def sql_delete(self):
+        pass
+
+    def count(self, field='*'):
+        q = Query().from_table(self, fields=[
+            Count(field)
+        ])
+        rows = q.select()
+        return rows[0].values()[0]
+
+    def max(self, field):
+        q = Query().from_table(self, fields=[
+            Max(field)
+        ])
+        rows = q.select()
+        return rows[0].values()[0]
+
+    def min(self, field):
+        q = Query().from_table(self, fields=[
+            Min(field)
+        ])
+        rows = q.select()
+        return rows[0].values()[0]
+
+    def sum(self, field):
+        q = Query().from_table(self, fields=[
+            Sum(field)
+        ])
+        rows = q.select()
+        return rows[0].values()[0]
+
+    def avg(self, field):
+        q = Query().from_table(self, fields=[
+            Avg(field)
+        ])
+        rows = q.select()
+        return rows[0].values()[0]
 
     def _fetch_all_as_dict(self, cursor):
         """
