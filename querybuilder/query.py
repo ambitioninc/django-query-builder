@@ -1,6 +1,7 @@
 from django.db import connection
-from django.db.models import Aggregate, Count, Max, Min, Sum, Avg
+from django.db.models import Aggregate, Count, Max, Min, Sum, Avg, Q
 from django.db.models.base import ModelBase
+from django.db.models.sql import AND
 from querybuilder.helpers import set_value_for_keypath
 
 
@@ -117,7 +118,7 @@ class Query(object):
         self._distinct = False
         self.table = {}
         self.fields = []
-        self.wheres = []
+        self.wheres = Q()
         self.joins = []
         self.groups = []
         self.order = []
@@ -223,15 +224,12 @@ class Query(object):
 
     #TODO: parse named arg conditions and convert to string
     # ex: Account__id__gt=5
-    def where(self, condition, *args):
+    def where(self, where, where_type=AND):
         """
         @return: self
         """
         self.mark_dirty()
-        self.wheres.append({
-            'condition': condition,
-            'args': args
-        })
+        self.wheres.add(where, where_type)
         return self
 
     def join(self, table=None, fields=['*'], condition=None, join_type='JOIN', schema=None):
@@ -564,27 +562,67 @@ class Query(object):
         str = 'FROM {0} '.format(self.get_table_identifier(self.table))
         return str
 
+    def get_condition_operator(self, operator):
+        map = {
+            'eq': '=',
+            'gt': '>',
+            'gte': '>=',
+            'lt': '<',
+            'lte': '<=',
+            'contains': 'LIKE',
+            'startswith': 'LIKE',
+        }
+        return map.get(operator, None)
+
+    def get_condition_value(self, operator, value):
+        if operator == 'contains':
+            value = '%{0}%'.format(value)
+        elif operator == 'startswith':
+            value = '{0}%'.format(value)
+
+        return value
+
+    def build_where_part(self, wheres):
+        where_parts = []
+        for where in wheres.children:
+            if type(where) is Q:
+                where_parts.append(self.build_where_part(where))
+            elif type(where) is tuple:
+                field_name = where[0]
+                value = where[1]
+                operator_str = 'eq'
+                operator = '='
+
+                field_parts = field_name.split('__')
+                if len(field_parts) > 1:
+                    operator_str = field_parts[-1]
+                    operator = self.get_condition_operator(operator_str)
+                    if operator is None:
+                        operator = '='
+                        field_name = '.'.join(field_parts)
+                    else:
+                        field_name = '.'.join(field_parts[:-1])
+
+                condition = '{0} {1} ?'.format(field_name, operator)
+                if wheres.negated:
+                    condition = 'NOT({0})'.format(condition)
+
+                value = self.get_condition_value(operator_str, value)
+                named_arg = '{0}_A{1}'.format(self.get_name(self.table), self.arg_index)
+                self.args[named_arg] = value
+                self.arg_index += 1
+                condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
+                where_parts.append(condition)
+        joined_parts = ' {0} '.format(wheres.connector).join(where_parts)
+        return '({0})'.format(joined_parts)
+
     def build_where(self):
         """
         @return: str
         """
         if len(self.wheres):
-            wheres = []
-            for where in self.wheres:
-                condition = where['condition']
-                # TODO: handle more than one table in the condition
-                condition_parts = condition.split('.')
-                if len(condition_parts) > 1:
-                    condition_parts[0] = self.table_alias_map.get(condition_parts[0], condition_parts[0])
-                condition = '.'.join(condition_parts)
-
-                for arg in where['args']:
-                    named_arg = '{0}_A{1}'.format(self.get_name(self.table), self.arg_index)
-                    self.args[named_arg] = arg
-                    self.arg_index += 1
-                    condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
-                wheres.append(condition)
-            return 'WHERE {0} '.format(' AND '.join(wheres))
+            where = self.build_where_part(self.wheres)
+            return 'WHERE {0} '.format(where)
         return ''
 
     def build_joins(self):
