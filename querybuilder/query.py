@@ -2,95 +2,9 @@ from django.db import connection
 from django.db.models import Aggregate, Count, Max, Min, Sum, Avg, Q
 from django.db.models.base import ModelBase
 from django.db.models.sql import AND
+from querybuilder.groups import DatePart, default_group_names, week_group_names
 from querybuilder.helpers import set_value_for_keypath
 from querybuilder.window_functions import WindowFunction
-
-
-all_group_names = (
-    'year',
-    'month',
-    'day',
-    'hour',
-    'minute',
-    'second',
-    'week',
-    'all',
-    'none',
-)
-
-allowed_group_names = (
-    'year',
-    'month',
-    'day',
-    'hour',
-    'minute',
-    'second',
-    'week',
-)
-
-default_group_names = (
-    'year',
-    'month',
-    'day',
-    'hour',
-    'minute',
-    'second',
-)
-
-week_group_names = (
-    'year',
-    'week',
-)
-
-
-class DatePart(object):
-
-    name = ''
-
-    def __init__(self, lookup, auto=False, desc=False, include_datetime=False):
-        self.lookup = lookup
-        self.auto = auto
-        self.desc = desc
-        self.include_datetime = include_datetime
-
-    def get_select(self, name=None):
-        return 'CAST(extract({0} from {1}) as INT)'.format(name or self.name, self.lookup)
-
-
-class AllTime(DatePart):
-    name = 'all'
-
-
-class NoneTime(DatePart):
-    name = 'none'
-
-
-class Year(DatePart):
-    name = 'year'
-
-
-class Month(DatePart):
-    name = 'month'
-
-
-class Day(DatePart):
-    name = 'day'
-
-
-class Hour(DatePart):
-    name = 'hour'
-
-
-class Minute(DatePart):
-    name = 'minute'
-
-
-class Second(DatePart):
-    name = 'second'
-
-
-class Week(DatePart):
-    name = 'week'
 
 
 class Query(object):

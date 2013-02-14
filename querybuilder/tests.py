@@ -24,7 +24,7 @@ class TestSelect(unittest.TestCase):
     def test_select_fields_from_model(self):
         raise NotImplementedError
 
-    def test_select_fields_alias_from_model_alias(self):
+    def test_select_fields_from_model_alias(self):
         raise NotImplementedError
 
     def test_select_fields_alias_from_string(self):
