@@ -3,23 +3,7 @@ from django.db.models import Aggregate, Count, Max, Min, Sum, Avg, Q
 from django.db.models.base import ModelBase
 from django.db.models.sql import AND
 from querybuilder.helpers import set_value_for_keypath
-
-
-class WindowFunction(object):
-
-    name = ''
-
-    def __init__(self, over, lookup=None):
-        """
-        :type lookup: str
-        """
-        self.over = over
-        self.lookup = lookup
-
-
-class Rank(WindowFunction):
-
-    name = 'rank'
+from querybuilder.window_functions import WindowFunction
 
 
 all_group_names = (
@@ -459,7 +443,10 @@ class Query(object):
 
                             # add the epoch time
                             epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
-                            fields.append('CAST(EXTRACT(EPOCH FROM MIN({0})) AS INT) AS {1}'.format(datetime_str, epoch_alias))
+                            fields.append('CAST(EXTRACT(EPOCH FROM MIN({0})) AS INT) AS {1}'.format(
+                                datetime_str,
+                                epoch_alias
+                            ))
                         elif field.name == 'none':
                             # add the datetime object
                             datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
@@ -470,7 +457,10 @@ class Query(object):
 
                             # add the epoch time
                             epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
-                            fields.append('CAST(EXTRACT(EPOCH FROM {0}) AS INT) AS {1}'.format(datetime_str, epoch_alias))
+                            fields.append('CAST(EXTRACT(EPOCH FROM {0}) AS INT) AS {1}'.format(
+                                datetime_str,
+                                epoch_alias
+                            ))
                             self.group_by(epoch_alias)
                         else:
                             group_names = default_group_names
@@ -497,7 +487,10 @@ class Query(object):
 
                                     # add the epoch time
                                     epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
-                                    fields.append('CAST(EXTRACT(EPOCH FROM {0}) AS INT) AS {1}'.format(datetime_str, epoch_alias))
+                                    fields.append('CAST(EXTRACT(EPOCH FROM {0}) AS INT) AS {1}'.format(
+                                        datetime_str,
+                                        epoch_alias
+                                    ))
                                     self.group_by(epoch_alias)
                                     break
                     else:
@@ -706,7 +699,7 @@ class Query(object):
         @return: list
         """
         # Check if we need to set a safe limit
-        if bypass_safe_limit == False:
+        if bypass_safe_limit is False:
             if Query.enable_safe_limit:
                 if self.count() > Query.safe_limit:
                     self.limit(Query.safe_limit)
