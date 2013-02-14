@@ -1,5 +1,6 @@
 # Django settings for test_project project.
 
+ENVIRONMENT_VARIABLE = 'develop'
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
