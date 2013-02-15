@@ -41,7 +41,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT table_alias.* FROM test_project_account AS table_alias'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, '{0}\n!=\n{1}'.format(query_str, expected_query))
 
     def test_select_fields_from_string(self):
         query = Query().from_table(
@@ -151,6 +151,66 @@ class TestSelect(unittest.TestCase):
         expected_query = 'SELECT table_alias.field_one AS field_alias_one, table_alias.field_two AS field_alias_two FROM test_project_account AS table_alias'
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
+    def test_select_fields_two_tables(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                'field_one',
+                'field_two'
+            ]
+        ).from_table(
+            table='second_table',
+            fields=[
+                'field_three',
+                'field_four'
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.field_one, test_project_account.field_two, second_table.field_three, second_table.field_four FROM test_project_account, second_table'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_select_fields_two_tables_alias(self):
+        query = Query().from_table(
+            table={
+                'table_one': Account
+            },
+            fields=[{
+                'f1': 'field_one'
+            }, {
+                'f2': 'field_two'
+            }]
+        ).from_table(
+            table={
+                'table_two': 'second_table'
+            },
+            fields=[{
+                'f3': 'field_three'
+            },{
+                'f4': 'field_four'
+            }]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT table_one.field_one AS f1, table_one.field_two AS f2, table_two.field_three AS f3, table_two.field_four AS f4 FROM test_project_account AS table_one, second_table AS table_two'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_select_fields_same_two_tables(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                'field_one',
+                'field_two'
+            ]
+        ).from_table(
+            table=Account,
+            fields=[
+                'field_three',
+                'field_four'
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.field_one, test_project_account.field_two, T0.field_three, T0.field_four FROM test_project_account, test_project_account AS T0'
+        self.assertEqual(query_str, expected_query, '\n{0}\n!=\n{1}'.format(query_str, expected_query))
+
 
 class TestOrderBy(unittest.TestCase):
 
@@ -162,7 +222,6 @@ class TestOrderBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one ASC'
-        print query_str
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
     def test_order_by_args_asc(self):
@@ -174,7 +233,6 @@ class TestOrderBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one ASC, field_two ASC'
-        print query_str
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
     def test_order_by_chained_asc(self):
@@ -187,7 +245,6 @@ class TestOrderBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one ASC, field_two ASC'
-        print query_str
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
     def test_order_by_single_desc(self):
@@ -198,7 +255,6 @@ class TestOrderBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one DESC'
-        print query_str
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
     def test_order_by_args_desc(self):
@@ -210,7 +266,6 @@ class TestOrderBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one DESC, field_two DESC'
-        print query_str
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
     def test_order_by_chained_desc(self):
@@ -223,7 +278,6 @@ class TestOrderBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one DESC, field_two DESC'
-        print query_str
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
 

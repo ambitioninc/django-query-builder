@@ -33,6 +33,8 @@ class Field(object):
         """
         if self.alias:
             return '{0}.{1} AS {2}'.format(self.table.get_name(), self.name, self.alias)
+        elif self.auto_alias:
+            return '{0}.{1} AS {2}'.format(self.table.get_name(), self.name, self.auto_alias)
 
         return '{0}.{1}'.format(self.table.get_name(), self.name)
 
@@ -99,6 +101,8 @@ class Table(object):
         """
         if self.alias:
             return self.alias
+        elif self.auto_alias:
+            return self.auto_alias
 
         return self.name
 
@@ -110,7 +114,8 @@ class Table(object):
         """
         if self.alias:
             return '{0} AS {1}'.format(self.name, self.alias)
-
+        elif self.auto_alias:
+            return '{0} AS {1}'.format(self.name, self.auto_alias)
         return self.name
 
 
@@ -194,6 +199,15 @@ class Query(object):
 
         return self
 
+    def check_name_collisions(self):
+        table_index = 0
+        table_names = {}
+        for table in self.tables:
+            if table.get_name() in table_names:
+                table.auto_alias = 'T{0}'.format(table_index)
+                table_index += 1
+            table_names[table.get_name()] = True
+
     def get_sql(self):
         """
         @return: self
@@ -202,6 +216,7 @@ class Query(object):
             return self.sql
 
         query = ''
+        self.check_name_collisions()
         # query += self.build_withs()
         query += self.build_select_fields()
         query += self.build_from_table()
