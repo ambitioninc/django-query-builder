@@ -153,28 +153,78 @@ class TestSelect(unittest.TestCase):
 
 
 class TestOrderBy(unittest.TestCase):
-    pass
 
-    # def test_order_by_single_asc(self):
-    #     raise NotImplementedError
-    #
-    # def test_order_by_list_asc(self):
-    #     raise NotImplementedError
-    #
-    # def test_order_by_args_asc(self):
-    #     raise NotImplementedError
-    #
-    # def test_order_by_single_desc(self):
-    #     raise NotImplementedError
-    #
-    # def test_order_by_list_desc(self):
-    #     raise NotImplementedError
-    #
-    # def test_order_by_args_desc(self):
-    #     raise NotImplementedError
-    #
-    # def test_order_by_chained(self):
-    #     raise NotImplementedError
+    def test_order_by_single_asc(self):
+        query = Query().from_table(
+            table='test_table'
+        ).order_by(
+            'field_one'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one ASC'
+        print query_str
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_order_by_args_asc(self):
+        query = Query().from_table(
+            table='test_table'
+        ).order_by(
+            'field_one',
+            'field_two'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one ASC, field_two ASC'
+        print query_str
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_order_by_chained_asc(self):
+        query = Query().from_table(
+            table='test_table'
+        ).order_by(
+            'field_one'
+        ).order_by(
+            'field_two'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one ASC, field_two ASC'
+        print query_str
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_order_by_single_desc(self):
+        query = Query().from_table(
+            table='test_table'
+        ).order_by(
+            '-field_one'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one DESC'
+        print query_str
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_order_by_args_desc(self):
+        query = Query().from_table(
+            table='test_table'
+        ).order_by(
+            '-field_one',
+            '-field_two'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one DESC, field_two DESC'
+        print query_str
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_order_by_chained_desc(self):
+        query = Query().from_table(
+            table='test_table'
+        ).order_by(
+            '-field_one'
+        ).order_by(
+            '-field_two'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one DESC, field_two DESC'
+        print query_str
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
 
 
 class TestLimit(unittest.TestCase):

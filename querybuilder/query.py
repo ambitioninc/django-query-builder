@@ -122,6 +122,7 @@ class Query(object):
     def init_defaults(self):
         self.sql = None
         self.tables = []
+        self.sorters = []
 
         # self._distinct = False
         # self.table = {}
@@ -129,7 +130,7 @@ class Query(object):
         # self.wheres = Q()
         # self.joins = []
         # self.groups = []
-        # self.order = []
+
         # self.limit_count = 0
         # self.offset = 0
         #
@@ -166,6 +167,16 @@ class Query(object):
     def add_table(self, table):
         self.tables.append(table)
 
+    def order_by(self, *args):
+        """
+        @return: self
+        """
+        for item in args:
+            if item not in self.sorters:
+                self.sorters.append(item)
+
+        return self
+
     def get_sql(self):
         """
         @return: self
@@ -180,7 +191,7 @@ class Query(object):
         # query += self.build_joins()
         # query += self.build_where()
         # query += self.build_groups()
-        # query += self.build_order()
+        query += self.build_order_by()
         # query += self.build_limit()
 
         self.sql = query
@@ -397,6 +408,31 @@ class Query(object):
 
         return sql
 
+    def build_order_by(self):
+        """
+        @return: str
+        """
+        if len(self.sorters):
+            orders = []
+            for order in self.sorters:
+                is_desc = False
+                if order[0] == '-':
+                    is_desc = True
+                    order = order[1:]
+
+                order_parts = order.split('.')
+                if len(order_parts) > 1:
+                    pass
+                    # order_parts[0] = self.table_alias_map.get(order_parts[0], order_parts[0])
+                if is_desc:
+                    order_parts[0] = '{0} DESC'.format(order_parts[0])
+                else:
+                    order_parts[0] = '{0} ASC'.format(order_parts[0])
+                orders.append('.'.join(order_parts))
+
+            return 'ORDER BY {0} '.format(', '.join(orders))
+        return ''
+
     # def distinct(self, distinct=True):
     #     """
     #     @return: self
@@ -511,20 +547,7 @@ class Query(object):
     #
     #     return self
     #
-    # def order_by(self, order, *args):
-    #     """
-    #     @return: self
-    #     """
-    #     if type(order) is not list:
-    #         order = [order]
-    #     if len(args):
-    #         order += args
-    #
-    #     for item in order:
-    #         if item not in self.order:
-    #             self.order.append(item)
-    #
-    #     return self
+
     #
     # def limit(self, limit_count, offset=0):
     #     """
@@ -699,27 +722,7 @@ class Query(object):
     #         return 'GROUP BY {0} '.format(', '.join(groups))
     #     return ''
     #
-    # def build_order(self):
-    #     """
-    #     @return: str
-    #     """
-    #     if len(self.order):
-    #         orders = []
-    #         for order in self.order:
-    #             is_desc = False
-    #             if order[0] == '-':
-    #                 is_desc = True
-    #                 order = order[1:]
-    #
-    #             order_parts = order.split('.')
-    #             if len(order_parts) > 1:
-    #                 order_parts[0] = self.table_alias_map.get(order_parts[0], order_parts[0])
-    #             if is_desc:
-    #                 order_parts[0] = '{0} DESC'.format(order_parts[0])
-    #             orders.append('.'.join(order_parts))
-    #
-    #         return 'ORDER BY {0} '.format(', '.join(orders))
-    #     return ''
+
     #
     # def build_limit(self):
     #     """
