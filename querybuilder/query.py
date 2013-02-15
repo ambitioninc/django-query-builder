@@ -270,6 +270,17 @@ class Query(object):
                 order_by_segment = order_by_segment.replace('ORDER BY ', '', 1)
                 sorters = [sorter.strip() for sorter in order_by_segment.split(',')]
                 sql += 'ORDER BY\n\t{0}\n'.format(',\n\t'.join(sorters))
+
+            limit_segment = self.build_limit()
+            if len(limit_segment):
+                if 'LIMIT' in limit_segment:
+                    limit_segment = limit_segment.replace('LIMIT ', 'LIMIT\n\t', 1)
+                    if 'OFFSET' in limit_segment:
+                        limit_segment = limit_segment.replace('OFFSET ', '\nOFFSET\n\t', 1)
+                elif 'OFFSET' in limit_segment:
+                    limit_segment = limit_segment.replace('OFFSET ', 'OFFSET\n\t', 1)
+                sql += limit_segment
+
             return sql
         else:
             # sql += self.build_withs()
