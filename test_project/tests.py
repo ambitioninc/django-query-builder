@@ -67,7 +67,6 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT table_alias.field_one, table_alias.field_two FROM test_table AS table_alias'
-        print query_str
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
     def test_select_fields_from_model(self):
@@ -80,7 +79,6 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_account.field_one, test_project_account.field_two FROM test_project_account'
-        print query_str
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
     def test_select_fields_from_model_alias(self):
@@ -95,7 +93,6 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT table_alias.field_one, table_alias.field_two FROM test_project_account AS table_alias'
-        print query_str
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
     def test_select_fields_alias_from_string(self):
@@ -109,17 +106,50 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.field_one AS field_alias_one, test_table.field_two AS field_alias_two FROM test_table'
-        print query_str
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
-    # def test_select_fields_alias_from_string_alias(self):
-    #     raise NotImplementedError
-    #
-    # def test_select_fields_alias_from_model(self):
-    #     raise NotImplementedError
-    #
-    # def test_select_fields_alias_from_model_alias(self):
-    #     raise NotImplementedError
+    def test_select_fields_alias_from_string_alias(self):
+        query = Query().from_table(
+            table={
+                'table_alias': 'test_table'
+            },
+            fields=[{
+                'field_alias_one': 'field_one'
+            }, {
+                'field_alias_two': 'field_two'
+            }]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT table_alias.field_one AS field_alias_one, table_alias.field_two AS field_alias_two FROM test_table AS table_alias'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_select_fields_alias_from_model(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[{
+                'field_alias_one': 'field_one'
+            }, {
+                'field_alias_two': 'field_two'
+            }]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.field_one AS field_alias_one, test_project_account.field_two AS field_alias_two FROM test_project_account'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_select_fields_alias_from_model_alias(self):
+        query = Query().from_table(
+            table={
+                'table_alias': Account
+            },
+            fields=[{
+                'field_alias_one': 'field_one'
+            }, {
+                'field_alias_two': 'field_two'
+            }]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT table_alias.field_one AS field_alias_one, table_alias.field_two AS field_alias_two FROM test_project_account AS table_alias'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
 
 
 class TestOrderBy(unittest.TestCase):
