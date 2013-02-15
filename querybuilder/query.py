@@ -119,6 +119,77 @@ class Table(object):
         return self.name
 
 
+class Where(object):
+
+    map = {
+        'eq': '=',
+        'gt': '>',
+        'gte': '>=',
+        'lt': '<',
+        'lte': '<=',
+        'contains': 'LIKE',
+        'startswith': 'LIKE',
+    }
+
+    def __init__(self):
+        self.arg_index = 0
+        self.args = {}
+        self.wheres = Q()
+
+    def get_sql(self):
+        if len(self.wheres):
+            where = self.build_where_part(self.wheres)
+            return 'WHERE {0} '.format(where)
+        return ''
+
+    def get_condition_operator(self, operator):
+        return Where.map.get(operator, None)
+
+    def get_condition_value(self, operator, value):
+        if operator == 'contains':
+            value = '%{0}%'.format(value)
+        elif operator == 'startswith':
+            value = '{0}%'.format(value)
+
+        return value
+
+    def build_where_part(self, wheres):
+        where_parts = []
+        for where in wheres.children:
+            if type(where) is Q:
+                where_parts.append(self.build_where_part(where))
+            elif type(where) is tuple:
+                field_name = where[0]
+                value = where[1]
+
+                operator_str = 'eq'
+                operator = '='
+
+                field_parts = field_name.split('__')
+                if len(field_parts) > 1:
+                    operator_str = field_parts[-1]
+                    operator = self.get_condition_operator(operator_str)
+                    if operator is None:
+                        operator = '='
+                        field_name = '.'.join(field_parts)
+                    else:
+                        field_name = '.'.join(field_parts[:-1])
+
+                condition = '{0} {1} ?'.format(field_name, operator)
+                if wheres.negated:
+                    condition = 'NOT({0})'.format(condition)
+
+                value = self.get_condition_value(operator_str, value)
+                # named_arg = '{0}_A{1}'.format(self.get_name(self.table), self.arg_index)
+                named_arg = 'A{0}'.format(self.arg_index)
+                self.args[named_arg] = value
+                self.arg_index += 1
+                condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
+                where_parts.append(condition)
+        joined_parts = ' {0} '.format(wheres.connector).join(where_parts)
+        return '({0})'.format(joined_parts)
+
+
 class Sorter(object):
 
     def __init__(self, field=None, table=None, desc=False):
@@ -166,13 +237,14 @@ class Query(object):
     def init_defaults(self):
         self.sql = None
         self.tables = []
+        self._where = Where()
         self.sorters = []
-        self.limit_offset = None
+        self._limit = None
 
         # self._distinct = False
         # self.table = {}
         # self.fields = []
-        # self.wheres = Q()
+
         # self.joins = []
         # self.groups = []
 
@@ -209,6 +281,17 @@ class Query(object):
     def add_table(self, table):
         self.tables.append(table)
 
+    def where(self, q, where_type=AND):
+        """
+        Adds a Q object to the query's where condition
+        :param where: django Q object with where condition
+        :param where_type: django where type. AND, OR
+        @return: self
+        """
+        # self.mark_dirty()
+        self._where.wheres.add(q, where_type)
+        return self
+
     def order_by(self, field=None, table=None, desc=False):
         """
         @return: self
@@ -227,7 +310,7 @@ class Query(object):
         """
         @return: self
         """
-        self.limit_offset = Limit(
+        self._limit = Limit(
             limit=limit,
             offset=offset
         )
@@ -260,7 +343,7 @@ class Query(object):
         sql += self.build_select_fields()
         sql += self.build_from_table()
         # sql += self.build_joins()
-        # sql += self.build_where()
+        sql += self.build_where()
         # sql += self.build_groups()
         sql += self.build_order_by()
         sql += self.build_limit()
@@ -508,6 +591,12 @@ class Query(object):
 
         return sql
 
+    def build_where(self):
+        """
+        @return: str
+        """
+        return self._where.get_sql()
+
     def build_order_by(self):
         """
         @return: str
@@ -523,8 +612,8 @@ class Query(object):
         """
         @return: str
         """
-        if self.limit_offset:
-            return self.limit_offset.get_sql()
+        if self._limit:
+            return self._limit.get_sql()
         return ''
 
     # def distinct(self, distinct=True):
@@ -596,16 +685,6 @@ class Query(object):
     #     self.table['fields'] = fields
     #     return self
 
-    # #TODO: parse named arg conditions and convert to string
-    # # ex: Account__id__gt=5
-    # def where(self, where, where_type=AND):
-    #     """
-    #     @return: self
-    #     """
-    #     self.mark_dirty()
-    #     self.wheres.add(where, where_type)
-    #     return self
-    #
     # def join(self, table=None, fields=['*'], condition=None, join_type='JOIN', schema=None):
     #     """
     #     @return: self
@@ -698,69 +777,6 @@ class Query(object):
     #     return table_identifier
 
 
-
-    # def get_condition_operator(self, operator):
-    #     map = {
-    #         'eq': '=',
-    #         'gt': '>',
-    #         'gte': '>=',
-    #         'lt': '<',
-    #         'lte': '<=',
-    #         'contains': 'LIKE',
-    #         'startswith': 'LIKE',
-    #     }
-    #     return map.get(operator, None)
-    #
-    # def get_condition_value(self, operator, value):
-    #     if operator == 'contains':
-    #         value = '%{0}%'.format(value)
-    #     elif operator == 'startswith':
-    #         value = '{0}%'.format(value)
-    #
-    #     return value
-    #
-    # def build_where_part(self, wheres):
-    #     where_parts = []
-    #     for where in wheres.children:
-    #         if type(where) is Q:
-    #             where_parts.append(self.build_where_part(where))
-    #         elif type(where) is tuple:
-    #             field_name = where[0]
-    #             value = where[1]
-    #             operator_str = 'eq'
-    #             operator = '='
-    #
-    #             field_parts = field_name.split('__')
-    #             if len(field_parts) > 1:
-    #                 operator_str = field_parts[-1]
-    #                 operator = self.get_condition_operator(operator_str)
-    #                 if operator is None:
-    #                     operator = '='
-    #                     field_name = '.'.join(field_parts)
-    #                 else:
-    #                     field_name = '.'.join(field_parts[:-1])
-    #
-    #             condition = '{0} {1} ?'.format(field_name, operator)
-    #             if wheres.negated:
-    #                 condition = 'NOT({0})'.format(condition)
-    #
-    #             value = self.get_condition_value(operator_str, value)
-    #             named_arg = '{0}_A{1}'.format(self.get_name(self.table), self.arg_index)
-    #             self.args[named_arg] = value
-    #             self.arg_index += 1
-    #             condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
-    #             where_parts.append(condition)
-    #     joined_parts = ' {0} '.format(wheres.connector).join(where_parts)
-    #     return '({0})'.format(joined_parts)
-    #
-    # def build_where(self):
-    #     """
-    #     @return: str
-    #     """
-    #     if len(self.wheres):
-    #         where = self.build_where_part(self.wheres)
-    #         return 'WHERE {0} '.format(where)
-    #     return ''
     #
     # def build_joins(self):
     #     """
