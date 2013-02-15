@@ -148,6 +148,20 @@ class Table(object):
         return self.name
 
 
+class Join(object):
+
+    def __init__(self, right_table=None, fields=['*'], condition=None, join_type='JOIN', schema=None, left_table=None):
+        self.left_table = left_table
+        self.right_table = right_table
+        self.fields = fields
+        self.condition = condition
+        self.join_type = join_type
+        self.schema = schema
+
+    def get_sql(self):
+        return '{0} {1} ON {2}'.format(self.join_type, self.right_table, self.condition)
+
+
 class Where(object):
 
     map = {
@@ -282,6 +296,7 @@ class Query(object):
     def init_defaults(self):
         self.sql = None
         self.tables = []
+        self.joins = []
         self._where = Where()
         self.groups = []
         self.sorters = []
@@ -290,8 +305,6 @@ class Query(object):
         # self._distinct = False
         # self.table = {}
         # self.fields = []
-
-        # self.joins = []
 
         # self.table_index = 0
         # self.field_index = 0
@@ -315,7 +328,7 @@ class Query(object):
         @return: self
         """
         # self.mark_dirty()
-        self.add_table(Table(
+        self.tables.append(Table(
             table=table,
             fields=fields,
             schema=schema,
@@ -323,8 +336,26 @@ class Query(object):
 
         return self
 
-    def add_table(self, table):
-        self.tables.append(table)
+    def join(self, right_table=None, fields=['*'], condition=None, join_type='JOIN', schema=None, left_table=None):
+        """
+        @return: self
+        """
+        # self.mark_dirty()
+        self.joins.append(Join(
+            left_table=left_table,
+            right_table=right_table,
+            fields=fields,
+            condition=condition,
+            join_type=join_type,
+            schema=schema,
+        ))
+        return self
+
+    def join_left(self, right_table=None, fields=['*'], condition=None, join_type='LEFT JOIN', schema=None, left_table=None):
+        """
+        @return: self
+        """
+        return self.join(right_table=right_table, fields=fields, condition=condition, join_type=join_type, schema=schema, left_table=left_table)
 
     def where(self, q, where_type=AND):
         """
@@ -341,29 +372,23 @@ class Query(object):
         """
         @return: self
         """
-        self.add_group(Group(
+        self.groups.append(Group(
             field=field,
             table=table,
         ))
 
         return self
-
-    def add_group(self, sorter):
-        self.groups.append(sorter)
 
     def order_by(self, field=None, table=None, desc=False):
         """
         @return: self
         """
-        self.add_sorter(Sorter(
+        self.sorters.append(Sorter(
             field=field,
             table=table,
             desc=desc
         ))
         return self
-
-    def add_sorter(self, sorter):
-        self.sorters.append(sorter)
 
     def limit(self, limit=None, offset=None):
         """
@@ -401,7 +426,7 @@ class Query(object):
         # sql += self.build_withs()
         sql += self.build_select_fields()
         sql += self.build_from_table()
-        # sql += self.build_joins()
+        sql += self.build_joins()
         sql += self.build_where()
         sql += self.build_groups()
         sql += self.build_order_by()
@@ -650,6 +675,17 @@ class Query(object):
 
         return sql
 
+    def build_joins(self):
+        """
+        @return: str
+        """
+        join_parts = []
+
+        for join_item in self.joins:
+            join_parts.append(join_item.get_sql())
+
+        return ' '.join(join_parts)
+
     def build_where(self):
         """
         @return: str
@@ -755,27 +791,6 @@ class Query(object):
     #     self.table['fields'] = fields
     #     return self
 
-    # def join(self, table=None, fields=['*'], condition=None, join_type='JOIN', schema=None):
-    #     """
-    #     @return: self
-    #     """
-    #     self.mark_dirty()
-    #     self.joins.append(self.create_table_dict(
-    #         table=table,
-    #         fields=fields,
-    #         schema=schema,
-    #         condition=condition,
-    #         join_type=join_type
-    #     ))
-    #     return self
-    #
-    # def join_left(self, table, fields=['*'], condition=None, join_type='LEFT JOIN', schema=None):
-    #     """
-    #     @return: self
-    #     """
-    #     return self.join(table, fields=fields, condition=condition, join_type=join_type, schema=schema)
-    #
-
 
     # def build_alias_maps(self):
     #     tables = [self.table] + self.joins
@@ -831,36 +846,6 @@ class Query(object):
     #         table_identifier = '{0}'.format(table_name)
     #
     #     return table_identifier
-
-
-    #
-    # def build_joins(self):
-    #     """
-    #     @return: str
-    #     """
-    #     join_parts = []
-    #
-    #     for table_dict in self.joins:
-    #
-    #         # map table names
-    #         condition = table_dict['condition'] or ''
-    #         segments = []
-    #         for segment in condition.split(' '):
-    #             condition_parts = segment.split('.')
-    #             if len(condition_parts) > 1:
-    #                 condition_parts[0] = self.table_alias_map.get(condition_parts[0], condition_parts[0])
-    #             segments.append('.'.join(condition_parts))
-    #         condition = ' '.join(segments)
-    #
-    #         # add the join condition to the join list
-    #         join_parts.append('{0} {1} ON {2} '.format(
-    #             table_dict['join_type'],
-    #             self.get_table_identifier(table_dict),
-    #             condition
-    #         ))
-    #
-    #     return ' '.join(join_parts)
-    #
 
     def select(self, nest=False, bypass_safe_limit=False):
         """

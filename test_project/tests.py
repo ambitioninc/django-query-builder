@@ -214,6 +214,22 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(query_str, expected_query, '\n{0}\n!=\n{1}'.format(query_str, expected_query))
 
 
+class TestJoins(unittest.TestCase):
+
+    def test_join_str(self):
+        query = Query().from_table(
+            table='test_table'
+        ).join(
+            'other_table',
+            fields=None,
+            condition='other_table.test_id = test_table.id'
+        )
+
+        query_str = query.get_sql()
+        print query_str
+        expected_query = 'SELECT test_table.* FROM test_table JOIN other_table ON other_table.test_id = test_table.id'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
 class TestWheres(unittest.TestCase):
 
     def test_where_eq(self):
