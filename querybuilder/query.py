@@ -121,19 +121,26 @@ class Table(object):
 
 class Sorter(object):
 
-    def __init__(self, field=None):
+    def __init__(self, field=None, table=None, desc=False):
+        self.desc = desc
+        if field[0] == '-':
+            self.desc = True
+            field = field[1:]
         self.field = field
-        self.name = None
+        self.table = table
 
     def get_name(self):
         """
         Gets the name to reference the sorted field
         :return: :rtype: str
         """
-        if self.alias:
-            return self.alias
-
-        return self.name
+        if self.desc:
+            direction = 'DESC'
+        else:
+            direction = 'ASC'
+        if self.table:
+            return '{0}.{1} {2}'.format(self.table, self.field, direction)
+        return '{0} {1}'.format(self.field, direction)
 
 
 class Query(object):
@@ -189,15 +196,19 @@ class Query(object):
     def add_table(self, table):
         self.tables.append(table)
 
-    def order_by(self, *args):
+    def order_by(self, field=None, table=None, desc=False):
         """
         @return: self
         """
-        for item in args:
-            if item not in self.sorters:
-                self.sorters.append(item)
-
+        self.add_sorter(Sorter(
+            field=field,
+            table=table,
+            desc=desc
+        ))
         return self
+
+    def add_sorter(self, sorter):
+        self.sorters.append(sorter)
 
     def check_name_collisions(self):
         table_index = 0
@@ -228,6 +239,12 @@ class Query(object):
             from_segment = from_segment.replace('FROM ', '', 1)
             tables = [table.strip() for table in from_segment.split(',')]
             sql += 'FROM\n\t{0}\n'.format(',\n\t'.join(tables))
+
+            order_by_segment = self.build_order_by()
+            if len(order_by_segment):
+                order_by_segment = order_by_segment.replace('ORDER BY ', '', 1)
+                sorters = [sorter.strip() for sorter in order_by_segment.split(',')]
+                sql += 'ORDER BY\n\t{0}\n'.format(',\n\t'.join(sorters))
             return sql
         else:
             # sql += self.build_withs()
@@ -243,12 +260,7 @@ class Query(object):
         return self.sql.strip()
 
     def format_sql(self, sql):
-        keywords = [
-            'SELECT',
-            'FROM',
-        ]
-        for keyword in keywords:
-            pass
+        pass
 
     def build_select_fields(self):
         """
@@ -465,24 +477,10 @@ class Query(object):
         @return: str
         """
         if len(self.sorters):
-            orders = []
-            for order in self.sorters:
-                is_desc = False
-                if order[0] == '-':
-                    is_desc = True
-                    order = order[1:]
-
-                order_parts = order.split('.')
-                if len(order_parts) > 1:
-                    pass
-                    # order_parts[0] = self.table_alias_map.get(order_parts[0], order_parts[0])
-                if is_desc:
-                    order_parts[0] = '{0} DESC'.format(order_parts[0])
-                else:
-                    order_parts[0] = '{0} ASC'.format(order_parts[0])
-                orders.append('.'.join(order_parts))
-
-            return 'ORDER BY {0} '.format(', '.join(orders))
+            sorters = []
+            for sorter in self.sorters:
+                sorters.append(sorter.get_name())
+            return 'ORDER BY {0} '.format(', '.join(sorters))
         return ''
 
     # def distinct(self, distinct=True):

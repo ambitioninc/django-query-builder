@@ -209,7 +209,6 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_account.field_one, test_project_account.field_two, T0.field_three, T0.field_four FROM test_project_account, test_project_account AS T0'
-        print query.get_sql(debug=True)
         self.assertEqual(query_str, expected_query, '\n{0}\n!=\n{1}'.format(query_str, expected_query))
 
 
@@ -222,21 +221,12 @@ class TestOrderBy(unittest.TestCase):
             'field_one'
         )
         query_str = query.get_sql()
+        print query_str
+        print query.get_sql(debug=True)
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one ASC'
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
-    def test_order_by_args_asc(self):
-        query = Query().from_table(
-            table='test_table'
-        ).order_by(
-            'field_one',
-            'field_two'
-        )
-        query_str = query.get_sql()
-        expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one ASC, field_two ASC'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
-
-    def test_order_by_chained_asc(self):
+    def test_order_by_many_asc(self):
         query = Query().from_table(
             table='test_table'
         ).order_by(
@@ -258,18 +248,7 @@ class TestOrderBy(unittest.TestCase):
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one DESC'
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
-    def test_order_by_args_desc(self):
-        query = Query().from_table(
-            table='test_table'
-        ).order_by(
-            '-field_one',
-            '-field_two'
-        )
-        query_str = query.get_sql()
-        expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one DESC, field_two DESC'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
-
-    def test_order_by_chained_desc(self):
+    def test_order_by_many_desc(self):
         query = Query().from_table(
             table='test_table'
         ).order_by(
