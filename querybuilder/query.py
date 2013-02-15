@@ -114,6 +114,23 @@ class Table(object):
         return self.name
 
 
+class Sorter(object):
+
+    def __init__(self, field=None):
+        self.field = field
+        self.name = None
+
+    def get_name(self):
+        """
+        Gets the name to reference the sorted field
+        :return: :rtype: str
+        """
+        if self.alias:
+            return self.alias
+
+        return self.name
+
+
 class Query(object):
 
     # enable_safe_limit = False
