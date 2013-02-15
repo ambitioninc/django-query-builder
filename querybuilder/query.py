@@ -16,6 +16,7 @@ class Field(object):
         self.table = table
         self.alias = None
         self.auto_alias = None
+        self.aggregate = None
 
         if self.type is dict:
             self.alias = field.keys()[0]
@@ -24,6 +25,12 @@ class Field(object):
 
         if self.type is str:
             self.name = field
+        elif isinstance(field, Aggregate):
+            self.aggregate = field
+            self.name = field.lookup
+            if self.name == '*':
+                self.name = 'all'
+            self.name = '{0}_{1}'.format(field.name.lower(), self.name)
 
     def get_identifier(self):
         """
@@ -31,6 +38,28 @@ class Field(object):
         Ex: field_name AS alias
         :return: :rtype: str
         """
+        if self.aggregate:
+            if self.alias:
+                return '{0}({1}.{2}) AS {3}'.format(
+                    self.aggregate.name.upper(),
+                    self.table.get_name(),
+                    self.aggregate.lookup,
+                    self.alias
+                )
+            elif self.auto_alias:
+                return '{0}({1}.{2}) AS {3}'.format(
+                    self.aggregate.name.upper(),
+                    self.table.get_name(),
+                    self.aggregate.lookup,
+                    self.auto_alias
+                )
+            return '{0}({1}.{2}) AS {3}'.format(
+                self.aggregate.name.upper(),
+                self.table.get_name(),
+                self.aggregate.lookup,
+                self.name
+            )
+
         if self.alias:
             return '{0}.{1} AS {2}'.format(self.table.get_name(), self.name, self.alias)
         elif self.auto_alias:
@@ -190,6 +219,22 @@ class Where(object):
         return '({0})'.format(joined_parts)
 
 
+class Group(object):
+
+    def __init__(self, field=None, table=None):
+        self.field = field
+        self.table = table
+
+    def get_name(self):
+        """
+        Gets the name to reference the grouped field
+        :return: :rtype: str
+        """
+        if self.table:
+            return '{0}.{1}'.format(self.table, self.field)
+        return '{0}'.format(self.field)
+
+
 class Sorter(object):
 
     def __init__(self, field=None, table=None, desc=False):
@@ -238,6 +283,7 @@ class Query(object):
         self.sql = None
         self.tables = []
         self._where = Where()
+        self.groups = []
         self.sorters = []
         self._limit = None
 
@@ -246,7 +292,6 @@ class Query(object):
         # self.fields = []
 
         # self.joins = []
-        # self.groups = []
 
         # self.table_index = 0
         # self.field_index = 0
@@ -291,6 +336,20 @@ class Query(object):
         # self.mark_dirty()
         self._where.wheres.add(q, where_type)
         return self
+
+    def group_by(self, field=None, table=None):
+        """
+        @return: self
+        """
+        self.add_group(Group(
+            field=field,
+            table=table,
+        ))
+
+        return self
+
+    def add_group(self, sorter):
+        self.groups.append(sorter)
 
     def order_by(self, field=None, table=None, desc=False):
         """
@@ -344,7 +403,7 @@ class Query(object):
         sql += self.build_from_table()
         # sql += self.build_joins()
         sql += self.build_where()
-        # sql += self.build_groups()
+        sql += self.build_groups()
         sql += self.build_order_by()
         sql += self.build_limit()
         self.sql = sql
@@ -597,6 +656,17 @@ class Query(object):
         """
         return self._where.get_sql()
 
+    def build_groups(self):
+        """
+        @return: str
+        """
+        if len(self.groups):
+            groups = []
+            for group in self.groups:
+                groups.append(group.get_name())
+            return 'GROUP BY {0} '.format(', '.join(groups))
+        return ''
+
     def build_order_by(self):
         """
         @return: str
@@ -705,21 +775,7 @@ class Query(object):
     #     """
     #     return self.join(table, fields=fields, condition=condition, join_type=join_type, schema=schema)
     #
-    # def group_by(self, group, *args):
-    #     """
-    #     @return: self
-    #     """
-    #     if type(group) is not list:
-    #         group = [group]
-    #     if len(args):
-    #         group += args
-    #
-    #     for item in group:
-    #         if item not in self.groups:
-    #             self.groups.append(item)
-    #
-    #     return self
-    #
+
 
     # def build_alias_maps(self):
     #     tables = [self.table] + self.joins
@@ -804,22 +860,6 @@ class Query(object):
     #         ))
     #
     #     return ' '.join(join_parts)
-    #
-    # def build_groups(self):
-    #     """
-    #     @return: str
-    #     """
-    #     if len(self.groups):
-    #         groups = []
-    #         for group in self.groups:
-    #             if type(group) is str:
-    #                 group_parts = group.split('.')
-    #                 if len(group_parts) > 1:
-    #                     group_parts[0] = self.table_alias_map.get(group_parts[0], group_parts[0])
-    #                 groups.append('.'.join(group_parts))
-    #
-    #         return 'GROUP BY {0} '.format(', '.join(groups))
-    #     return ''
     #
 
     def select(self, nest=False, bypass_safe_limit=False):

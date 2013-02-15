@@ -1,7 +1,7 @@
 import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "test_project.settings")
 from django.db.models.sql import OR, AND
-from django.db.models import Q
+from django.db.models import Q, Count
 from test_project.models import Account
 from django.utils import unittest
 from querybuilder.query import Query
@@ -512,6 +512,86 @@ class TestWheres(unittest.TestCase):
             'OR five <= %(A4)s) AND (six LIKE %(A5)s) AND (NOT(seven LIKE %(A6)s)) AND ',
             '((eight = %(A7)s AND nine = %(A8)s) OR ten = %(A9)s OR (NOT(eleven = %(A10)s))))'
         ])
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+
+class TestGroupBy(unittest.TestCase):
+
+    def test_count_id(self):
+        query = Query().from_table(
+            table='test_table',
+            fields=[
+                Count('id')
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT COUNT(test_table.id) AS count_id FROM test_table'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_count_all(self):
+        query = Query().from_table(
+            table='test_table',
+            fields=[
+                Count('*')
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT COUNT(test_table.*) AS count_all FROM test_table'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_count_id_alias(self):
+        query = Query().from_table(
+            table='test_table',
+            fields=[{
+                'num': Count('id')
+            }]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_group_by_id(self):
+        query = Query().from_table(
+            table='test_table',
+            fields=[{
+                'num': Count('id')
+            }]
+        ).group_by(
+            field='id'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table GROUP BY id'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_group_by_table_id(self):
+        query = Query().from_table(
+            table='test_table',
+            fields=[{
+                'num': Count('id')
+            }]
+        ).group_by(
+            field='id',
+            table='test_table',
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table GROUP BY test_table.id'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_group_by_many_table_id(self):
+        query = Query().from_table(
+            table='test_table',
+            fields=[{
+                'num': Count('id')
+            }]
+        ).group_by(
+            field='id',
+            table='test_table',
+        ).group_by(
+            field='id2',
+            table='test_table',
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table GROUP BY test_table.id, test_table.id2'
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
 
