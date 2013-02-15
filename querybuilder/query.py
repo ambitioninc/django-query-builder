@@ -208,27 +208,47 @@ class Query(object):
                 table_index += 1
             table_names[table.get_name()] = True
 
-    def get_sql(self):
+    def get_sql(self, debug=False, use_cache=True):
         """
         @return: self
         """
-        if self.sql:
+        if self.sql and use_cache and not debug:
             return self.sql
 
-        query = ''
+        sql = ''
         self.check_name_collisions()
-        # query += self.build_withs()
-        query += self.build_select_fields()
-        query += self.build_from_table()
-        # query += self.build_joins()
-        # query += self.build_where()
-        # query += self.build_groups()
-        query += self.build_order_by()
-        # query += self.build_limit()
 
-        self.sql = query
+        if debug:
+            select_segment = self.build_select_fields()
+            select_segment = select_segment.replace('SELECT ', '', 1)
+            fields = [field.strip() for field in select_segment.split(',')]
+            sql += 'SELECT\n\t{0}\n'.format(',\n\t'.join(fields))
+
+            from_segment = self.build_from_table()
+            from_segment = from_segment.replace('FROM ', '', 1)
+            tables = [table.strip() for table in from_segment.split(',')]
+            sql += 'FROM\n\t{0}\n'.format(',\n\t'.join(tables))
+            return sql
+        else:
+            # sql += self.build_withs()
+            sql += self.build_select_fields()
+            sql += self.build_from_table()
+            # sql += self.build_joins()
+            # sql += self.build_where()
+            # sql += self.build_groups()
+            sql += self.build_order_by()
+            # sql += self.build_limit()
+            self.sql = sql
 
         return self.sql.strip()
+
+    def format_sql(self, sql):
+        keywords = [
+            'SELECT',
+            'FROM',
+        ]
+        for keyword in keywords:
+            pass
 
     def build_select_fields(self):
         """
