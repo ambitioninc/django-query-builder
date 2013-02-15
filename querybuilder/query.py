@@ -44,6 +44,9 @@ class Table(object):
 
         if self.type is str:
             self.name = table
+        elif self.type is ModelBase:
+            self.model = table
+            self.name = self.model._meta.db_table
 
         if fields:
             for field in fields:
