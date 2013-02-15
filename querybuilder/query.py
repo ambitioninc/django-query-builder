@@ -176,8 +176,6 @@ class Query(object):
         # self.joins = []
         # self.groups = []
 
-
-        #
         # self.table_index = 0
         # self.field_index = 0
         # self.arg_index = 0
@@ -251,52 +249,54 @@ class Query(object):
         if self.sql and use_cache and not debug:
             return self.sql
 
-        sql = ''
+
         self.check_name_collisions()
 
         if debug:
-            select_segment = self.build_select_fields()
-            select_segment = select_segment.replace('SELECT ', '', 1)
-            fields = [field.strip() for field in select_segment.split(',')]
-            sql += 'SELECT\n\t{0}\n'.format(',\n\t'.join(fields))
+            return self.format_sql()
 
-            from_segment = self.build_from_table()
-            from_segment = from_segment.replace('FROM ', '', 1)
-            tables = [table.strip() for table in from_segment.split(',')]
-            sql += 'FROM\n\t{0}\n'.format(',\n\t'.join(tables))
-
-            order_by_segment = self.build_order_by()
-            if len(order_by_segment):
-                order_by_segment = order_by_segment.replace('ORDER BY ', '', 1)
-                sorters = [sorter.strip() for sorter in order_by_segment.split(',')]
-                sql += 'ORDER BY\n\t{0}\n'.format(',\n\t'.join(sorters))
-
-            limit_segment = self.build_limit()
-            if len(limit_segment):
-                if 'LIMIT' in limit_segment:
-                    limit_segment = limit_segment.replace('LIMIT ', 'LIMIT\n\t', 1)
-                    if 'OFFSET' in limit_segment:
-                        limit_segment = limit_segment.replace('OFFSET ', '\nOFFSET\n\t', 1)
-                elif 'OFFSET' in limit_segment:
-                    limit_segment = limit_segment.replace('OFFSET ', 'OFFSET\n\t', 1)
-                sql += limit_segment
-
-            return sql
-        else:
-            # sql += self.build_withs()
-            sql += self.build_select_fields()
-            sql += self.build_from_table()
-            # sql += self.build_joins()
-            # sql += self.build_where()
-            # sql += self.build_groups()
-            sql += self.build_order_by()
-            sql += self.build_limit()
-            self.sql = sql
+        sql = ''
+        # sql += self.build_withs()
+        sql += self.build_select_fields()
+        sql += self.build_from_table()
+        # sql += self.build_joins()
+        # sql += self.build_where()
+        # sql += self.build_groups()
+        sql += self.build_order_by()
+        sql += self.build_limit()
+        self.sql = sql
 
         return self.sql.strip()
 
-    def format_sql(self, sql):
-        pass
+    def format_sql(self):
+        sql = ''
+        select_segment = self.build_select_fields()
+        select_segment = select_segment.replace('SELECT ', '', 1)
+        fields = [field.strip() for field in select_segment.split(',')]
+        sql += 'SELECT\n\t{0}\n'.format(',\n\t'.join(fields))
+
+        from_segment = self.build_from_table()
+        from_segment = from_segment.replace('FROM ', '', 1)
+        tables = [table.strip() for table in from_segment.split(',')]
+        sql += 'FROM\n\t{0}\n'.format(',\n\t'.join(tables))
+
+        order_by_segment = self.build_order_by()
+        if len(order_by_segment):
+            order_by_segment = order_by_segment.replace('ORDER BY ', '', 1)
+            sorters = [sorter.strip() for sorter in order_by_segment.split(',')]
+            sql += 'ORDER BY\n\t{0}\n'.format(',\n\t'.join(sorters))
+
+        limit_segment = self.build_limit()
+        if len(limit_segment):
+            if 'LIMIT' in limit_segment:
+                limit_segment = limit_segment.replace('LIMIT ', 'LIMIT\n\t', 1)
+                if 'OFFSET' in limit_segment:
+                    limit_segment = limit_segment.replace('OFFSET ', '\nOFFSET\n\t', 1)
+            elif 'OFFSET' in limit_segment:
+                limit_segment = limit_segment.replace('OFFSET ', 'OFFSET\n\t', 1)
+            sql += limit_segment
+
+        return sql
 
     def build_select_fields(self):
         """
