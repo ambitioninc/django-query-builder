@@ -14,15 +14,35 @@ class Field(object):
         self.type = type(field)
         self.name = None
         self.table = table
+        self.alias = None
+        self.auto_alias = None
+
+        if self.type is dict:
+            self.alias = field.keys()[0]
+            field = field.values()[0]
+            self.type = type(field)
 
         if self.type is str:
             self.name = field
 
     def get_identifier(self):
-        return '{0}.{1}'.format(self.table.get_name(), self.get_name())
+        """
+        Gets the FROM identifier for a field
+        Ex: field_name AS alias
+        :return: :rtype: str
+        """
+        if self.alias:
+            return '{0}.{1} AS {2}'.format(self.table.get_name(), self.name, self.alias)
+
+        return '{0}.{1}'.format(self.table.get_name(), self.name)
 
     def get_name(self):
-        return self.name
+        """
+        Gets the name to reference the field within a query. It will be
+        prefixed with the table name or table alias
+        :return: :rtype: str
+        """
+        return '{0}.{1}'.format(self.table.get_name(), self.name)
 
 
 class Table(object):

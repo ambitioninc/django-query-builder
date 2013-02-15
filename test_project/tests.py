@@ -98,9 +98,20 @@ class TestSelect(unittest.TestCase):
         print query_str
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
-    # def test_select_fields_alias_from_string(self):
-    #     raise NotImplementedError
-    #
+    def test_select_fields_alias_from_string(self):
+        query = Query().from_table(
+            table='test_table',
+            fields=[{
+                'field_alias_one': 'field_one'
+            }, {
+                'field_alias_two': 'field_two'
+            }]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.field_one AS field_alias_one, test_table.field_two AS field_alias_two FROM test_table'
+        print query_str
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
     # def test_select_fields_alias_from_string_alias(self):
     #     raise NotImplementedError
     #
