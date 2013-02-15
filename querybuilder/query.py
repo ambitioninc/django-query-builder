@@ -143,6 +143,21 @@ class Sorter(object):
         return '{0} {1}'.format(self.field, direction)
 
 
+class Limit(object):
+
+    def __init__(self, limit=None, offset=None):
+        self.limit = limit
+        self.offset = offset
+
+    def get_sql(self):
+        sql = ''
+        if self.limit > 0:
+            sql += 'LIMIT {0} '.format(self.limit)
+        if self.offset > 0:
+            sql += 'OFFSET {0} '.format(self.offset)
+        return sql
+
+
 class Query(object):
 
     # enable_safe_limit = False
@@ -152,6 +167,7 @@ class Query(object):
         self.sql = None
         self.tables = []
         self.sorters = []
+        self.limit_offset = None
 
         # self._distinct = False
         # self.table = {}
@@ -160,8 +176,7 @@ class Query(object):
         # self.joins = []
         # self.groups = []
 
-        # self.limit_count = 0
-        # self.offset = 0
+
         #
         # self.table_index = 0
         # self.field_index = 0
@@ -210,6 +225,16 @@ class Query(object):
     def add_sorter(self, sorter):
         self.sorters.append(sorter)
 
+    def limit(self, limit=None, offset=None):
+        """
+        @return: self
+        """
+        self.limit_offset = Limit(
+            limit=limit,
+            offset=offset
+        )
+        return self
+
     def check_name_collisions(self):
         table_index = 0
         table_names = {}
@@ -254,7 +279,7 @@ class Query(object):
             # sql += self.build_where()
             # sql += self.build_groups()
             sql += self.build_order_by()
-            # sql += self.build_limit()
+            sql += self.build_limit()
             self.sql = sql
 
         return self.sql.strip()
@@ -483,6 +508,14 @@ class Query(object):
             return 'ORDER BY {0} '.format(', '.join(sorters))
         return ''
 
+    def build_limit(self):
+        """
+        @return: str
+        """
+        if self.limit_offset:
+            return self.limit_offset.get_sql()
+        return ''
+
     # def distinct(self, distinct=True):
     #     """
     #     @return: self
@@ -597,17 +630,6 @@ class Query(object):
     #
     #     return self
     #
-
-    #
-    # def limit(self, limit_count, offset=0):
-    #     """
-    #     @return: self
-    #     """
-    #     self.limit_count = limit_count
-    #     self.offset = offset
-    #     return self
-
-
 
     # def build_alias_maps(self):
     #     tables = [self.table] + self.joins
@@ -772,18 +794,6 @@ class Query(object):
     #         return 'GROUP BY {0} '.format(', '.join(groups))
     #     return ''
     #
-
-    #
-    # def build_limit(self):
-    #     """
-    #     @return: str
-    #     """
-    #     limit_str = ''
-    #     if self.limit_count > 0:
-    #         limit_str += 'LIMIT {0} '.format(self.limit_count)
-    #     if self.offset > 0:
-    #         limit_str += 'OFFSET {0} '.format(self.offset)
-    #     return limit_str
 
     def select(self, nest=False, bypass_safe_limit=False):
         """

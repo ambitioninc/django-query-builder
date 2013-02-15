@@ -221,8 +221,6 @@ class TestOrderBy(unittest.TestCase):
             'field_one'
         )
         query_str = query.get_sql()
-        print query_str
-        print query.get_sql(debug=True)
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one ASC'
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
@@ -262,13 +260,32 @@ class TestOrderBy(unittest.TestCase):
 
 
 class TestLimit(unittest.TestCase):
-    pass
 
-    # def test_limit(self):
-    #     raise NotImplementedError
-    #
-    # def test_offset(self):
-    #     raise NotImplementedError
-    #
-    # def test_limit_with_offset(self):
-    #     raise NotImplementedError
+    def test_limit(self):
+        query = Query().from_table(
+            table='test_table'
+        ).limit(10)
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table LIMIT 10'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_offset(self):
+        query = Query().from_table(
+            table='test_table'
+        ).limit(
+            offset=10
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table OFFSET 10'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_limit_with_offset(self):
+        query = Query().from_table(
+            table='test_table'
+        ).limit(
+            limit=5,
+            offset=20
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table LIMIT 5 OFFSET 20'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
