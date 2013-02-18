@@ -19,4 +19,4 @@ class Order(models.Model):
     revenue = models.FloatField()
     margin = models.FloatField()
     margin_percent = models.FloatField()
-
+    time = models.DateTimeField()

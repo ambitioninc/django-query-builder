@@ -10,12 +10,12 @@ from querybuilder.window_functions import WindowFunction
 
 class Field(object):
 
-    def __init__(self, field=None, table=None):
+    def __init__(self, field=None, table=None, alias=None):
         self.type = type(field)
         self.name = None
         self.table = table
-        self.alias = None
-        self.auto_alias = None
+        self.alias = alias
+        # self.auto_alias = None
         self.aggregate = None
 
         if self.type is dict:
@@ -38,34 +38,35 @@ class Field(object):
         Ex: field_name AS alias
         :return: :rtype: str
         """
+        name = ''
+        alias = None
+
         if self.aggregate:
-            if self.alias:
-                return '{0}({1}.{2}) AS {3}'.format(
-                    self.aggregate.name.upper(),
-                    self.table.get_name(),
-                    self.aggregate.lookup,
-                    self.alias
-                )
-            elif self.auto_alias:
-                return '{0}({1}.{2}) AS {3}'.format(
-                    self.aggregate.name.upper(),
-                    self.table.get_name(),
-                    self.aggregate.lookup,
-                    self.auto_alias
-                )
-            return '{0}({1}.{2}) AS {3}'.format(
+            name = '{0}({1}.{2})'.format(
                 self.aggregate.name.upper(),
                 self.table.get_name(),
-                self.aggregate.lookup,
-                self.name
+                self.aggregate.lookup
             )
+            if self.alias:
+                alias = self.alias
+            else:
+                alias = self.name
+        else:
+            name = '{0}.{1}'.format(self.table.get_name(), self.name)
+            if self.alias:
+                alias = self.alias
 
-        if self.alias:
-            return '{0}.{1} AS {2}'.format(self.table.get_name(), self.name, self.alias)
-        elif self.auto_alias:
-            return '{0}.{1} AS {2}'.format(self.table.get_name(), self.name, self.auto_alias)
+        if self.table.prefix_fields:
+            field_prefix = self.table.get_field_prefix()
+            if alias:
+                alias = '{0}__{1}'.format(field_prefix, alias)
+            else:
+                alias = '{0}__{1}'.format(field_prefix, self.name)
 
-        return '{0}.{1}'.format(self.table.get_name(), self.name)
+        if alias:
+            return '{0} AS {1}'.format(name, alias)
+
+        return name
 
     def get_name(self):
         """
@@ -78,7 +79,7 @@ class Field(object):
 
 class Table(object):
 
-    def __init__(self, table=None, fields=None, schema=None):
+    def __init__(self, table=None, fields=None, schema=None, extract_fields=False, prefix_fields=False):
         self.model = None
         self.query = None
         self.name = None
@@ -87,6 +88,8 @@ class Table(object):
         self.type = type(table)
         self.fields = []
         self.schema = schema
+        self.extract_fields = extract_fields
+        self.prefix_fields = prefix_fields
 
         if self.type is dict:
             self.alias = table.keys()[0]
@@ -100,14 +103,46 @@ class Table(object):
             self.name = self.model._meta.db_table
 
         if fields:
-            for field in fields:
-                self.add_field(Field(
-                    field=field,
-                ))
+            self.set_fields(fields)
 
     def add_field(self, field):
-        field.table = self
+        if type(field) is Field:
+            field.table = self
+        else:
+            field = Field(
+                field=field,
+                table=self,
+            )
+
+        if self.extract_fields and field.name == '*':
+            if self.type is ModelBase:
+                fields = [model_field.column for model_field in self.model._meta.fields]
+                self.add_fields(fields)
+                return
+
         self.fields.append(field)
+
+        # new_fields = []
+        # for field in table_dict['fields']:
+        #     if type(field) is dict:
+        #         new_fields.append(field)
+        #     elif field == '*':
+        #         new_fields.append(field)
+        #     else:
+        #         new_fields.append({
+        #             '{0}__{1}'.format(table_join_name, field): field
+        #         })
+        # table_dict['fields'] = new_fields
+        # if fields and len(fields) and fields[0] == '*':
+        #     table_dict['fields'] = [field.column for field in table_dict['table']._meta.fields]
+
+    def set_fields(self, fields):
+        self.fields = []
+        self.add_fields(fields)
+
+    def add_fields(self, fields):
+        for field in fields:
+            self.add_field(field)
 
     def get_fields_sql(self):
         """
@@ -147,20 +182,28 @@ class Table(object):
             return '{0} AS {1}'.format(self.name, self.auto_alias)
         return self.name
 
+    def get_field_prefix(self):
+        return self.name
+
 
 class Join(object):
 
-    def __init__(self, right_table=None, fields=['*'], condition=None, join_type='JOIN', schema=None, left_table=None, query=None):
+    def __init__(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, query=None, extract_fields=True, prefix_fields=True):
         self.query = query
         self.left_table = None
-        self.set_left_table(left_table=left_table)
-        self.right_table = Table(
-            table=right_table,
-            fields=fields
-        )
+        # self.table_join_name = None
+        self.prefix_fields = prefix_fields
         self.condition = condition
         self.join_type = join_type
         self.schema = schema
+
+        self.set_left_table(left_table=left_table)
+        self.right_table = Table(
+            table=right_table,
+            fields=fields,
+            extract_fields=extract_fields,
+            prefix_fields=prefix_fields
+        )
 
     def get_sql(self):
         return '{0} {1} ON {2}'.format(self.join_type, self.right_table.get_identifier(), self.get_condition())
@@ -197,7 +240,7 @@ class Join(object):
             for field in self.right_table.model._meta.get_all_related_objects():
                 if field.model == self.left_table.model:
                     table_join_field = field.field.column
-                    table_join_name = field.get_accessor_name()
+                    # self.table_join_name = field.get_accessor_name()
                     condition = '{0}.{1} = {2}.{3}'.format(
                         self.right_table.get_name(),
                         self.right_table.model._meta.pk.name,
@@ -214,7 +257,7 @@ class Join(object):
                 ):
                     if field.rel.to == self.left_table.model:
                         table_join_field = field.column
-                        table_join_name = field.name
+                        # self.table_join_name = field.name
                         condition = '{0}.{1} = {2}.{3}'.format(
                             self.right_table.get_name(),
                             table_join_field,
@@ -386,11 +429,15 @@ class Query(object):
         """
         self.init_defaults()
 
-    def from_table(self, table=None, fields=['*'], schema=None):
+    def from_table(self, table=None, fields=None, schema=None):
         """
         @return: self
         """
         # self.mark_dirty()
+
+        if fields is None:
+            fields = ['*']
+
         self.tables.append(Table(
             table=table,
             fields=fields,
@@ -399,7 +446,7 @@ class Query(object):
 
         return self
 
-    def join(self, right_table=None, fields=['*'], condition=None, join_type='JOIN', schema=None, left_table=None):
+    def join(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True):
         """
         @return: self
         """
@@ -411,15 +458,17 @@ class Query(object):
             condition=condition,
             join_type=join_type,
             schema=schema,
-            query=self
+            query=self,
+            extract_fields=extract_fields,
+            prefix_fields=prefix_fields
         ))
         return self
 
-    def join_left(self, right_table=None, fields=['*'], condition=None, join_type='LEFT JOIN', schema=None, left_table=None):
+    def join_left(self, right_table=None, fields=None, condition=None, join_type='LEFT JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True):
         """
         @return: self
         """
-        return self.join(right_table=right_table, fields=fields, condition=condition, join_type=join_type, schema=schema, left_table=left_table)
+        return self.join(right_table=right_table, fields=fields, condition=condition, join_type=join_type, schema=schema, left_table=left_table, extract_fields=extract_fields, prefix_fields=prefix_fields)
 
     def where(self, q, where_type=AND):
         """

@@ -8,6 +8,10 @@ from django.utils import unittest
 from querybuilder.query import Query
 
 
+def get_comparison_str(item1, item2):
+    return 'Items are not equal.\nGot:\n{0}\nExpected:\n{1}'.format(item1, item2)
+
+
 class TestSelect(unittest.TestCase):
 
     def test_select_all_from_string(self):
@@ -16,7 +20,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_all_from_string_alias(self):
         query = Query().from_table(
@@ -26,7 +30,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT table_alias.* FROM test_table AS table_alias'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_all_from_model(self):
         query = Query().from_table(
@@ -34,7 +38,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_account.* FROM test_project_account'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_all_from_model_alias(self):
         query = Query().from_table(
@@ -56,7 +60,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.field_one, test_table.field_two FROM test_table'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_from_string_alias(self):
         query = Query().from_table(
@@ -70,7 +74,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT table_alias.field_one, table_alias.field_two FROM test_table AS table_alias'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_from_model(self):
         query = Query().from_table(
@@ -82,7 +86,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_account.field_one, test_project_account.field_two FROM test_project_account'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_from_model_alias(self):
         query = Query().from_table(
@@ -96,7 +100,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT table_alias.field_one, table_alias.field_two FROM test_project_account AS table_alias'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_alias_from_string(self):
         query = Query().from_table(
@@ -109,7 +113,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.field_one AS field_alias_one, test_table.field_two AS field_alias_two FROM test_table'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_alias_from_string_alias(self):
         query = Query().from_table(
@@ -124,7 +128,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT table_alias.field_one AS field_alias_one, table_alias.field_two AS field_alias_two FROM test_table AS table_alias'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_alias_from_model(self):
         query = Query().from_table(
@@ -137,7 +141,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_account.field_one AS field_alias_one, test_project_account.field_two AS field_alias_two FROM test_project_account'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_alias_from_model_alias(self):
         query = Query().from_table(
@@ -152,7 +156,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT table_alias.field_one AS field_alias_one, table_alias.field_two AS field_alias_two FROM test_project_account AS table_alias'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_two_tables(self):
         query = Query().from_table(
@@ -170,7 +174,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_account.field_one, test_project_account.field_two, second_table.field_three, second_table.field_four FROM test_project_account, second_table'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_two_tables_alias(self):
         query = Query().from_table(
@@ -194,7 +198,7 @@ class TestSelect(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT table_one.field_one AS f1, table_one.field_two AS f2, table_two.field_three AS f3, table_two.field_four AS f4 FROM test_project_account AS table_one, second_table AS table_two'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_same_two_tables(self):
         query = Query().from_table(
@@ -222,74 +226,68 @@ class TestJoins(unittest.TestCase):
             table='test_table'
         ).join(
             'other_table',
-            fields=None,
             condition='other_table.test_id = test_table.id'
         )
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table JOIN other_table ON other_table.test_id = test_table.id'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_join_model_to_str(self):
         query = Query().from_table(
             table=Account
         ).join(
             'other_table',
-            fields=None,
             condition='other_table.test_id = test_project_account.id'
         )
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_account.* FROM test_project_account JOIN other_table ON other_table.test_id = test_project_account.id'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_join_model_foreign_key(self):
         query = Query().from_table(
             table=Account
         ).join(
             Order,
-            fields=None,
         )
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_account.* FROM test_project_account JOIN test_project_order ON test_project_order.account_id = test_project_account.id'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_join_model_foreign_key_reverse(self):
         query = Query().from_table(
             table=Order
         ).join(
             Account,
-            fields=None,
         )
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_order.* FROM test_project_order JOIN test_project_account ON test_project_account.id = test_project_order.account_id'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_join_model_one_to_one(self):
         query = Query().from_table(
             table=Account
         ).join(
             User,
-            fields=None,
         )
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_account.* FROM test_project_account JOIN auth_user ON auth_user.id = test_project_account.user_id'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_join_model_one_to_one_reverse(self):
         query = Query().from_table(
             table=User
         ).join(
             Account,
-            fields=None,
         )
 
         query_str = query.get_sql()
         expected_query = 'SELECT auth_user.* FROM auth_user JOIN test_project_account ON test_project_account.user_id = auth_user.id'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_join_model_fields(self):
         query = Query().from_table(
@@ -303,13 +301,69 @@ class TestJoins(unittest.TestCase):
             fields=[{
                 'three': 'one'
             }, {
-                'four': 'two',
+                'four': 'two'
             }],
+            prefix_fields=False,
         )
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_account.one, test_project_account.two, test_project_order.one AS three, test_project_order.two AS four FROM test_project_account JOIN test_project_order ON test_project_order.account_id = test_project_account.id'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_join_model_fields_all(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                '*',
+            ]
+        ).join(
+            Order,
+            fields=[
+                '*'
+            ],
+            prefix_fields=False,
+            extract_fields=False
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.*, test_project_order.* FROM test_project_account JOIN test_project_order ON test_project_order.account_id = test_project_account.id'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_join_model_fields_extract(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                '*',
+            ]
+        ).join(
+            Order,
+            fields=[
+                '*'
+            ],
+            prefix_fields=False
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.*, test_project_order.id, test_project_order.account_id, test_project_order.revenue, test_project_order.margin, test_project_order.margin_percent, test_project_order.time FROM test_project_account JOIN test_project_order ON test_project_order.account_id = test_project_account.id'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_join_model_fields_prefix(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                '*',
+            ]
+        ).join(
+            Order,
+            fields=[
+                'id',
+                'margin',
+            ],
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.*, test_project_order.id AS test_project_order__id, test_project_order.margin AS test_project_order__margin FROM test_project_account JOIN test_project_order ON test_project_order.account_id = test_project_account.id'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
 class TestWheres(unittest.TestCase):
@@ -323,7 +377,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s)'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_not_eq(self):
         query = Query().from_table(
@@ -334,7 +388,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE ((NOT(one = %(A0)s)))'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_eq_explicit(self):
         query = Query().from_table(
@@ -345,7 +399,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s)'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_not_eq_explicit(self):
         query = Query().from_table(
@@ -356,7 +410,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE ((NOT(one = %(A0)s)))'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_gt(self):
         query = Query().from_table(
@@ -367,7 +421,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (field_name > %(A0)s)'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_not_gt(self):
         query = Query().from_table(
@@ -378,7 +432,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE ((NOT(field_name > %(A0)s)))'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_gte(self):
         query = Query().from_table(
@@ -389,7 +443,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (field_name >= %(A0)s)'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_not_gte(self):
         query = Query().from_table(
@@ -400,7 +454,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE ((NOT(field_name >= %(A0)s)))'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_lt(self):
         query = Query().from_table(
@@ -411,7 +465,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (field_name < %(A0)s)'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_not_lt(self):
         query = Query().from_table(
@@ -422,7 +476,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE ((NOT(field_name < %(A0)s)))'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_lte(self):
         query = Query().from_table(
@@ -433,7 +487,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (field_name <= %(A0)s)'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_not_lte(self):
         query = Query().from_table(
@@ -444,7 +498,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE ((NOT(field_name <= %(A0)s)))'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_contains(self):
         query = Query().from_table(
@@ -455,7 +509,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (field_name LIKE %(A0)s)'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
         self.assertEqual(query._where.args['A0'], '%some value%', 'Value is not correct')
 
     def test_where_not_contains(self):
@@ -467,7 +521,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE ((NOT(field_name LIKE %(A0)s)))'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
         self.assertEqual(query._where.args['A0'], '%some value%', 'Value is not correct')
 
     def test_where_startswith(self):
@@ -479,7 +533,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (field_name LIKE %(A0)s)'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
         self.assertEqual(query._where.args['A0'], 'some value%', 'Value is not correct')
 
     def test_where_not_startswith(self):
@@ -491,7 +545,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE ((NOT(field_name LIKE %(A0)s)))'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
         self.assertEqual(query._where.args['A0'], 'some value%', 'Value is not correct')
 
     def test_where_and(self):
@@ -505,7 +559,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s AND three = %(A1)s)'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_and_combined(self):
         query = Query().from_table(
@@ -518,7 +572,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s AND three = %(A1)s)'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_or(self):
         query = Query().from_table(
@@ -531,7 +585,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s OR three = %(A1)s)'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_combined_or(self):
         query = Query().from_table(
@@ -544,7 +598,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE ((one = %(A0)s OR three = %(A1)s))'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_and_with_combined_or(self):
         query = Query().from_table(
@@ -559,7 +613,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s AND (three = %(A1)s OR five = %(A2)s))'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_and_with_not_combined_or(self):
         query = Query().from_table(
@@ -574,7 +628,7 @@ class TestWheres(unittest.TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s AND ((NOT(three = %(A1)s)) OR five = %(A2)s))'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_complex(self):
         query = Query().from_table(
@@ -610,7 +664,7 @@ class TestWheres(unittest.TestCase):
             'OR five <= %(A4)s) AND (six LIKE %(A5)s) AND (NOT(seven LIKE %(A6)s)) AND ',
             '((eight = %(A7)s AND nine = %(A8)s) OR ten = %(A9)s OR (NOT(eleven = %(A10)s))))'
         ])
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
 class TestGroupBy(unittest.TestCase):
@@ -624,7 +678,7 @@ class TestGroupBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT COUNT(test_table.id) AS count_id FROM test_table'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_count_all(self):
         query = Query().from_table(
@@ -635,7 +689,7 @@ class TestGroupBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT COUNT(test_table.*) AS count_all FROM test_table'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_count_id_alias(self):
         query = Query().from_table(
@@ -646,7 +700,7 @@ class TestGroupBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_group_by_id(self):
         query = Query().from_table(
@@ -659,7 +713,7 @@ class TestGroupBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table GROUP BY id'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_group_by_table_id(self):
         query = Query().from_table(
@@ -673,7 +727,7 @@ class TestGroupBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table GROUP BY test_table.id'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_group_by_many_table_id(self):
         query = Query().from_table(
@@ -690,7 +744,7 @@ class TestGroupBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table GROUP BY test_table.id, test_table.id2'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
 class TestOrderBy(unittest.TestCase):
@@ -703,7 +757,7 @@ class TestOrderBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one ASC'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_order_by_many_asc(self):
         query = Query().from_table(
@@ -715,7 +769,7 @@ class TestOrderBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one ASC, field_two ASC'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_order_by_single_desc(self):
         query = Query().from_table(
@@ -725,7 +779,7 @@ class TestOrderBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one DESC'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_order_by_many_desc(self):
         query = Query().from_table(
@@ -737,7 +791,7 @@ class TestOrderBy(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table ORDER BY field_one DESC, field_two DESC'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
 class TestLimit(unittest.TestCase):
@@ -748,7 +802,7 @@ class TestLimit(unittest.TestCase):
         ).limit(10)
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table LIMIT 10'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_offset(self):
         query = Query().from_table(
@@ -758,7 +812,7 @@ class TestLimit(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table OFFSET 10'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_limit_with_offset(self):
         query = Query().from_table(
@@ -769,4 +823,15 @@ class TestLimit(unittest.TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table LIMIT 5 OFFSET 20'
-        self.assertEqual(query_str, expected_query, 'Queries did not match')
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+
+# class TestDates(unittest.TestCase):
+#
+#     def test_year(self):
+#         query = Query().from_table(
+#             table=Order,
+#         )
+#         query_str = query.get_sql()
+#         expected_query = 'SELECT test_project_order.* FROM test_project_order'
+#         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
