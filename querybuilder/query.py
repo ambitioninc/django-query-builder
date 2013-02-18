@@ -54,19 +54,19 @@ class Field(object):
 
 
     @abc.abstractmethod
-    def get_name(self):
+    def get_identifier(self):
         """
-        Gets the name to reference the field within a query. It will be
+        Gets the name for the field of how it should
+        be references within a query. It will be
         prefixed with the table name or table alias
         :return: :rtype: str
         """
         pass
 
-
     @abc.abstractmethod
-    def get_identifier(self):
+    def get_sql(self):
         """
-        Gets the FROM identifier for a field
+        Gets the FROM sql part for a field
         Ex: field_name AS alias
         :return: :rtype: str
         """
@@ -79,15 +79,15 @@ class SimpleField(Field):
         super(SimpleField, self).__init__(field, table, alias)
         self.name = field
 
-    def get_name(self):
+    def get_identifier(self):
         return '{0}.{1}'.format(self.table.get_name(), self.name)
 
-    def get_identifier(self):
+    def get_sql(self):
         alias = self.get_alias()
         if alias:
-            return '{0} AS {1}'.format(self.get_name(), alias)
+            return '{0} AS {1}'.format(self.get_identifier(), alias)
 
-        return self.get_name()
+        return self.get_identifier()
 
 
 class AggregateField(Field):
@@ -101,19 +101,19 @@ class AggregateField(Field):
             self.name = 'all'
         self.auto_alias = '{0}_{1}'.format(field.name.lower(), self.name)
 
-    def get_name(self):
+    def get_identifier(self):
         return '{0}({1}.{2})'.format(
             self.field.name.upper(),
             self.table.get_name(),
             self.field.lookup
         )
 
-    def get_identifier(self):
+    def get_sql(self):
         alias = self.get_alias()
         if alias:
-            return '{0} AS {1}'.format(self.get_name(), alias)
+            return '{0} AS {1}'.format(self.get_identifier(), alias)
 
-        return self.get_name()
+        return self.get_identifier()
 
 
 class DatePartField(Field):
@@ -190,17 +190,17 @@ class DatePartField(Field):
             # field_name = field.get_select()
             self.name = field.get_select()
 
-    def get_name(self):
+    def get_identifier(self):
         lookup_field = '{0}.{1}'.format(self.table.get_name(), self.field.lookup)
         name = self.field.get_select(lookup=lookup_field)
         return name
 
-    def get_identifier(self):
+    def get_sql(self):
         alias = self.get_alias()
         if alias:
-            return '{0} AS {1}'.format(self.get_name(), alias)
+            return '{0} AS {1}'.format(self.get_identifier(), alias)
 
-        return self.get_name()
+        return self.get_identifier()
 
 
 class Table(object):
@@ -273,14 +273,14 @@ class Table(object):
 
     def get_fields_sql(self):
         """
-        Loop through this tables fields and calls the get_identifier
+        Loop through this tables fields and calls the get_sql
         method on each of them to build the field list for the FROM
         clause
         :return: :rtype: str
         """
         parts = []
         for field in self.fields:
-            parts.append(field.get_identifier())
+            parts.append(field.get_sql())
         return ', '.join(parts)
 
     def get_name(self):
@@ -297,9 +297,9 @@ class Table(object):
 
         return self.name
 
-    def get_identifier(self):
+    def get_sql(self):
         """
-        Gets the FROM identifier for a table
+        Gets the FROM sql for a table
         Ex: table_name AS alias
         :return: :rtype: str
         """
@@ -334,7 +334,7 @@ class Join(object):
         )
 
     def get_sql(self):
-        return '{0} {1} ON {2}'.format(self.join_type, self.right_table.get_identifier(), self.get_condition())
+        return '{0} {1} ON {2}'.format(self.join_type, self.right_table.get_sql(), self.get_condition())
 
     def set_left_table(self, left_table=None):
         if left_table:
@@ -914,7 +914,7 @@ class Query(object):
         """
         table_parts = []
         for table in self.tables:
-            table_parts.append(table.get_identifier())
+            table_parts.append(table.get_sql())
 
         sql = 'FROM {0} '.format(', '.join(table_parts))
 
