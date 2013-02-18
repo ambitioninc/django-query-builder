@@ -156,7 +156,6 @@ class DatePartField(Field):
             for group_name in group_names:
                 field_alias = '{0}__{1}'.format(self.field.lookup, group_name)
                 self.add_to_table(group_map[group_name](self.field.lookup), field_alias)
-                self.table.owner.group_by(field_alias)
 
                 # check if this is the last date grouping
                 if group_name == self.field.name:
@@ -185,6 +184,7 @@ class DatePartField(Field):
         self.table.add_field({
             alias: field
         })
+        self.table.owner.group_by(alias)
 
 
 class Table(object):

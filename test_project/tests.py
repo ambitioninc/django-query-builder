@@ -1,5 +1,5 @@
 from django.test import TestCase
-from querybuilder.groups import Year
+from querybuilder.groups import Year, Month
 from django.db.models.sql import OR, AND
 from django.db.models import Q, Count
 from test_project.models import Account, Order, User
@@ -850,3 +850,27 @@ class TestDates(TestCase):
         query_str = query.get_sql()
         expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(epoch from date_trunc(\'year\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year ORDER BY time__epoch ASC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_month_auto(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                Month('time', auto=True)
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(epoch from date_trunc(\'month\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month ORDER BY time__epoch ASC'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_month_auto(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                Month('time', auto=True)
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(epoch from date_trunc(\'month\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month ORDER BY time__epoch ASC'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+
