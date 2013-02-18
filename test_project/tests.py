@@ -848,7 +848,18 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(epoch from date_trunc(\'year\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year ORDER BY time__epoch ASC'
+        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(epoch from date_trunc(\'year\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__epoch ORDER BY time__epoch ASC'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_year_auto_desc(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                Year('time', auto=True, desc=True)
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(epoch from date_trunc(\'year\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__epoch ORDER BY time__epoch DESC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_month_auto(self):
@@ -859,7 +870,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(epoch from date_trunc(\'month\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month ORDER BY time__epoch ASC'
+        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(epoch from date_trunc(\'month\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__epoch ORDER BY time__epoch ASC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_month_auto(self):
