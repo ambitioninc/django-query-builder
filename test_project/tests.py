@@ -1,8 +1,9 @@
 import os
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "test_project.settings")
+from django.contrib.auth.models import User
 from django.db.models.sql import OR, AND
 from django.db.models import Q, Count
-from test_project.models import Account
+from test_project.models import Account, Order
 from django.utils import unittest
 from querybuilder.query import Query
 
@@ -216,7 +217,7 @@ class TestSelect(unittest.TestCase):
 
 class TestJoins(unittest.TestCase):
 
-    def test_join_str(self):
+    def test_join_str_to_str(self):
         query = Query().from_table(
             table='test_table'
         ).join(
@@ -226,9 +227,70 @@ class TestJoins(unittest.TestCase):
         )
 
         query_str = query.get_sql()
-        print query_str
         expected_query = 'SELECT test_table.* FROM test_table JOIN other_table ON other_table.test_id = test_table.id'
         self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_join_model_to_str(self):
+        query = Query().from_table(
+            table=Account
+        ).join(
+            'other_table',
+            fields=None,
+            condition='other_table.test_id = test_project_account.id'
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.* FROM test_project_account JOIN other_table ON other_table.test_id = test_project_account.id'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_join_model_foreign_key(self):
+        query = Query().from_table(
+            table=Account
+        ).join(
+            Order,
+            fields=None,
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.* FROM test_project_account JOIN test_project_order ON test_project_order.account_id = test_project_account.id'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_join_model_foreign_key_reverse(self):
+        query = Query().from_table(
+            table=Order
+        ).join(
+            Account,
+            fields=None,
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.* FROM test_project_order JOIN test_project_account ON test_project_account.id = test_project_order.account_id'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_join_model_one_to_one(self):
+        query = Query().from_table(
+            table=Account
+        ).join(
+            User,
+            fields=None,
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.* FROM test_project_account JOIN auth_user ON auth_user.id = test_project_account.user_id'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
+    def test_join_model_one_to_one_reverse(self):
+        query = Query().from_table(
+            table=User
+        ).join(
+            Account,
+            fields=None,
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT auth_user.* FROM auth_user JOIN test_project_account ON test_project_account.user_id = auth_user.id'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
 
 class TestWheres(unittest.TestCase):
 

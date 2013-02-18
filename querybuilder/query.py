@@ -150,16 +150,79 @@ class Table(object):
 
 class Join(object):
 
-    def __init__(self, right_table=None, fields=['*'], condition=None, join_type='JOIN', schema=None, left_table=None):
-        self.left_table = left_table
-        self.right_table = right_table
-        self.fields = fields
+    def __init__(self, right_table=None, fields=['*'], condition=None, join_type='JOIN', schema=None, left_table=None, query=None):
+        self.query = query
+        self.left_table = None
+        self.set_left_table(left_table=left_table)
+        self.right_table = Table(
+            table=right_table,
+            fields=fields
+        )
         self.condition = condition
         self.join_type = join_type
         self.schema = schema
 
     def get_sql(self):
-        return '{0} {1} ON {2}'.format(self.join_type, self.right_table, self.condition)
+        return '{0} {1} ON {2}'.format(self.join_type, self.right_table.get_identifier(), self.get_condition())
+
+    def set_left_table(self, left_table=None):
+        if left_table:
+            self.left_table = Table(
+                table=left_table
+            )
+        else:
+            self.left_table = self.get_left_table()
+
+    def get_left_table(self):
+        if self.left_table:
+            return self.left_table
+        if len(self.query.tables):
+            return self.query.tables[0]
+
+    def get_condition(self):
+        if self.condition:
+            return self.condition
+
+        condition = ''
+        left_table = self.get_left_table()
+        if left_table.model is None and len(self.query.tables):
+            self.left_table = Table(
+                table=self.query.tables[0]
+            )
+
+        if self.right_table.type is ModelBase:
+            # loop through fields to find the field for this model
+
+            # check if this join type is for a related field
+            for field in self.right_table.model._meta.get_all_related_objects():
+                if field.model == self.left_table.model:
+                    table_join_field = field.field.column
+                    table_join_name = field.get_accessor_name()
+                    condition = '{0}.{1} = {2}.{3}'.format(
+                        self.right_table.get_name(),
+                        self.right_table.model._meta.pk.name,
+                        self.left_table.get_name(),
+                        table_join_field,
+                    )
+                    return condition
+
+            # check if this join type is for a foreign key
+            for field in self.right_table.model._meta.fields:
+                if (
+                    field.get_internal_type() == 'OneToOneField' or
+                    field.get_internal_type() == 'ForeignKey'
+                ):
+                    if field.rel.to == self.left_table.model:
+                        table_join_field = field.column
+                        table_join_name = field.name
+                        condition = '{0}.{1} = {2}.{3}'.format(
+                            self.right_table.get_name(),
+                            table_join_field,
+                            self.left_table.get_name(),
+                            self.left_table.model._meta.pk.name
+                        )
+                        return condition
+        return None
 
 
 class Where(object):
@@ -348,6 +411,7 @@ class Query(object):
             condition=condition,
             join_type=join_type,
             schema=schema,
+            query=self
         ))
         return self
 
@@ -474,6 +538,7 @@ class Query(object):
             field_sql_parts.append(table.get_fields_sql())
         sql = 'SELECT {0} '.format(', '.join(field_sql_parts))
         return sql
+
         # fields = []
         # tables = [self.table] + self.joins
         #
@@ -484,61 +549,61 @@ class Query(object):
         #     if table_dict['join_type']:
         #         table_join_name = ''
         #
-        #         if table_dict['condition'] is None:
-        #
-        #             if table_dict['type'] is ModelBase:
-        #                 # Build join condition
-        #                 # Loop through fields to find the field for this model
-        #
-        #                 # check if this join type is for a related field
-        #                 for field in self.table['table']._meta.get_all_related_objects():
-        #                     if field.model == table_dict['table']:
-        #                         table_join_field = field.field.column
-        #                         table_join_name = field.get_accessor_name()
-        #                         table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(
-        #                             self.get_name(table_dict),
-        #                             table_join_field,
-        #                             self.get_name(self.table),
-        #                             table_dict['table']._meta.pk.name
-        #                         )
-        #                         break
-        #
-        #                 # check if this join type is for a foreign key
-        #                 for field in self.table['table']._meta.fields:
-        #                     if (
-        #                                 field.get_internal_type() == 'OneToOneField' or
-        #                                 field.get_internal_type() == 'ForeignKey'
-        #                     ):
-        #                         if field.rel.to == table_dict['table']:
-        #                             table_join_field = field.column
-        #                             table_join_name = field.name
-        #                             table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(
-        #                                 self.get_name(table_dict),
-        #                                 table_dict['table']._meta.pk.name,
-        #                                 self.get_name(self.table),
-        #                                 table_join_field
-        #                             )
-        #                             break
-        #
-        #         if table_dict['type'] is ModelBase:
-        #             if len(table_join_name) == 0:
-        #                 table_join_name = table_dict['table']._meta.db_table
-        #
-        #         if table_dict['fields'][0] == '*':
-        #             if table_dict['type'] is ModelBase:
-        #                 table_dict['fields'] = [field.column for field in table_dict['table']._meta.fields]
-        #
-        #         new_fields = []
-        #         for field in table_dict['fields']:
-        #             if type(field) is dict:
-        #                 new_fields.append(field)
-        #             elif field == '*':
-        #                 new_fields.append(field)
-        #             else:
-        #                 new_fields.append({
-        #                     '{0}__{1}'.format(table_join_name, field): field
-        #                 })
-        #         table_dict['fields'] = new_fields
+                # if table_dict['condition'] is None:
+                #
+                #     if table_dict['type'] is ModelBase:
+                #         # Build join condition
+                #         # Loop through fields to find the field for this model
+                #
+                #         # check if this join type is for a related field
+                #         for field in self.table['table']._meta.get_all_related_objects():
+                #             if field.model == table_dict['table']:
+                #                 table_join_field = field.field.column
+                #                 table_join_name = field.get_accessor_name()
+                #                 table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(
+                #                     self.get_name(table_dict),
+                #                     table_join_field,
+                #                     self.get_name(self.table),
+                #                     table_dict['table']._meta.pk.name
+                #                 )
+                #                 break
+                #
+                #         # check if this join type is for a foreign key
+                #         for field in self.table['table']._meta.fields:
+                #             if (
+                #                         field.get_internal_type() == 'OneToOneField' or
+                #                         field.get_internal_type() == 'ForeignKey'
+                #             ):
+                #                 if field.rel.to == table_dict['table']:
+                #                     table_join_field = field.column
+                #                     table_join_name = field.name
+                #                     table_dict['condition'] = '{0}.{1} = {2}.{3}'.format(
+                #                         self.get_name(table_dict),
+                #                         table_dict['table']._meta.pk.name,
+                #                         self.get_name(self.table),
+                #                         table_join_field
+                #                     )
+                #                     break
+                #
+                # if table_dict['type'] is ModelBase:
+                #     if len(table_join_name) == 0:
+                #         table_join_name = table_dict['table']._meta.db_table
+                #
+                # if table_dict['fields'][0] == '*':
+                #     if table_dict['type'] is ModelBase:
+                #         table_dict['fields'] = [field.column for field in table_dict['table']._meta.fields]
+                #
+                # new_fields = []
+                # for field in table_dict['fields']:
+                #     if type(field) is dict:
+                #         new_fields.append(field)
+                #     elif field == '*':
+                #         new_fields.append(field)
+                #     else:
+                #         new_fields.append({
+                #             '{0}__{1}'.format(table_join_name, field): field
+                #         })
+                # table_dict['fields'] = new_fields
         #
         #     # loop through each field for this table
         #     for field in table_dict['fields']:
