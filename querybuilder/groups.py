@@ -1,38 +1,3 @@
-all_group_names = (
-    'year',
-    'month',
-    'day',
-    'hour',
-    'minute',
-    'second',
-    'week',
-    'all',
-    'none',
-)
-
-allowed_group_names = (
-    'year',
-    'month',
-    'day',
-    'hour',
-    'minute',
-    'second',
-    'week',
-)
-
-default_group_names = (
-    'year',
-    'month',
-    'day',
-    'hour',
-    'minute',
-    'second',
-)
-
-week_group_names = (
-    'year',
-    'week',
-)
 
 
 class DatePart(object):
@@ -82,3 +47,71 @@ class Second(DatePart):
 
 class Week(DatePart):
     name = 'week'
+
+
+class Epoch(DatePart):
+    name = 'epoch'
+
+    def __init__(self, lookup, auto=False, desc=False, include_datetime=False, group_name=None):
+        super(Epoch, self).__init__(lookup, auto, desc, include_datetime)
+
+        self.group_name = group_name
+
+
+    def get_select(self, name=None, lookup=None):
+        if self.group_name:
+            return 'CAST(extract({0} from date_trunc(\'{1}\', {2})) as INT)'.format(
+                name or self.name,
+                self.group_name,
+                lookup or self.lookup
+            )
+        return super(Epoch, self).get_select(name=name, lookup=lookup, **kwargs)
+
+
+group_map = {
+    'year': Year,
+    'month': Month,
+    'day': Day,
+    'hour': Hour,
+    'minute': Minute,
+    'second': Second,
+    'week': Week,
+    'all': AllTime,
+    'none': NoneTime,
+}
+
+all_group_names = (
+    'year',
+    'month',
+    'day',
+    'hour',
+    'minute',
+    'second',
+    'week',
+    'all',
+    'none',
+)
+
+allowed_group_names = (
+    'year',
+    'month',
+    'day',
+    'hour',
+    'minute',
+    'second',
+    'week',
+)
+
+default_group_names = (
+    'year',
+    'month',
+    'day',
+    'hour',
+    'minute',
+    'second',
+)
+
+week_group_names = (
+    'year',
+    'week',
+)

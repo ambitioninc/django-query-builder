@@ -3,7 +3,7 @@ from django.db import connection
 from django.db.models import Aggregate, Count, Max, Min, Sum, Avg, Q
 from django.db.models.base import ModelBase
 from django.db.models.sql import AND
-from querybuilder.groups import DatePart, default_group_names, week_group_names
+from querybuilder.groups import DatePart, default_group_names, week_group_names, group_map, Epoch
 from querybuilder.helpers import set_value_for_keypath
 
 
@@ -121,74 +121,10 @@ class DatePartField(Field):
     def __init__(self, field, table=None, alias=None):
         super(DatePartField, self).__init__(field, table, alias)
 
-        if field.auto:
-            self.ignore = True
-            fields = []
-            if field.name == 'all':
-                # add the datetime object
-                datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
-                datetime_str = field.lookup
-                if field.include_datetime:
-                    fields.append('{0} AS {1}'.format(datetime_str, datetime_alias))
-                    self.group_by(datetime_alias)
-
-                # add the epoch time
-                epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
-                fields.append('CAST(EXTRACT(EPOCH FROM MIN({0})) AS INT) AS {1}'.format(
-                    datetime_str,
-                    epoch_alias
-                ))
-            elif field.name == 'none':
-                # add the datetime object
-                datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
-                datetime_str = field.lookup
-                if field.include_datetime:
-                    fields.append('{0} AS {1}'.format(datetime_str, datetime_alias))
-                    self.group_by(datetime_alias)
-
-                # add the epoch time
-                epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
-                fields.append('CAST(EXTRACT(EPOCH FROM {0}) AS INT) AS {1}'.format(
-                    datetime_str,
-                    epoch_alias
-                ))
-                self.group_by(epoch_alias)
-            else:
-                group_names = default_group_names
-                if field.name == 'week':
-                    group_names = week_group_names
-                for group_name in group_names:
-                    field_alias = '{0}__{1}'.format(field.lookup, group_name)
-                    field_name = field.get_select(name=group_name)
-                    fields.append('{0} AS {1}'.format(field_name, field_alias))
-                    self.table.owner.group_by(field_alias)
-                    if field.desc:
-                        self.table.owner.order_by('-{0}'.format(field_alias))
-                    else:
-                        self.table.owner.order_by(field_alias)
-
-                    # check if this is the last date grouping
-                    if group_name == field.name:
-                        # add the datetime object
-                        datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
-                        datetime_str = 'date_trunc(\'{0}\', {1})'.format(group_name, field.lookup)
-                        if field.include_datetime:
-                            fields.append('{0} AS {1}'.format(datetime_str, datetime_alias))
-                            self.table.owner.group_by(datetime_alias)
-
-                        # add the epoch time
-                        epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
-                        fields.append('CAST(EXTRACT(EPOCH FROM {0}) AS INT) AS {1}'.format(
-                            datetime_str,
-                            epoch_alias
-                        ))
-                        self.table.owner.group_by(epoch_alias)
-                        break
-                self.table.add_fields(fields)
+        if self.field.auto:
+            self.generate_auto_fields()
         else:
             self.auto_alias = '{0}__{1}'.format(field.lookup, field.name)
-            # field_name = field.get_select()
-            self.name = field.get_select()
 
     def get_identifier(self):
         lookup_field = '{0}.{1}'.format(self.table.get_name(), self.field.lookup)
@@ -201,6 +137,54 @@ class DatePartField(Field):
             return '{0} AS {1}'.format(self.get_identifier(), alias)
 
         return self.get_identifier()
+
+    def generate_auto_fields(self):
+        self.ignore = True
+        datetime_str = None
+
+        if self.field.name == 'all':
+            datetime_str = 'MIN({0})'.format(self.field.lookup)
+            self.generate_datetime_epoch(datetime_str)
+        elif self.field.name == 'none':
+            datetime_str = self.field.lookup
+            self.generate_datetime_epoch(datetime_str)
+        else:
+            group_names = default_group_names
+            if self.field.name == 'week':
+                group_names = week_group_names
+
+            for group_name in group_names:
+                field_alias = '{0}__{1}'.format(self.field.lookup, group_name)
+                self.add_to_table(group_map[group_name](self.field.lookup), field_alias)
+                self.table.owner.group_by(field_alias)
+
+                # check if this is the last date grouping
+                if group_name == self.field.name:
+                    # datetime_str = 'date_trunc(\'{0}\', {1})'.format(group_name, self.field.lookup)
+                    datetime_str = self.field.lookup
+                    self.generate_datetime_epoch(datetime_str, group_name=group_name)
+                    break
+
+    def generate_datetime_epoch(self, datetime_str, group_name=None):
+        # add the datetime object
+        # datetime_alias = '{0}__{1}'.format(self.field.lookup, 'datetime')
+        # if self.field.include_datetime:
+        #     self.add_to_table(datetime_str, datetime_alias)
+
+        # add the epoch time
+        epoch_alias = '{0}__{1}'.format(self.field.lookup, 'epoch')
+        field = 'CAST(EXTRACT(EPOCH FROM {0}) AS INT)'.format(datetime_str)
+        self.add_to_table(Epoch(datetime_str, group_name=group_name), epoch_alias)
+
+        if self.field.desc:
+            self.table.owner.order_by('-{0}'.format(epoch_alias))
+        else:
+            self.table.owner.order_by(epoch_alias)
+
+    def add_to_table(self, field, alias):
+        self.table.add_field({
+            alias: field
+        })
 
 
 class Table(object):

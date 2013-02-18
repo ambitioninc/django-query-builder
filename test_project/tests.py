@@ -840,13 +840,13 @@ class TestDates(TestCase):
         expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
-    # def test_year_auto(self):
-    #     query = Query().from_table(
-    #         table=Order,
-    #         fields=[
-    #             Year('time', auto=True)
-    #         ]
-    #     )
-    #     query_str = query.get_sql()
-    #     expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year FROM test_project_order'
-    #     self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+    def test_year_auto(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                Year('time', auto=True)
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(epoch from date_trunc(\'year\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year ORDER BY time__epoch ASC'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
