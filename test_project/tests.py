@@ -291,6 +291,26 @@ class TestJoins(unittest.TestCase):
         expected_query = 'SELECT auth_user.* FROM auth_user JOIN test_project_account ON test_project_account.user_id = auth_user.id'
         self.assertEqual(query_str, expected_query, 'Queries did not match')
 
+    def test_join_model_fields(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                'one',
+                'two',
+            ]
+        ).join(
+            Order,
+            fields=[{
+                'three': 'one'
+            }, {
+                'four': 'two',
+            }],
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.one, test_project_account.two, test_project_order.one AS three, test_project_order.two AS four FROM test_project_account JOIN test_project_order ON test_project_order.account_id = test_project_account.id'
+        self.assertEqual(query_str, expected_query, 'Queries did not match')
+
 
 class TestWheres(unittest.TestCase):
 

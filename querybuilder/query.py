@@ -536,6 +536,9 @@ class Query(object):
         field_sql_parts = []
         for table in self.tables:
             field_sql_parts.append(table.get_fields_sql())
+        for join_item in self.joins:
+            if len(join_item.right_table.fields):
+                field_sql_parts.append(join_item.right_table.get_fields_sql())
         sql = 'SELECT {0} '.format(', '.join(field_sql_parts))
         return sql
 
