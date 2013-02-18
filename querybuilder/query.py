@@ -1,60 +1,47 @@
-from pprint import pprint
+import abc
 from django.db import connection
 from django.db.models import Aggregate, Count, Max, Min, Sum, Avg, Q
 from django.db.models.base import ModelBase
 from django.db.models.sql import AND
 from querybuilder.groups import DatePart, default_group_names, week_group_names
 from querybuilder.helpers import set_value_for_keypath
-from querybuilder.window_functions import WindowFunction
+
+
+class FieldFactory(object):
+
+    def __new__(self, field, *args, **kwargs):
+        field_type = type(field)
+        if field_type is dict:
+            kwargs.update(alias=field.keys()[0])
+            field = field.values()[0]
+            field_type = type(field)
+
+        if field_type is str:
+            return SimpleField(field, **kwargs)
+        elif isinstance(field, Aggregate):
+            return AggregateField(field, **kwargs)
+        elif isinstance(field, DatePart):
+            return DatePartField(field, **kwargs)
 
 
 class Field(object):
 
-    def __init__(self, field=None, table=None, alias=None):
-        self.type = type(field)
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, field, table=None, alias=None):
+        self.field = field
         self.name = None
         self.table = table
         self.alias = alias
-        # self.auto_alias = None
-        self.aggregate = None
+        self.auto_alias = None
+        self.ignore = False
 
-        if self.type is dict:
-            self.alias = field.keys()[0]
-            field = field.values()[0]
-            self.type = type(field)
-
-        if self.type is str:
-            self.name = field
-        elif isinstance(field, Aggregate):
-            self.aggregate = field
-            self.name = field.lookup
-            if self.name == '*':
-                self.name = 'all'
-            self.name = '{0}_{1}'.format(field.name.lower(), self.name)
-
-    def get_identifier(self):
-        """
-        Gets the FROM identifier for a field
-        Ex: field_name AS alias
-        :return: :rtype: str
-        """
-        name = ''
+    def get_alias(self):
         alias = None
-
-        if self.aggregate:
-            name = '{0}({1}.{2})'.format(
-                self.aggregate.name.upper(),
-                self.table.get_name(),
-                self.aggregate.lookup
-            )
-            if self.alias:
-                alias = self.alias
-            else:
-                alias = self.name
-        else:
-            name = '{0}.{1}'.format(self.table.get_name(), self.name)
-            if self.alias:
-                alias = self.alias
+        if self.alias:
+            alias = self.alias
+        elif self.auto_alias:
+            alias = self.auto_alias
 
         if self.table.prefix_fields:
             field_prefix = self.table.get_field_prefix()
@@ -63,25 +50,164 @@ class Field(object):
             else:
                 alias = '{0}__{1}'.format(field_prefix, self.name)
 
-        if alias:
-            return '{0} AS {1}'.format(name, alias)
+        return alias
 
-        return name
 
+    @abc.abstractmethod
     def get_name(self):
         """
         Gets the name to reference the field within a query. It will be
         prefixed with the table name or table alias
         :return: :rtype: str
         """
+        pass
+
+
+    @abc.abstractmethod
+    def get_identifier(self):
+        """
+        Gets the FROM identifier for a field
+        Ex: field_name AS alias
+        :return: :rtype: str
+        """
+        pass
+
+
+class SimpleField(Field):
+
+    def __init__(self, field, table=None, alias=None):
+        super(SimpleField, self).__init__(field, table, alias)
+        self.name = field
+
+    def get_name(self):
         return '{0}.{1}'.format(self.table.get_name(), self.name)
+
+    def get_identifier(self):
+        alias = self.get_alias()
+        if alias:
+            return '{0} AS {1}'.format(self.get_name(), alias)
+
+        return self.get_name()
+
+
+class AggregateField(Field):
+
+    def __init__(self, field, table=None, alias=None):
+        super(AggregateField, self).__init__(field, table, alias)
+
+        self.name = field.lookup
+
+        if self.name == '*':
+            self.name = 'all'
+        self.auto_alias = '{0}_{1}'.format(field.name.lower(), self.name)
+
+    def get_name(self):
+        return '{0}({1}.{2})'.format(
+            self.field.name.upper(),
+            self.table.get_name(),
+            self.field.lookup
+        )
+
+    def get_identifier(self):
+        alias = self.get_alias()
+        if alias:
+            return '{0} AS {1}'.format(self.get_name(), alias)
+
+        return self.get_name()
+
+
+class DatePartField(Field):
+
+    def __init__(self, field, table=None, alias=None):
+        super(DatePartField, self).__init__(field, table, alias)
+
+        if field.auto:
+            self.ignore = True
+            fields = []
+            if field.name == 'all':
+                # add the datetime object
+                datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
+                datetime_str = field.lookup
+                if field.include_datetime:
+                    fields.append('{0} AS {1}'.format(datetime_str, datetime_alias))
+                    self.group_by(datetime_alias)
+
+                # add the epoch time
+                epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
+                fields.append('CAST(EXTRACT(EPOCH FROM MIN({0})) AS INT) AS {1}'.format(
+                    datetime_str,
+                    epoch_alias
+                ))
+            elif field.name == 'none':
+                # add the datetime object
+                datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
+                datetime_str = field.lookup
+                if field.include_datetime:
+                    fields.append('{0} AS {1}'.format(datetime_str, datetime_alias))
+                    self.group_by(datetime_alias)
+
+                # add the epoch time
+                epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
+                fields.append('CAST(EXTRACT(EPOCH FROM {0}) AS INT) AS {1}'.format(
+                    datetime_str,
+                    epoch_alias
+                ))
+                self.group_by(epoch_alias)
+            else:
+                group_names = default_group_names
+                if field.name == 'week':
+                    group_names = week_group_names
+                for group_name in group_names:
+                    field_alias = '{0}__{1}'.format(field.lookup, group_name)
+                    field_name = field.get_select(name=group_name)
+                    fields.append('{0} AS {1}'.format(field_name, field_alias))
+                    self.table.owner.group_by(field_alias)
+                    if field.desc:
+                        self.table.owner.order_by('-{0}'.format(field_alias))
+                    else:
+                        self.table.owner.order_by(field_alias)
+
+                    # check if this is the last date grouping
+                    if group_name == field.name:
+                        # add the datetime object
+                        datetime_alias = '{0}__{1}'.format(field.lookup, 'datetime')
+                        datetime_str = 'date_trunc(\'{0}\', {1})'.format(group_name, field.lookup)
+                        if field.include_datetime:
+                            fields.append('{0} AS {1}'.format(datetime_str, datetime_alias))
+                            self.table.owner.group_by(datetime_alias)
+
+                        # add the epoch time
+                        epoch_alias = '{0}__{1}'.format(field.lookup, 'epoch')
+                        fields.append('CAST(EXTRACT(EPOCH FROM {0}) AS INT) AS {1}'.format(
+                            datetime_str,
+                            epoch_alias
+                        ))
+                        self.table.owner.group_by(epoch_alias)
+                        break
+                self.table.add_fields(fields)
+        else:
+            self.auto_alias = '{0}__{1}'.format(field.lookup, field.name)
+            # field_name = field.get_select()
+            self.name = field.get_select()
+
+    def get_name(self):
+        lookup_field = '{0}.{1}'.format(self.table.get_name(), self.field.lookup)
+        name = self.field.get_select(lookup=lookup_field)
+        return name
+
+    def get_identifier(self):
+        alias = self.get_alias()
+        if alias:
+            return '{0} AS {1}'.format(self.get_name(), alias)
+
+        return self.get_name()
 
 
 class Table(object):
 
-    def __init__(self, table=None, fields=None, schema=None, extract_fields=False, prefix_fields=False):
+    def __init__(self, table=None, fields=None, schema=None, extract_fields=False, prefix_fields=False, owner=None):
         self.model = None
-        self.query = None
+        self.owner = owner
         self.name = None
         self.alias = None
         self.auto_alias = None
@@ -109,18 +235,19 @@ class Table(object):
         if type(field) is Field:
             field.table = self
         else:
-            field = Field(
-                field=field,
+            field = FieldFactory(
+                field,
                 table=self,
             )
 
         if self.extract_fields and field.name == '*':
+            field.ignore = True
             if self.type is ModelBase:
                 fields = [model_field.column for model_field in self.model._meta.fields]
                 self.add_fields(fields)
-                return
 
-        self.fields.append(field)
+        if field.ignore is False:
+            self.fields.append(field)
 
         # new_fields = []
         # for field in table_dict['fields']:
@@ -188,8 +315,8 @@ class Table(object):
 
 class Join(object):
 
-    def __init__(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, query=None, extract_fields=True, prefix_fields=True):
-        self.query = query
+    def __init__(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, owner=None, extract_fields=True, prefix_fields=True):
+        self.owner = owner
         self.left_table = None
         # self.table_join_name = None
         self.prefix_fields = prefix_fields
@@ -202,7 +329,8 @@ class Join(object):
             table=right_table,
             fields=fields,
             extract_fields=extract_fields,
-            prefix_fields=prefix_fields
+            prefix_fields=prefix_fields,
+            owner=self.owner,
         )
 
     def get_sql(self):
@@ -211,7 +339,8 @@ class Join(object):
     def set_left_table(self, left_table=None):
         if left_table:
             self.left_table = Table(
-                table=left_table
+                table=left_table,
+                owner=self.owner,
             )
         else:
             self.left_table = self.get_left_table()
@@ -219,8 +348,8 @@ class Join(object):
     def get_left_table(self):
         if self.left_table:
             return self.left_table
-        if len(self.query.tables):
-            return self.query.tables[0]
+        if len(self.owner.tables):
+            return self.owner.tables[0]
 
     def get_condition(self):
         if self.condition:
@@ -228,10 +357,8 @@ class Join(object):
 
         condition = ''
         left_table = self.get_left_table()
-        if left_table.model is None and len(self.query.tables):
-            self.left_table = Table(
-                table=self.query.tables[0]
-            )
+        if left_table.model is None and len(self.owner.tables):
+            self.left_table = self.owner.tables[0]
 
         if self.right_table.type is ModelBase:
             # loop through fields to find the field for this model
@@ -396,8 +523,8 @@ class Limit(object):
 
 class Query(object):
 
-    # enable_safe_limit = False
-    # safe_limit = 1000
+    enable_safe_limit = False
+    safe_limit = 1000
 
     def init_defaults(self):
         self.sql = None
@@ -442,6 +569,7 @@ class Query(object):
             table=table,
             fields=fields,
             schema=schema,
+            owner=self,
         ))
 
         return self
@@ -458,7 +586,7 @@ class Query(object):
             condition=condition,
             join_type=join_type,
             schema=schema,
-            query=self,
+            owner=self,
             extract_fields=extract_fields,
             prefix_fields=prefix_fields
         ))
@@ -974,7 +1102,7 @@ class Query(object):
                 if self.count() > Query.safe_limit:
                     self.limit(Query.safe_limit)
         cursor = connection.cursor()
-        cursor.execute(self.get_sql(), self.args)
+        cursor.execute(self.get_sql(), self._where.args)
         rows = self._fetch_all_as_dict(cursor)
         if nest:
             for row in rows:

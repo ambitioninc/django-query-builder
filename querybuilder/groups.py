@@ -44,8 +44,8 @@ class DatePart(object):
         self.desc = desc
         self.include_datetime = include_datetime
 
-    def get_select(self, name=None):
-        return 'CAST(extract({0} from {1}) as INT)'.format(name or self.name, self.lookup)
+    def get_select(self, name=None, lookup=None):
+        return 'CAST(extract({0} from {1}) as INT)'.format(name or self.name, lookup or self.lookup)
 
 
 class AllTime(DatePart):

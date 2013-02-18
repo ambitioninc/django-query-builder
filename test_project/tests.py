@@ -1,10 +1,8 @@
-import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "test_project.settings")
-from django.contrib.auth.models import User
+from django.test import TestCase
+from querybuilder.groups import Year
 from django.db.models.sql import OR, AND
 from django.db.models import Q, Count
-from test_project.models import Account, Order
-from django.utils import unittest
+from test_project.models import Account, Order, User
 from querybuilder.query import Query
 
 
@@ -12,7 +10,7 @@ def get_comparison_str(item1, item2):
     return 'Items are not equal.\nGot:\n{0}\nExpected:\n{1}'.format(item1, item2)
 
 
-class TestSelect(unittest.TestCase):
+class TestSelect(TestCase):
 
     def test_select_all_from_string(self):
         query = Query().from_table(
@@ -219,7 +217,7 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(query_str, expected_query, '\n{0}\n!=\n{1}'.format(query_str, expected_query))
 
 
-class TestJoins(unittest.TestCase):
+class TestJoins(TestCase):
 
     def test_join_str_to_str(self):
         query = Query().from_table(
@@ -275,7 +273,7 @@ class TestJoins(unittest.TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_account.* FROM test_project_account JOIN auth_user ON auth_user.id = test_project_account.user_id'
+        expected_query = 'SELECT test_project_account.* FROM test_project_account JOIN test_project_user ON test_project_user.id = test_project_account.user_id'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_join_model_one_to_one_reverse(self):
@@ -286,7 +284,7 @@ class TestJoins(unittest.TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT auth_user.* FROM auth_user JOIN test_project_account ON test_project_account.user_id = auth_user.id'
+        expected_query = 'SELECT test_project_user.* FROM test_project_user JOIN test_project_account ON test_project_account.user_id = test_project_user.id'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_join_model_fields(self):
@@ -366,7 +364,7 @@ class TestJoins(unittest.TestCase):
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
-class TestWheres(unittest.TestCase):
+class TestWheres(TestCase):
 
     def test_where_eq(self):
         query = Query().from_table(
@@ -667,7 +665,7 @@ class TestWheres(unittest.TestCase):
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
-class TestGroupBy(unittest.TestCase):
+class TestGroupBy(TestCase):
 
     def test_count_id(self):
         query = Query().from_table(
@@ -747,7 +745,7 @@ class TestGroupBy(unittest.TestCase):
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
-class TestOrderBy(unittest.TestCase):
+class TestOrderBy(TestCase):
 
     def test_order_by_single_asc(self):
         query = Query().from_table(
@@ -794,7 +792,7 @@ class TestOrderBy(unittest.TestCase):
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
-class TestLimit(unittest.TestCase):
+class TestLimit(TestCase):
 
     def test_limit(self):
         query = Query().from_table(
@@ -826,12 +824,29 @@ class TestLimit(unittest.TestCase):
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
-# class TestDates(unittest.TestCase):
-#
-#     def test_year(self):
-#         query = Query().from_table(
-#             table=Order,
-#         )
-#         query_str = query.get_sql()
-#         expected_query = 'SELECT test_project_order.* FROM test_project_order'
-#         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+class TestDates(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_year(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                Year('time')
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year FROM test_project_order'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    # def test_year_auto(self):
+    #     query = Query().from_table(
+    #         table=Order,
+    #         fields=[
+    #             Year('time', auto=True)
+    #         ]
+    #     )
+    #     query_str = query.get_sql()
+    #     expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year FROM test_project_order'
+    #     self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
