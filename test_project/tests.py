@@ -1,5 +1,5 @@
 from django.test import TestCase
-from querybuilder.groups import Year, Month
+from querybuilder.groups import Year, Month, Day, Hour, Minute, Second
 from django.db.models.sql import OR, AND
 from django.db.models import Q, Count
 from test_project.models import Account, Order, User
@@ -873,15 +873,41 @@ class TestDates(TestCase):
         expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(epoch from date_trunc(\'month\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__epoch ORDER BY time__epoch ASC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
-    def test_month_auto(self):
+    def test_hour_auto(self):
         query = Query().from_table(
             table=Order,
             fields=[
-                Month('time', auto=True)
+                Hour('time', auto=True)
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(epoch from date_trunc(\'month\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month ORDER BY time__epoch ASC'
+        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(day from test_project_order.time) as INT) AS time__day, CAST(extract(hour from test_project_order.time) as INT) AS time__hour, CAST(extract(epoch from date_trunc(\'hour\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__day, time__hour, time__epoch ORDER BY time__epoch ASC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_minute_auto(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                Minute('time', auto=True)
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(day from test_project_order.time) as INT) AS time__day, CAST(extract(hour from test_project_order.time) as INT) AS time__hour, CAST(extract(minute from test_project_order.time) as INT) AS time__minute, CAST(extract(epoch from date_trunc(\'minute\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__day, time__hour, time__minute, time__epoch ORDER BY time__epoch ASC'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_second_auto(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                Second('time', auto=True)
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(day from test_project_order.time) as INT) AS time__day, CAST(extract(hour from test_project_order.time) as INT) AS time__hour, CAST(extract(minute from test_project_order.time) as INT) AS time__minute, CAST(extract(second from test_project_order.time) as INT) AS time__second, CAST(extract(epoch from date_trunc(\'second\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__day, time__hour, time__minute, time__second, time__epoch ORDER BY time__epoch ASC'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+
+
+
 
 
