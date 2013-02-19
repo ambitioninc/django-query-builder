@@ -16,9 +16,17 @@ class DatePart(object):
 class AllTime(DatePart):
     name = 'all'
 
+    def __init__(self, lookup, auto=False, desc=False, include_datetime=False):
+        super(AllTime, self).__init__(lookup, auto, desc, include_datetime)
+        self.auto = True
+
 
 class NoneTime(DatePart):
     name = 'none'
+
+    def __init__(self, lookup, auto=False, desc=False, include_datetime=False):
+        super(NoneTime, self).__init__(lookup, auto, desc, include_datetime)
+        self.auto = True
 
 
 class Year(DatePart):
@@ -59,13 +67,29 @@ class Epoch(DatePart):
 
 
     def get_select(self, name=None, lookup=None):
-        if self.group_name:
-            return 'CAST(extract({0} from date_trunc(\'{1}\', {2})) as INT)'.format(
-                name or self.name,
-                self.group_name,
-                lookup or self.lookup
-            )
-        return super(Epoch, self).get_select(name=name, lookup=lookup, **kwargs)
+        return super(Epoch, self).get_select(name=name, lookup=lookup)
+
+class GroupEpoch(Epoch):
+
+    def __init__(self, lookup, auto=False, desc=False, include_datetime=False, group_name=None):
+        super(GroupEpoch, self).__init__(lookup, auto, desc, include_datetime)
+        self.group_name = group_name
+
+    def get_select(self, name=None, lookup=None):
+        return 'CAST(extract({0} from date_trunc(\'{1}\', {2})) as INT)'.format(
+            name or self.name,
+            self.group_name,
+            lookup or self.lookup
+        )
+
+
+class AllEpoch(Epoch):
+
+    def get_select(self, name=None, lookup=None):
+        return 'CAST(extract({0} from MIN({1})) as INT)'.format(
+            name or self.name,
+            lookup or self.lookup
+        )
 
 
 group_map = {

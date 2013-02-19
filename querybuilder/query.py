@@ -3,7 +3,7 @@ from django.db import connection
 from django.db.models import Aggregate, Count, Max, Min, Sum, Avg, Q
 from django.db.models.base import ModelBase
 from django.db.models.sql import AND
-from querybuilder.groups import DatePart, default_group_names, week_group_names, group_map, Epoch
+from querybuilder.groups import DatePart, default_group_names, week_group_names, group_map, Epoch, AllEpoch, GroupEpoch
 from querybuilder.helpers import set_value_for_keypath
 
 
@@ -142,12 +142,14 @@ class DatePartField(Field):
         self.ignore = True
         datetime_str = None
 
+        epoch_alias = '{0}__{1}'.format(self.field.lookup, 'epoch')
+
         if self.field.name == 'all':
-            datetime_str = 'MIN({0})'.format(self.field.lookup)
-            self.generate_datetime_epoch(datetime_str)
+            datetime_str = self.field.lookup
+            self.add_to_table(AllEpoch(datetime_str), epoch_alias)
         elif self.field.name == 'none':
             datetime_str = self.field.lookup
-            self.generate_datetime_epoch(datetime_str)
+            self.add_to_table(Epoch(datetime_str), epoch_alias, add_group=True)
         else:
             group_names = default_group_names
             if self.field.name == 'week':
@@ -155,36 +157,41 @@ class DatePartField(Field):
 
             for group_name in group_names:
                 field_alias = '{0}__{1}'.format(self.field.lookup, group_name)
-                self.add_to_table(group_map[group_name](self.field.lookup), field_alias)
+                self.add_to_table(group_map[group_name](self.field.lookup), field_alias, add_group=True)
 
                 # check if this is the last date grouping
                 if group_name == self.field.name:
                     # datetime_str = 'date_trunc(\'{0}\', {1})'.format(group_name, self.field.lookup)
                     datetime_str = self.field.lookup
-                    self.generate_datetime_epoch(datetime_str, group_name=group_name)
+                    # self.generate_datetime_epoch(datetime_str, group_name=group_name, add_group=True)
+                    self.add_to_table(GroupEpoch(datetime_str, group_name=group_name), epoch_alias, add_group=True)
                     break
-
-    def generate_datetime_epoch(self, datetime_str, group_name=None):
-        # add the datetime object
-        # datetime_alias = '{0}__{1}'.format(self.field.lookup, 'datetime')
-        # if self.field.include_datetime:
-        #     self.add_to_table(datetime_str, datetime_alias)
-
-        # add the epoch time
-        epoch_alias = '{0}__{1}'.format(self.field.lookup, 'epoch')
-        field = 'CAST(EXTRACT(EPOCH FROM {0}) AS INT)'.format(datetime_str)
-        self.add_to_table(Epoch(datetime_str, group_name=group_name), epoch_alias)
 
         if self.field.desc:
             self.table.owner.order_by('-{0}'.format(epoch_alias))
         else:
             self.table.owner.order_by(epoch_alias)
 
-    def add_to_table(self, field, alias):
+    def generate_datetime_epoch(self, datetime_str, group_name=None, add_group=False):
+        # add the datetime object
+        # datetime_alias = '{0}__{1}'.format(self.field.lookup, 'datetime')
+        # if self.field.include_datetime:
+        #     self.add_to_table(datetime_str, datetime_alias)
+
+        # add the epoch time
+
+
+        if self.field.desc:
+            self.table.owner.order_by('-{0}'.format(epoch_alias))
+        else:
+            self.table.owner.order_by(epoch_alias)
+
+    def add_to_table(self, field, alias, add_group=False):
         self.table.add_field({
             alias: field
         })
-        self.table.owner.group_by(alias)
+        if add_group:
+            self.table.owner.group_by(alias)
 
 
 class Table(object):
