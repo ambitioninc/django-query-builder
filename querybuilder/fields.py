@@ -3,7 +3,7 @@ from django.db.models import Aggregate
 
 
 class FieldFactory(object):
-    def __new__(self, field, *args, **kwargs):
+    def __new__(cls, field, *args, **kwargs):
         field_type = type(field)
         if field_type is dict:
             kwargs.update(alias=field.keys()[0])

@@ -1,3 +1,4 @@
+from pprint import pprint
 from django.db import connection
 from django.db.models import Count, Max, Min, Sum, Avg, Q
 from django.db.models.base import ModelBase
@@ -8,7 +9,7 @@ from querybuilder.helpers import set_value_for_keypath
 
 class Table(object):
 
-    def __init__(self, table=None, fields=None, schema=None, extract_fields=False, prefix_fields=False, owner=None):
+    def __init__(self, table=None, fields=None, schema=None, extract_fields=False, prefix_fields=False, field_prefix=None, owner=None):
         self.model = None
         self.owner = owner
         self.name = None
@@ -19,6 +20,7 @@ class Table(object):
         self.schema = schema
         self.extract_fields = extract_fields
         self.prefix_fields = prefix_fields
+        self.field_prefix = field_prefix
 
         if self.type is dict:
             self.alias = table.keys()[0]
@@ -117,7 +119,7 @@ class Table(object):
         return self.name
 
     def get_field_prefix(self):
-        return self.name
+        return self.field_prefix or self.name
 
 
 class Join(object):
@@ -125,6 +127,7 @@ class Join(object):
     def __init__(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, owner=None, extract_fields=True, prefix_fields=True):
         self.owner = owner
         self.left_table = None
+        self.right_table = None
         # self.table_join_name = None
         self.prefix_fields = prefix_fields
         self.condition = condition
@@ -132,13 +135,13 @@ class Join(object):
         self.schema = schema
 
         self.set_left_table(left_table=left_table)
-        self.right_table = Table(
+        self.set_right_table(Table(
             table=right_table,
             fields=fields,
             extract_fields=extract_fields,
             prefix_fields=prefix_fields,
             owner=self.owner,
-        )
+        ))
 
     def get_sql(self):
         return '{0} {1} ON {2}'.format(self.join_type, self.right_table.get_sql(), self.get_condition())
@@ -158,14 +161,39 @@ class Join(object):
         if len(self.owner.tables):
             return self.owner.tables[0]
 
+    def set_right_table(self, table):
+        self.right_table = table
+        if self.left_table is None:
+            return
+
+        # find table prefix
+        if self.left_table.type is ModelBase:
+            # loop through fields to find the field for this model
+
+            # check if this join type is for a related field
+            for field in self.left_table.model._meta.get_all_related_objects():
+                if field.model == self.right_table.model:
+                    self.right_table.field_prefix = field.get_accessor_name()
+                    if self.right_table.field_prefix[-4:] == '_set':
+                        self.right_table.field_prefix = self.right_table.field_prefix[:-4]
+                    return
+
+            # check if this join type is for a foreign key
+            for field in self.left_table.model._meta.fields:
+                if (
+                            field.get_internal_type() == 'OneToOneField' or
+                            field.get_internal_type() == 'ForeignKey'
+                ):
+                    if field.rel.to == self.right_table.model:
+                        self.right_table.field_prefix = field.name
+                        return
+
     def get_condition(self):
         if self.condition:
             return self.condition
 
         condition = ''
         left_table = self.get_left_table()
-        if left_table.model is None and len(self.owner.tables):
-            self.left_table = self.owner.tables[0]
 
         if self.right_table.type is ModelBase:
             # loop through fields to find the field for this model
@@ -341,6 +369,7 @@ class Query(object):
         self.groups = []
         self.sorters = []
         self._limit = None
+        self.model_map = {}
 
         # self._distinct = False
         # self.table = {}
@@ -397,6 +426,7 @@ class Query(object):
             extract_fields=extract_fields,
             prefix_fields=prefix_fields
         ))
+
         return self
 
     def join_left(self, right_table=None, fields=None, condition=None, join_type='LEFT JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True):
@@ -899,7 +929,7 @@ class Query(object):
     #
     #     return table_identifier
 
-    def select(self, nest=False, bypass_safe_limit=False):
+    def select(self, return_models=False, nest=False, bypass_safe_limit=False):
         """
         @return: list
         """
@@ -908,16 +938,47 @@ class Query(object):
             if Query.enable_safe_limit:
                 if self.count() > Query.safe_limit:
                     self.limit(Query.safe_limit)
+
         cursor = connection.cursor()
         cursor.execute(self.get_sql(), self._where.args)
         rows = self._fetch_all_as_dict(cursor)
+
+        if return_models:
+            nest = True
+
+            # build model map
+            self.model_map = {}
+            for join_item in self.joins:
+                self.model_map[join_item.right_table.field_prefix] = join_item.right_table.model
+
         if nest:
             for row in rows:
                 for key, value in row.items():
                     set_value_for_keypath(row, key, value, True, '__')
                     if '__' in key:
                         row.pop(key)
-        return rows
+
+            # make models
+
+            if return_models:
+                model_class = self.tables[0].model
+                new_rows = []
+                for row in rows:
+                    model = model_class()
+                    for key, value in row.items():
+                        if key in self.model_map:
+                            child_model = self.model_map[key]()
+                            for child_key, child_value in value.items():
+                                setattr(child_model, child_key, child_value)
+                            key = 'order'
+                            value = child_model
+                        setattr(model, key, value)
+                    new_rows.append(model)
+                rows = new_rows
+
+            return rows
+
+        return []
 
     def sql_insert(self):
         pass

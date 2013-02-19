@@ -1,3 +1,4 @@
+from pprint import pprint
 from django.test import TestCase
 from django.db.models.sql import OR, AND
 from django.db.models import Q, Count
@@ -11,7 +12,6 @@ def get_comparison_str(item1, item2):
 
 
 class TestSelect(TestCase):
-
     def test_select_all_from_string(self):
         query = Query().from_table(
             table='test_table'
@@ -190,7 +190,7 @@ class TestSelect(TestCase):
             },
             fields=[{
                 'f3': 'field_three'
-            },{
+            }, {
                 'f4': 'field_four'
             }]
         )
@@ -218,7 +218,6 @@ class TestSelect(TestCase):
 
 
 class TestJoins(TestCase):
-
     def test_join_str_to_str(self):
         query = Query().from_table(
             table='test_table'
@@ -243,6 +242,8 @@ class TestJoins(TestCase):
         expected_query = 'SELECT test_project_account.* FROM test_project_account JOIN other_table ON other_table.test_id = test_project_account.id'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
+    # TODO: the foreign key join should do an extra query and
+    # merge the results in python afterwards
     def test_join_model_foreign_key(self):
         query = Query().from_table(
             table=Account
@@ -360,12 +361,11 @@ class TestJoins(TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_account.*, test_project_order.id AS test_project_order__id, test_project_order.margin AS test_project_order__margin FROM test_project_account JOIN test_project_order ON test_project_order.account_id = test_project_account.id'
+        expected_query = 'SELECT test_project_account.*, test_project_order.id AS order__id, test_project_order.margin AS order__margin FROM test_project_account JOIN test_project_order ON test_project_order.account_id = test_project_account.id'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
 class TestWheres(TestCase):
-
     def test_where_eq(self):
         query = Query().from_table(
             table='test_table'
@@ -666,7 +666,6 @@ class TestWheres(TestCase):
 
 
 class TestGroupBy(TestCase):
-
     def test_count_id(self):
         query = Query().from_table(
             table='test_table',
@@ -746,7 +745,6 @@ class TestGroupBy(TestCase):
 
 
 class TestOrderBy(TestCase):
-
     def test_order_by_single_asc(self):
         query = Query().from_table(
             table='test_table'
@@ -793,7 +791,6 @@ class TestOrderBy(TestCase):
 
 
 class TestLimit(TestCase):
-
     def test_limit(self):
         query = Query().from_table(
             table='test_table'
@@ -927,6 +924,42 @@ class TestDates(TestCase):
         query_str = query.get_sql()
         expected_query = 'SELECT CAST(extract(epoch from MIN(test_project_order.time)) as INT) AS time__epoch FROM test_project_order ORDER BY time__epoch ASC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+
+class TestModels(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_single_model(self):
+        query = Query().from_table(
+            Account
+        )
+        rows = query.select(True)
+
+        self.assertGreater(len(rows), 0, 'No records')
+
+        for row in rows:
+            self.assertIsInstance(row, Account, 'Row is not model instance')
+
+    def test_joined_model(self):
+        query = Query().from_table(
+            Account
+        ).join(
+            right_table=Order,
+            fields=[
+                '*'
+            ]
+        )
+
+        rows = query.select(True)
+
+        self.assertGreater(len(rows), 0, 'No records')
+        for row in rows:
+            self.assertIsInstance(row, Account, 'Record is not model instance')
+            self.assertIs(hasattr(row, 'user'), True, 'Row does not have nested model')
+            self.assertIsInstance(row.user, User, 'Nested record is not model instance')
+
 
 
 
