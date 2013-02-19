@@ -957,10 +957,14 @@ class TestModels(TestCase):
 
         self.assertGreater(len(rows), 0, 'No records')
         # TODO make sure this isn't running a query for each access of model.model
+
+        logger = Logger()
+        logger.start_logging()
         for row in rows:
             self.assertIsInstance(row, Account, 'Record is not model instance')
             self.assertIs(hasattr(row, 'order'), True, 'Row does not have nested model')
             self.assertIsInstance(row.order, Order, 'Nested record is not model instance')
+        self.assertEqual(logger.count(), 0, 'Queries were executed when none should')
 
     def test_joined_model_foreign_reverse(self):
         query = Query().from_table(
@@ -975,10 +979,13 @@ class TestModels(TestCase):
 
         self.assertGreater(len(rows), 0, 'No records')
 
+        logger = Logger()
+        logger.start_logging()
         for row in rows:
             self.assertIsInstance(row, Order, 'Record is not model instance')
             self.assertIs(hasattr(row, 'account'), True, 'Row does not have nested model')
             self.assertIsInstance(row.account, Account, 'Nested record is not model instance')
+        self.assertEqual(logger.count(), 0, 'Queries were executed when none should')
 
     def test_joined_model_one_to_one(self):
         query = Query().from_table(
@@ -993,10 +1000,14 @@ class TestModels(TestCase):
         rows = query.select(True)
 
         self.assertGreater(len(rows), 0, 'No records')
+
+        logger = Logger()
+        logger.start_logging()
         for row in rows:
             self.assertIsInstance(row, Account, 'Record is not model instance')
             self.assertIs(hasattr(row, 'user'), True, 'Row does not have nested model')
             self.assertIsInstance(row.user, User, 'Nested record is not model instance')
+        self.assertEqual(logger.count(), 0, 'Queries were executed when none should')
 
     def test_joined_model_one_to_one_reverse(self):
         query = Query().from_table(
@@ -1011,10 +1022,14 @@ class TestModels(TestCase):
         rows = query.select(True)
 
         self.assertGreater(len(rows), 0, 'No records')
+
+        logger = Logger()
+        logger.start_logging()
         for row in rows:
             self.assertIsInstance(row, User, 'Record is not model instance')
             self.assertIs(hasattr(row, 'account'), True, 'Row does not have nested model')
             self.assertIsInstance(row.account, Account, 'Nested record is not model instance')
+        self.assertEqual(logger.count(), 0, 'Queries were executed when none should')
 
 
 class TestLogger(TestCase):
@@ -1030,7 +1045,7 @@ class TestLogger(TestCase):
         query = Query().from_table(Account)
         query.select()
 
-        self.assertEqual(len(logger_one.get_log()), 1, 'Incorrect number of queries')
+        self.assertEqual(logger_one.count(), 1, 'Incorrect number of queries')
 
         query.select()
         logger_two.start_logging()
@@ -1038,15 +1053,15 @@ class TestLogger(TestCase):
         logger_one.stop_logging()
         query.select()
 
-        self.assertEqual(len(logger_one.get_log()), 3, 'Incorrect number of queries')
-        self.assertEqual(len(logger_two.get_log()), 2, 'Incorrect number of queries')
+        self.assertEqual(logger_one.count(), 3, 'Incorrect number of queries')
+        self.assertEqual(logger_two.count(), 2, 'Incorrect number of queries')
 
         query.select()
         logger_one.start_logging()
         query.select()
 
-        self.assertEqual(len(logger_one.get_log()), 4, 'Incorrect number of queries')
-        self.assertEqual(len(logger_two.get_log()), 4, 'Incorrect number of queries')
+        self.assertEqual(logger_one.count(), 4, 'Incorrect number of queries')
+        self.assertEqual(logger_two.count(), 4, 'Incorrect number of queries')
 
         query.select()
         logger_two.clear_log()

@@ -12,7 +12,7 @@ class LogManager(object):
         LogManager.loggers[logger.name] = logger
 
     @staticmethod
-    def get_logger(name):
+    def get_logger(name=None):
         if name in LogManager.loggers:
             return LogManager.loggers[name]
         return Logger(name)
@@ -28,7 +28,9 @@ class LogManager(object):
 
 class Logger(object):
 
-    def __init__(self, name):
+    def __init__(self, name=None):
+        if name is None:
+            name = 'default'
         self.name = name
         self.query_index = None
         self.queries = []
