@@ -1032,6 +1032,21 @@ class TestModels(TestCase):
         self.assertEqual(logger.count(), 0, 'Queries were executed when none should')
 
 
+class TestWindowFunctions(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    # def test_rank(self):
+    #     query = Query().from_table(
+    #         Order,
+    #         fields=[
+    #             Rank
+    #         ]
+    #     )
+    #     pprint(query.select())
+
+
 class TestLogger(TestCase):
     fixtures = [
         'test_project/test_data.json'

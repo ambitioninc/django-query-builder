@@ -14,7 +14,7 @@ class FieldFactory(object):
             return SimpleField(field, **kwargs)
         elif isinstance(field, Aggregate):
             return AggregateField(field, **kwargs)
-        elif isinstance(field, DatePart):
+        elif isinstance(field, DatePartField):
             return field
 
 
@@ -83,6 +83,7 @@ class SimpleField(Field):
 
 
 class AggregateField(Field):
+
     def __init__(self, field, table=None, alias=None):
         super(AggregateField, self).__init__(field, table, alias)
 
@@ -107,11 +108,11 @@ class AggregateField(Field):
         return self.get_identifier()
 
 
-class DatePart(Field):
+class DatePartField(Field):
     group_name=None
 
     def __init__(self, field, table=None, alias=None, auto=None, desc=None, include_datetime=False):
-        super(DatePart, self).__init__(field, table, alias)
+        super(DatePartField, self).__init__(field, table, alias)
 
         self.name = self.group_name
         self.auto = auto
@@ -172,7 +173,7 @@ class DatePart(Field):
             self.table.owner.group_by(alias)
 
 
-class AllTime(DatePart):
+class AllTime(DatePartField):
     group_name = 'all'
 
     def __init__(self, lookup, auto=False, desc=False, include_datetime=False):
@@ -180,7 +181,7 @@ class AllTime(DatePart):
         self.auto = True
 
 
-class NoneTime(DatePart):
+class NoneTime(DatePartField):
     group_name = 'none'
 
     def __init__(self, lookup, auto=False, desc=False, include_datetime=False):
@@ -188,35 +189,35 @@ class NoneTime(DatePart):
         self.auto = True
 
 
-class Year(DatePart):
+class Year(DatePartField):
     group_name = 'year'
 
 
-class Month(DatePart):
+class Month(DatePartField):
     group_name = 'month'
 
 
-class Day(DatePart):
+class Day(DatePartField):
     group_name = 'day'
 
 
-class Hour(DatePart):
+class Hour(DatePartField):
     group_name = 'hour'
 
 
-class Minute(DatePart):
+class Minute(DatePartField):
     group_name = 'minute'
 
 
-class Second(DatePart):
+class Second(DatePartField):
     group_name = 'second'
 
 
-class Week(DatePart):
+class Week(DatePartField):
     group_name = 'week'
 
 
-class Epoch(DatePart):
+class Epoch(DatePartField):
     group_name = 'epoch'
 
     def __init__(self, field, table=None, alias=None, auto=None, desc=None, include_datetime=False, date_group_name=None):

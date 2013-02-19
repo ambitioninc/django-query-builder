@@ -653,7 +653,7 @@ class Query(object):
         #             field_alias = field_alias or '{0}_{1}'.format(field.name.lower(), field_name)
         #             field_name = '{0}({1}.{2})'.format(field.name, self.get_name(table_dict), field.lookup)
         #             fields.append('{0} AS {1}'.format(field_name, field_alias))
-        #         elif isinstance(field, DatePart):
+        #         elif isinstance(field, DatePartField):
         #             if field.auto:
         #                 if field.name == 'all':
         #                     # add the datetime object
