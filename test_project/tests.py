@@ -942,11 +942,49 @@ class TestModels(TestCase):
         for row in rows:
             self.assertIsInstance(row, Account, 'Row is not model instance')
 
-    def test_joined_model(self):
+    def test_joined_model_foreign(self):
         query = Query().from_table(
             Account
         ).join(
             right_table=Order,
+            fields=[
+                '*'
+            ]
+        )
+
+        rows = query.select(True)
+
+        self.assertGreater(len(rows), 0, 'No records')
+        # TODO make sure this isn't running a query for each access of model.model
+        for row in rows:
+            self.assertIsInstance(row, Account, 'Record is not model instance')
+            self.assertIs(hasattr(row, 'order'), True, 'Row does not have nested model')
+            self.assertIsInstance(row.order, Order, 'Nested record is not model instance')
+
+    def test_joined_model_foreign_reverse(self):
+        query = Query().from_table(
+            Order
+        ).join(
+            right_table=Account,
+            fields=[
+                '*'
+            ]
+        )
+
+        rows = query.select(True)
+
+        self.assertGreater(len(rows), 0, 'No records')
+
+        for row in rows:
+            self.assertIsInstance(row, Order, 'Record is not model instance')
+            self.assertIs(hasattr(row, 'account'), True, 'Row does not have nested model')
+            self.assertIsInstance(row.account, Account, 'Nested record is not model instance')
+
+    def test_joined_model_one_to_one(self):
+        query = Query().from_table(
+            Account
+        ).join(
+            right_table=User,
             fields=[
                 '*'
             ]
@@ -961,6 +999,20 @@ class TestModels(TestCase):
             self.assertIsInstance(row.user, User, 'Nested record is not model instance')
 
 
+    def test_joined_model_one_to_one_reverse(self):
+        query = Query().from_table(
+            User
+        ).join(
+            right_table=Account,
+            fields=[
+                '*'
+            ]
+        )
 
+        rows = query.select(True)
 
-
+        self.assertGreater(len(rows), 0, 'No records')
+        for row in rows:
+            self.assertIsInstance(row, User, 'Record is not model instance')
+            self.assertIs(hasattr(row, 'account'), True, 'Row does not have nested model')
+            self.assertIsInstance(row.account, Account, 'Nested record is not model instance')
