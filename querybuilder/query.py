@@ -161,25 +161,9 @@ class DatePartField(Field):
 
                 # check if this is the last date grouping
                 if group_name == self.field.name:
-                    # datetime_str = 'date_trunc(\'{0}\', {1})'.format(group_name, self.field.lookup)
                     datetime_str = self.field.lookup
-                    # self.generate_datetime_epoch(datetime_str, group_name=group_name, add_group=True)
                     self.add_to_table(GroupEpoch(datetime_str, group_name=group_name), epoch_alias, add_group=True)
                     break
-
-        if self.field.desc:
-            self.table.owner.order_by('-{0}'.format(epoch_alias))
-        else:
-            self.table.owner.order_by(epoch_alias)
-
-    def generate_datetime_epoch(self, datetime_str, group_name=None, add_group=False):
-        # add the datetime object
-        # datetime_alias = '{0}__{1}'.format(self.field.lookup, 'datetime')
-        # if self.field.include_datetime:
-        #     self.add_to_table(datetime_str, datetime_alias)
-
-        # add the epoch time
-
 
         if self.field.desc:
             self.table.owner.order_by('-{0}'.format(epoch_alias))
