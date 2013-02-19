@@ -94,7 +94,7 @@ class AggregateField(Field):
         if field_name == '*':
             field_name = 'all'
 
-        self.auto_alias = '{0}_{1}'.format(self.name, field_name)
+        self.auto_alias = '{0}_{1}'.format(self.name.lower(), field_name)
 
     def get_identifier(self):
         return '{0}({1}.{2})'.format(
@@ -112,7 +112,31 @@ class AggregateField(Field):
 
 
 class CountField(AggregateField):
-    aggregate_name = 'count'
+    aggregate_name = 'Count'
+
+
+class AvgField(AggregateField):
+    aggregate_name = 'Avg'
+
+
+class MaxField(AggregateField):
+    aggregate_name = 'Max'
+
+
+class MinField(AggregateField):
+    aggregate_name = 'Min'
+
+
+class StdDevField(AggregateField):
+    aggregate_name = 'StdDev'
+
+
+class SumField(AggregateField):
+    aggregate_name = 'Sum'
+
+
+class VarianceField(AggregateField):
+    aggregate_name = 'Variance'
 
 
 class DatePartField(Field):
