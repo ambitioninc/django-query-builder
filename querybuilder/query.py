@@ -1,8 +1,8 @@
 from django.db import connection
-from django.db.models import Count, Max, Min, Sum, Avg, Q, Field
+from django.db.models import Count, Max, Min, Sum, Avg, Q
 from django.db.models.base import ModelBase
 from django.db.models.sql import AND
-from querybuilder.fields import FieldFactory
+from querybuilder.fields import FieldFactory, Field
 from querybuilder.helpers import set_value_for_keypath
 
 
@@ -35,7 +35,7 @@ class Table(object):
             self.set_fields(fields)
 
     def add_field(self, field):
-        if type(field) is Field:
+        if isinstance(field, Field):
             field.table = self
         else:
             field = FieldFactory(
@@ -48,6 +48,10 @@ class Table(object):
             if self.type is ModelBase:
                 fields = [model_field.column for model_field in self.model._meta.fields]
                 self.add_fields(fields)
+
+        if field.auto:
+            field.ignore = True
+            field.generate_auto_fields()
 
         if field.ignore is False:
             self.fields.append(field)

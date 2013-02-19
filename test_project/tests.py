@@ -1,7 +1,7 @@
 from django.test import TestCase
-from querybuilder.groups import Year, Month, Day, Hour, Minute, Second, NoneTime, AllTime
 from django.db.models.sql import OR, AND
 from django.db.models import Q, Count
+from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime
 from test_project.models import Account, Order, User
 from querybuilder.query import Query
 

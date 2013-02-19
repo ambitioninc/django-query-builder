@@ -1,6 +1,5 @@
 import abc
 from django.db.models import Aggregate
-from querybuilder.groups import DatePart, AllEpoch, Epoch, default_group_names, week_group_names, group_map, GroupEpoch
 
 
 class FieldFactory(object):
@@ -16,7 +15,7 @@ class FieldFactory(object):
         elif isinstance(field, Aggregate):
             return AggregateField(field, **kwargs)
         elif isinstance(field, DatePart):
-            return DatePartField(field, **kwargs)
+            return field
 
 
 class Field(object):
@@ -29,6 +28,7 @@ class Field(object):
         self.alias = alias
         self.auto_alias = None
         self.ignore = False
+        self.auto = False
 
     def get_alias(self):
         alias = None
@@ -107,19 +107,22 @@ class AggregateField(Field):
         return self.get_identifier()
 
 
-class DatePartField(Field):
-    def __init__(self, field, table=None, alias=None):
-        super(DatePartField, self).__init__(field, table, alias)
+class DatePart(Field):
+    group_name=None
 
-        if self.field.auto:
-            self.generate_auto_fields()
-        else:
-            self.auto_alias = '{0}__{1}'.format(field.lookup, field.name)
+    def __init__(self, field, table=None, alias=None, auto=None, desc=None, include_datetime=False):
+        super(DatePart, self).__init__(field, table, alias)
+
+        self.name = self.group_name
+        self.auto = auto
+        self.desc = desc
+        self.include_datetime = include_datetime
+
+        self.auto_alias = '{0}__{1}'.format(self.field, self.name)
 
     def get_identifier(self):
-        lookup_field = '{0}.{1}'.format(self.table.get_name(), self.field.lookup)
-        name = self.field.get_select(lookup=lookup_field)
-        return name
+        lookup_field = '{0}.{1}'.format(self.table.get_name(), self.field)
+        return 'CAST(extract({0} from {1}) as INT)'.format(self.name, lookup_field)
 
     def get_sql(self):
         alias = self.get_alias()
@@ -132,30 +135,31 @@ class DatePartField(Field):
         self.ignore = True
         datetime_str = None
 
-        epoch_alias = '{0}__{1}'.format(self.field.lookup, 'epoch')
+        epoch_alias = '{0}__{1}'.format(self.field, 'epoch')
 
-        if self.field.name == 'all':
-            datetime_str = self.field.lookup
-            self.add_to_table(AllEpoch(datetime_str), epoch_alias)
-        elif self.field.name == 'none':
-            datetime_str = self.field.lookup
-            self.add_to_table(Epoch(datetime_str), epoch_alias, add_group=True)
+        if self.name == 'all':
+            datetime_str = self.field
+            self.add_to_table(AllEpoch(datetime_str, table=self.table), epoch_alias)
+        elif self.name == 'none':
+            datetime_str = self.field
+            self.add_to_table(Epoch(datetime_str, table=self.table), epoch_alias, add_group=True)
         else:
             group_names = default_group_names
-            if self.field.name == 'week':
+            if self.name == 'week':
                 group_names = week_group_names
 
             for group_name in group_names:
-                field_alias = '{0}__{1}'.format(self.field.lookup, group_name)
-                self.add_to_table(group_map[group_name](self.field.lookup), field_alias, add_group=True)
+                field_alias = '{0}__{1}'.format(self.field, group_name)
+                auto_field = group_map[group_name](self.field, table=self.table)
+                self.add_to_table(auto_field, field_alias, add_group=True)
 
                 # check if this is the last date grouping
-                if group_name == self.field.name:
-                    datetime_str = self.field.lookup
-                    self.add_to_table(GroupEpoch(datetime_str, group_name=group_name), epoch_alias, add_group=True)
+                if group_name == self.name:
+                    datetime_str = self.field
+                    self.add_to_table(GroupEpoch(datetime_str, date_group_name=group_name, table=self.table), epoch_alias, add_group=True)
                     break
 
-        if self.field.desc:
+        if self.desc:
             self.table.owner.order_by('-{0}'.format(epoch_alias))
         else:
             self.table.owner.order_by(epoch_alias)
@@ -166,3 +170,125 @@ class DatePartField(Field):
         })
         if add_group:
             self.table.owner.group_by(alias)
+
+
+class AllTime(DatePart):
+    group_name = 'all'
+
+    def __init__(self, lookup, auto=False, desc=False, include_datetime=False):
+        super(AllTime, self).__init__(lookup, auto, desc, include_datetime)
+        self.auto = True
+
+
+class NoneTime(DatePart):
+    group_name = 'none'
+
+    def __init__(self, lookup, auto=False, desc=False, include_datetime=False):
+        super(NoneTime, self).__init__(lookup, auto, desc, include_datetime)
+        self.auto = True
+
+
+class Year(DatePart):
+    group_name = 'year'
+
+
+class Month(DatePart):
+    group_name = 'month'
+
+
+class Day(DatePart):
+    group_name = 'day'
+
+
+class Hour(DatePart):
+    group_name = 'hour'
+
+
+class Minute(DatePart):
+    group_name = 'minute'
+
+
+class Second(DatePart):
+    group_name = 'second'
+
+
+class Week(DatePart):
+    group_name = 'week'
+
+
+class Epoch(DatePart):
+    group_name = 'epoch'
+
+    def __init__(self, field, table=None, alias=None, auto=None, desc=None, include_datetime=False, date_group_name=None):
+        super(Epoch, self).__init__(field, table, alias, auto, desc, include_datetime)
+        self.date_group_name = date_group_name
+
+
+class GroupEpoch(Epoch):
+
+    def get_identifier(self):
+        lookup_field = '{0}.{1}'.format(self.table.get_name(), self.field)
+        return 'CAST(extract({0} from date_trunc(\'{1}\', {2})) as INT)'.format(
+            self.name,
+            self.date_group_name,
+            lookup_field
+        )
+
+
+class AllEpoch(Epoch):
+
+    def get_identifier(self):
+        lookup_field = '{0}.{1}'.format(self.table.get_name(), self.field)
+        return 'CAST(extract({0} from MIN({1})) as INT)'.format(
+            self.name,
+            lookup_field
+        )
+
+
+group_map = {
+    'year': Year,
+    'month': Month,
+    'day': Day,
+    'hour': Hour,
+    'minute': Minute,
+    'second': Second,
+    'week': Week,
+    'all': AllTime,
+    'none': NoneTime,
+}
+
+all_group_names = (
+    'year',
+    'month',
+    'day',
+    'hour',
+    'minute',
+    'second',
+    'week',
+    'all',
+    'none',
+)
+
+allowed_group_names = (
+    'year',
+    'month',
+    'day',
+    'hour',
+    'minute',
+    'second',
+    'week',
+)
+
+default_group_names = (
+    'year',
+    'month',
+    'day',
+    'hour',
+    'minute',
+    'second',
+)
+
+week_group_names = (
+    'year',
+    'week',
+)
