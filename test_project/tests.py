@@ -1,6 +1,5 @@
-from pprint import pprint
 from django.test import TestCase
-from django.db.models.sql import OR, AND
+from django.db.models.sql import OR
 from django.db.models import Q
 from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField
 from querybuilder.logger import Logger, LogManager
@@ -694,8 +693,8 @@ class TestAggregates(TestCase):
         query = Query().from_table(
             table='test_table',
             fields=[{
-                        'num': CountField('id')
-                    }]
+                'num': CountField('id')
+            }]
         )
         query_str = query.get_sql()
         expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table'
@@ -766,7 +765,6 @@ class TestAggregates(TestCase):
         query_str = query.get_sql()
         expected_query = 'SELECT VARIANCE(test_project_order.margin) AS variance_margin FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
-
 
 
 class TestGroupBy(TestCase):
@@ -1162,7 +1160,7 @@ class TestLogger(TestCase):
         self.assertEqual(len(LogManager.loggers), 1, 'Incorrect number of loggers')
         logger_one = LogManager.get_logger('one')
         self.assertEqual(len(LogManager.loggers), 1, 'Incorrect number of loggers')
-        logger_two = LogManager.get_logger('two')
+        LogManager.get_logger('two')
         self.assertEqual(len(LogManager.loggers), 2, 'Incorrect number of loggers')
 
         logger_one.start_logging()

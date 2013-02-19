@@ -13,4 +13,3 @@ class WindowFunction(object):
 
 class Rank(WindowFunction):
     name = 'rank'
-

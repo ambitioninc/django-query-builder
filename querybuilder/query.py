@@ -1,9 +1,8 @@
-from pprint import pprint
 from django.db import connection
 from django.db.models import Count, Max, Min, Sum, Avg, Q
 from django.db.models.base import ModelBase
 from django.db.models.sql import AND
-from querybuilder.fields import FieldFactory, Field
+from querybuilder.fields import FieldFactory
 from querybuilder.helpers import set_value_for_keypath
 
 
@@ -178,8 +177,8 @@ class Join(object):
             # check if this join type is for a foreign key
             for field in self.left_table.model._meta.fields:
                 if (
-                            field.get_internal_type() == 'OneToOneField' or
-                            field.get_internal_type() == 'ForeignKey'
+                    field.get_internal_type() == 'OneToOneField' or
+                    field.get_internal_type() == 'ForeignKey'
                 ):
                     if field.rel.to == self.right_table.model:
                         self.right_table.field_prefix = field.name
@@ -190,7 +189,6 @@ class Join(object):
             return self.condition
 
         condition = ''
-        left_table = self.get_left_table()
 
         if self.right_table.type is ModelBase:
             # loop through fields to find the field for this model
@@ -490,7 +488,6 @@ class Query(object):
         """
         if self.sql and use_cache and not debug:
             return self.sql
-
 
         self.check_name_collisions()
 
@@ -815,7 +812,7 @@ class Query(object):
     #     self.arg_index = 0
     #     self.window_index = 0
     #     self.table_alias_map = {}
-
+#
 #     def create_table_dict(self, table=None, fields=['*'], schema=None, condition=None, join_type=None):
 #         """
 #         :type fields: list
@@ -856,7 +853,7 @@ class Query(object):
 #             self.add_inner_query(table_dict)
 #
 #         return table_dict
-
+#
     # def add_inner_query(self, table_dict):
     #     table_dict['table'].managed_by = self
     #     self.inner_queries.append(table_dict)
@@ -869,8 +866,8 @@ class Query(object):
     #         fields = [fields]
     #     self.table['fields'] = fields
     #     return self
-
-
+    #
+    #
     # def build_alias_maps(self):
     #     tables = [self.table] + self.joins
     #
@@ -905,9 +902,9 @@ class Query(object):
     #
     # def build_args(self):
     #     pass
-
-
-
+#
+#
+#
 #     def get_name(self, table_dict):
 #         if table_dict['type'] is Query:
 #             table_dict['table'].mark_dirty()
@@ -915,7 +912,7 @@ class Query(object):
 # #            return '({0})'.format(table_dict['table'].get_sql())
 #         else:
 #             return table_dict['name']
-
+#
     # def get_table_identifier(self, table_dict):
     #     table_name = self.get_name(table_dict)
     #     table_alias = table_dict['alias'] or table_dict['temp_alias']
@@ -1056,4 +1053,3 @@ class QueryWindow(Query):
         """
         select_sql = super(QueryWindow, self).build_groups()
         return select_sql.replace('GROUP BY', 'PARTITION BY', 1)
-

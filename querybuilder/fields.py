@@ -140,7 +140,7 @@ class VarianceField(AggregateField):
 
 
 class DatePartField(Field):
-    group_name=None
+    group_name = None
 
     def __init__(self, field, table=None, alias=None, auto=None, desc=None, include_datetime=False):
         super(DatePartField, self).__init__(field, table, alias)
