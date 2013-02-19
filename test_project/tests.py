@@ -971,7 +971,6 @@ class TestModels(TestCase):
                 '*'
             ]
         )
-
         rows = query.select(True)
 
         self.assertGreater(len(rows), 0, 'No records')

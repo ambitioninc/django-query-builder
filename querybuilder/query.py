@@ -970,7 +970,6 @@ class Query(object):
                             child_model = self.model_map[key]()
                             for child_key, child_value in value.items():
                                 setattr(child_model, child_key, child_value)
-                            key = 'order'
                             value = child_model
                         setattr(model, key, value)
                     new_rows.append(model)
