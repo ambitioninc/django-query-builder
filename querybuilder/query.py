@@ -976,9 +976,7 @@ class Query(object):
                     new_rows.append(model)
                 rows = new_rows
 
-            return rows
-
-        return []
+        return rows
 
     def sql_insert(self):
         pass
