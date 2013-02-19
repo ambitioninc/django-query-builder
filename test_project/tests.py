@@ -3,6 +3,7 @@ from django.test import TestCase
 from django.db.models.sql import OR, AND
 from django.db.models import Q, Count
 from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime
+from querybuilder.logger import Logger, LogManager
 from test_project.models import Account, Order, User
 from querybuilder.query import Query
 
@@ -998,7 +999,6 @@ class TestModels(TestCase):
             self.assertIs(hasattr(row, 'user'), True, 'Row does not have nested model')
             self.assertIsInstance(row.user, User, 'Nested record is not model instance')
 
-
     def test_joined_model_one_to_one_reverse(self):
         query = Query().from_table(
             User
@@ -1016,3 +1016,63 @@ class TestModels(TestCase):
             self.assertIsInstance(row, User, 'Record is not model instance')
             self.assertIs(hasattr(row, 'account'), True, 'Row does not have nested model')
             self.assertIsInstance(row.account, Account, 'Nested record is not model instance')
+
+
+class TestLogger(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_logger(self):
+        logger_one = Logger('one')
+        logger_two = Logger('two')
+
+        logger_one.start_logging()
+        query = Query().from_table(Account)
+        query.select()
+
+        self.assertEqual(len(logger_one.get_log()), 1, 'Incorrect number of queries')
+
+        query.select()
+        logger_two.start_logging()
+        query.select()
+        logger_one.stop_logging()
+        query.select()
+
+        self.assertEqual(len(logger_one.get_log()), 3, 'Incorrect number of queries')
+        self.assertEqual(len(logger_two.get_log()), 2, 'Incorrect number of queries')
+
+        query.select()
+        logger_one.start_logging()
+        query.select()
+
+        self.assertEqual(len(logger_one.get_log()), 4, 'Incorrect number of queries')
+        self.assertEqual(len(logger_two.get_log()), 4, 'Incorrect number of queries')
+
+        query.select()
+        logger_two.clear_log()
+        query.select()
+
+        self.assertEqual(logger_one.count(), 6, 'Incorrect number of queries')
+        self.assertEqual(logger_two.count(), 1, 'Incorrect number of queries')
+
+    def test_log_manager(self):
+        self.assertEqual(len(LogManager.loggers), 0, 'Incorrect number of loggers')
+        logger_one = LogManager.get_logger('one')
+        self.assertEqual(len(LogManager.loggers), 1, 'Incorrect number of loggers')
+        logger_one = LogManager.get_logger('one')
+        self.assertEqual(len(LogManager.loggers), 1, 'Incorrect number of loggers')
+        logger_two = LogManager.get_logger('two')
+        self.assertEqual(len(LogManager.loggers), 2, 'Incorrect number of loggers')
+
+        logger_one.start_logging()
+        query = Query().from_table(Account)
+        query.select()
+
+        self.assertEqual(logger_one.count(), 1, 'Incorrect number of queries')
+        LogManager.disable_logging()
+        query.select()
+        self.assertEqual(logger_one.count(), 1, 'Incorrect number of queries')
+        LogManager.enable_logging()
+        query.select()
+        self.assertEqual(logger_one.count(), 2, 'Incorrect number of queries')
