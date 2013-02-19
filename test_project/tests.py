@@ -2,7 +2,7 @@ from pprint import pprint
 from django.test import TestCase
 from django.db.models.sql import OR, AND
 from django.db.models import Q, Count
-from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime
+from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField
 from querybuilder.logger import Logger, LogManager
 from test_project.models import Account, Order, User
 from querybuilder.query import Query
@@ -667,11 +667,12 @@ class TestWheres(TestCase):
 
 
 class TestGroupBy(TestCase):
+
     def test_count_id(self):
         query = Query().from_table(
             table='test_table',
             fields=[
-                Count('id')
+                CountField('id')
             ]
         )
         query_str = query.get_sql()
@@ -682,7 +683,7 @@ class TestGroupBy(TestCase):
         query = Query().from_table(
             table='test_table',
             fields=[
-                Count('*')
+                CountField('*')
             ]
         )
         query_str = query.get_sql()
@@ -693,7 +694,7 @@ class TestGroupBy(TestCase):
         query = Query().from_table(
             table='test_table',
             fields=[{
-                'num': Count('id')
+                'num': CountField('id')
             }]
         )
         query_str = query.get_sql()
@@ -704,7 +705,7 @@ class TestGroupBy(TestCase):
         query = Query().from_table(
             table='test_table',
             fields=[{
-                'num': Count('id')
+                'num': CountField('id')
             }]
         ).group_by(
             field='id'
@@ -717,7 +718,7 @@ class TestGroupBy(TestCase):
         query = Query().from_table(
             table='test_table',
             fields=[{
-                'num': Count('id')
+                'num': CountField('id')
             }]
         ).group_by(
             field='id',
@@ -731,7 +732,7 @@ class TestGroupBy(TestCase):
         query = Query().from_table(
             table='test_table',
             fields=[{
-                'num': Count('id')
+                'num': CountField('id')
             }]
         ).group_by(
             field='id',

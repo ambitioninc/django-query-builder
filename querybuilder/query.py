@@ -37,13 +37,10 @@ class Table(object):
             self.set_fields(fields)
 
     def add_field(self, field):
-        if isinstance(field, Field):
-            field.table = self
-        else:
-            field = FieldFactory(
-                field,
-                table=self,
-            )
+        field = FieldFactory(
+            field,
+            table=self,
+        )
 
         if self.extract_fields and field.name == '*':
             field.ignore = True

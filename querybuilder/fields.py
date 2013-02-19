@@ -1,8 +1,8 @@
 import abc
-from django.db.models import Aggregate
 
 
 class FieldFactory(object):
+
     def __new__(cls, field, *args, **kwargs):
         field_type = type(field)
         if field_type is dict:
@@ -12,9 +12,9 @@ class FieldFactory(object):
 
         if field_type is str:
             return SimpleField(field, **kwargs)
-        elif isinstance(field, Aggregate):
-            return AggregateField(field, **kwargs)
-        elif isinstance(field, DatePartField):
+        elif isinstance(field, Field):
+            for key, value in kwargs.items():
+                setattr(field, key, value)
             return field
 
 
@@ -83,21 +83,24 @@ class SimpleField(Field):
 
 
 class AggregateField(Field):
+    aggregate_name = None
 
     def __init__(self, field, table=None, alias=None):
         super(AggregateField, self).__init__(field, table, alias)
 
-        self.name = field.lookup
+        self.name = self.aggregate_name
 
-        if self.name == '*':
-            self.name = 'all'
-        self.auto_alias = '{0}_{1}'.format(field.name.lower(), self.name)
+        field_name = self.field
+        if field_name == '*':
+            field_name = 'all'
+
+        self.auto_alias = '{0}_{1}'.format(self.name, field_name)
 
     def get_identifier(self):
         return '{0}({1}.{2})'.format(
-            self.field.name.upper(),
+            self.name.upper(),
             self.table.get_name(),
-            self.field.lookup
+            self.field
         )
 
     def get_sql(self):
@@ -106,6 +109,10 @@ class AggregateField(Field):
             return '{0} AS {1}'.format(self.get_identifier(), alias)
 
         return self.get_identifier()
+
+
+class CountField(AggregateField):
+    aggregate_name = 'count'
 
 
 class DatePartField(Field):
