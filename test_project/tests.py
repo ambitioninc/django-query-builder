@@ -667,6 +667,9 @@ class TestWheres(TestCase):
 
 
 class TestAggregates(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
 
     def test_count_id(self):
         query = Query().from_table(
@@ -676,7 +679,7 @@ class TestAggregates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT COUNT(test_table.id) AS count_id FROM test_table'
+        expected_query = 'SELECT COUNT(test_table.id) AS id_count FROM test_table'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_count_all(self):
@@ -687,7 +690,7 @@ class TestAggregates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT COUNT(test_table.*) AS count_all FROM test_table'
+        expected_query = 'SELECT COUNT(test_table.*) AS all_count FROM test_table'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_count_id_alias(self):
@@ -709,7 +712,7 @@ class TestAggregates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT AVG(test_project_order.margin) AS avg_margin FROM test_project_order'
+        expected_query = 'SELECT AVG(test_project_order.margin) AS margin_avg FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_max(self):
@@ -720,7 +723,7 @@ class TestAggregates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT MAX(test_project_order.margin) AS max_margin FROM test_project_order'
+        expected_query = 'SELECT MAX(test_project_order.margin) AS margin_max FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_min(self):
@@ -731,18 +734,27 @@ class TestAggregates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT MIN(test_project_order.margin) AS min_margin FROM test_project_order'
+        expected_query = 'SELECT MIN(test_project_order.margin) AS margin_min FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_stddev(self):
         query = Query().from_table(
             table=Order,
             fields=[
-                StdDevField('margin')
+                '*',
+                StdDevField(
+                    'margin',
+                    over=QueryWindow()
+                ),
+                AvgField(
+                    'margin',
+                    over=QueryWindow()
+                )
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT STDDEV(test_project_order.margin) AS stddev_margin FROM test_project_order'
+        pprint(query.select())
+        expected_query = 'SELECT STDDEV(test_project_order.margin) AS margin_stddev FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_sum(self):
@@ -753,7 +765,7 @@ class TestAggregates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT SUM(test_project_order.margin) AS sum_margin FROM test_project_order'
+        expected_query = 'SELECT SUM(test_project_order.margin) AS margin_sum FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_variance(self):
@@ -764,7 +776,7 @@ class TestAggregates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT VARIANCE(test_project_order.margin) AS variance_margin FROM test_project_order'
+        expected_query = 'SELECT VARIANCE(test_project_order.margin) AS margin_variance FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
@@ -1002,7 +1014,7 @@ class TestWindowFunctions(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, LAG(margin, 1) OVER (ORDER BY margin DESC) AS lag_margin FROM test_project_order'
+        expected_query = 'SELECT test_project_order.*, LAG(margin, 1) OVER (ORDER BY margin DESC) AS margin_lag FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_lag_default(self):
@@ -1020,7 +1032,7 @@ class TestWindowFunctions(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, LAG(margin, 1, \'0\') OVER (ORDER BY margin DESC) AS lag_margin FROM test_project_order'
+        expected_query = 'SELECT test_project_order.*, LAG(margin, 1, \'0\') OVER (ORDER BY margin DESC) AS margin_lag FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_lead(self):
@@ -1037,7 +1049,7 @@ class TestWindowFunctions(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, LEAD(margin, 1) OVER (ORDER BY margin DESC) AS lead_margin FROM test_project_order'
+        expected_query = 'SELECT test_project_order.*, LEAD(margin, 1) OVER (ORDER BY margin DESC) AS margin_lead FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_first_value(self):
@@ -1054,7 +1066,7 @@ class TestWindowFunctions(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, FIRST_VALUE(margin) OVER (ORDER BY margin DESC) AS first_value_margin FROM test_project_order'
+        expected_query = 'SELECT test_project_order.*, FIRST_VALUE(margin) OVER (ORDER BY margin DESC) AS margin_first_value FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_last_value(self):
@@ -1071,7 +1083,7 @@ class TestWindowFunctions(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, LAST_VALUE(margin) OVER (ORDER BY margin ASC) AS last_value_margin FROM test_project_order'
+        expected_query = 'SELECT test_project_order.*, LAST_VALUE(margin) OVER (ORDER BY margin ASC) AS margin_last_value FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_nth_value(self):
@@ -1089,7 +1101,7 @@ class TestWindowFunctions(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, NTH_VALUE(margin, 2) OVER (ORDER BY margin DESC) AS nth_value_margin FROM test_project_order'
+        expected_query = 'SELECT test_project_order.*, NTH_VALUE(margin, 2) OVER (ORDER BY margin DESC) AS margin_nth_value FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 

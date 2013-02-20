@@ -96,7 +96,7 @@ class AggregateField(Field):
             field_name = 'all'
 
         if field_name:
-            self.auto_alias = '{0}_{1}'.format(self.name.lower(), field_name)
+            self.auto_alias = '{0}_{1}'.format(field_name, self.name.lower())
         else:
             self.auto_alias = self.name.lower()
 
