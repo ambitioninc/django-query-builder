@@ -364,10 +364,11 @@ class Query(object):
         table_index = 0
         table_names = {}
         for table in self.tables:
-            if table.get_identifier() in table_names:
+            identifier = table.get_identifier()
+            if identifier is None or identifier in table_names:
                 table.auto_alias = 'T{0}'.format(table_index)
                 table_index += 1
-            table_names[table.get_identifier()] = True
+            table_names[identifier] = True
 
     def get_sql(self, debug=False, use_cache=True):
         """

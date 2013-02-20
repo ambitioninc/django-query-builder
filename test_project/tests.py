@@ -1357,8 +1357,22 @@ class TestInnerQuery(TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_account.* FROM test_project_account'
+        expected_query = 'SELECT T0.* FROM (SELECT test_project_account.* FROM test_project_account) AS T0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_inner_alias(self):
+        inner_query = Query().from_table(
+            Account
+        )
+        query = Query().from_table({
+            'inner': inner_query
+        })
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT inner.* FROM (SELECT test_project_account.* FROM test_project_account) AS inner'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+
 
 
 class TestModels(TestCase):

@@ -56,7 +56,7 @@ class Table(object):
         """
         alias = self.get_alias()
         if alias:
-            return '{0} AS {1}'.format(self.name, alias)
+            return '{0} AS {1}'.format(self.get_from_name(), alias)
 
         return self.get_identifier()
 
@@ -69,6 +69,12 @@ class Table(object):
 
         return alias
 
+    def get_name(self):
+        return self.name
+
+    def get_from_name(self):
+        return self.name
+
     def get_identifier(self):
         """
         Gets the name to reference the table within a query. If
@@ -79,7 +85,7 @@ class Table(object):
         alias = self.get_alias()
         if alias:
             return alias
-        return self.name
+        return self.get_name()
 
     def add_field(self, field):
         field = FieldFactory(
@@ -142,4 +148,11 @@ class ModelTable(Table):
 
 
 class QueryTable(Table):
-    pass
+
+    def init_defaults(self):
+        super(QueryTable, self).init_defaults()
+        self.query = self.table
+
+    def get_from_name(self):
+        return '({0})'.format(self.query.get_sql())
+
