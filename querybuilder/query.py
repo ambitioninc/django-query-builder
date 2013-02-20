@@ -2,7 +2,7 @@ from django.db import connection
 from django.db.models import Count, Max, Min, Sum, Avg, Q
 from django.db.models.sql import AND
 from querybuilder.helpers import set_value_for_keypath
-from test_project.tables import TableFactory, ModelTable
+from querybuilder.tables import TableFactory, ModelTable
 
 
 class Join(object):
@@ -86,9 +86,9 @@ class Join(object):
                     table_join_field = field.field.column
                     # self.table_join_name = field.get_accessor_name()
                     condition = '{0}.{1} = {2}.{3}'.format(
-                        self.right_table.get_name(),
+                        self.right_table.get_identifier(),
                         self.right_table.model._meta.pk.name,
-                        self.left_table.get_name(),
+                        self.left_table.get_identifier(),
                         table_join_field,
                     )
                     return condition
@@ -103,9 +103,9 @@ class Join(object):
                         table_join_field = field.column
                         # self.table_join_name = field.name
                         condition = '{0}.{1} = {2}.{3}'.format(
-                            self.right_table.get_name(),
+                            self.right_table.get_identifier(),
                             table_join_field,
-                            self.left_table.get_name(),
+                            self.left_table.get_identifier(),
                             self.left_table.model._meta.pk.name
                         )
                         return condition
@@ -364,10 +364,10 @@ class Query(object):
         table_index = 0
         table_names = {}
         for table in self.tables:
-            if table.get_name() in table_names:
+            if table.get_identifier() in table_names:
                 table.auto_alias = 'T{0}'.format(table_index)
                 table_index += 1
-            table_names[table.get_name()] = True
+            table_names[table.get_identifier()] = True
 
     def get_sql(self, debug=False, use_cache=True):
         """

@@ -1349,16 +1349,16 @@ class TestInnerQuery(TestCase):
     ]
 
     def test_inner(self):
-        # inner_query = Query().from_table(
-        #     Account
-        # )
-        # query = Query().from_table(
-        #     inner_query
-        # )
-        #
-        # query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(epoch from MIN(test_project_order.time)) as INT) AS time__epoch FROM test_project_order ORDER BY time__epoch ASC'
-        # self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+        inner_query = Query().from_table(
+            Account
+        )
+        query = Query().from_table(
+            inner_query
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.* FROM test_project_account'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
 class TestModels(TestCase):

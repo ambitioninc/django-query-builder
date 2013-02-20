@@ -30,6 +30,18 @@ class Field(object):
         self.ignore = False
         self.auto = False
 
+    def get_sql(self):
+        """
+        Gets the FROM sql part for a field
+        Ex: field_name AS alias
+        :return: :rtype: str
+        """
+        alias = self.get_alias()
+        if alias:
+            return '{0} AS {1}'.format(self.get_identifier(), alias)
+
+        return self.get_identifier()
+
     def get_alias(self):
         alias = None
         if self.alias:
@@ -46,11 +58,6 @@ class Field(object):
 
         return alias
 
-    def before_add(self):
-        if self.auto:
-            self.ignore = True
-            self.generate_auto_fields()
-
     @abc.abstractmethod
     def get_identifier(self):
         """
@@ -61,13 +68,7 @@ class Field(object):
         """
         pass
 
-    @abc.abstractmethod
-    def get_sql(self):
-        """
-        Gets the FROM sql part for a field
-        Ex: field_name AS alias
-        :return: :rtype: str
-        """
+    def before_add(self):
         pass
 
 
@@ -77,14 +78,7 @@ class SimpleField(Field):
         self.name = field
 
     def get_identifier(self):
-        return '{0}.{1}'.format(self.table.get_name(), self.name)
-
-    def get_sql(self):
-        alias = self.get_alias()
-        if alias:
-            return '{0} AS {1}'.format(self.get_identifier(), alias)
-
-        return self.get_identifier()
+        return '{0}.{1}'.format(self.table.get_identifier(), self.name)
 
 
 class AggregateField(Field):
@@ -105,13 +99,6 @@ class AggregateField(Field):
         else:
             self.auto_alias = self.name.lower()
 
-    def get_sql(self):
-        alias = self.get_alias()
-        if alias:
-            return '{0} AS {1}'.format(self.get_identifier(), alias)
-
-        return self.get_identifier()
-
     def get_identifier(self):
         return '{0}({1}){2}'.format(
             self.name.upper(),
@@ -121,7 +108,7 @@ class AggregateField(Field):
 
     def get_field_identifier(self):
         return '{0}.{1}'.format(
-            self.table.get_name(),
+            self.table.get_identifier(),
             self.field,
         )
 
@@ -275,15 +262,13 @@ class DatePartField(Field):
         self.auto_alias = '{0}__{1}'.format(self.field, self.name)
 
     def get_identifier(self):
-        lookup_field = '{0}.{1}'.format(self.table.get_name(), self.field)
+        lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
         return 'CAST(extract({0} from {1}) as INT)'.format(self.name, lookup_field)
 
-    def get_sql(self):
-        alias = self.get_alias()
-        if alias:
-            return '{0} AS {1}'.format(self.get_identifier(), alias)
-
-        return self.get_identifier()
+    def before_add(self):
+        if self.auto:
+            self.ignore = True
+            self.generate_auto_fields()
 
     def generate_auto_fields(self):
         self.ignore = True
@@ -390,7 +375,7 @@ class Epoch(DatePartField):
 class GroupEpoch(Epoch):
 
     def get_identifier(self):
-        lookup_field = '{0}.{1}'.format(self.table.get_name(), self.field)
+        lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
         return 'CAST(extract({0} from date_trunc(\'{1}\', {2})) as INT)'.format(
             self.name,
             self.date_group_name,
@@ -401,7 +386,7 @@ class GroupEpoch(Epoch):
 class AllEpoch(Epoch):
 
     def get_identifier(self):
-        lookup_field = '{0}.{1}'.format(self.table.get_name(), self.field)
+        lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
         return 'CAST(extract({0} from MIN({1})) as INT)'.format(
             self.name,
             lookup_field
