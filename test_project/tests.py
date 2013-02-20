@@ -1343,6 +1343,24 @@ class TestDates(TestCase):
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
+class TestInnerQuery(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_inner(self):
+        # inner_query = Query().from_table(
+        #     Account
+        # )
+        # query = Query().from_table(
+        #     inner_query
+        # )
+        #
+        # query_str = query.get_sql()
+        expected_query = 'SELECT CAST(extract(epoch from MIN(test_project_order.time)) as INT) AS time__epoch FROM test_project_order ORDER BY time__epoch ASC'
+        # self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+
 class TestModels(TestCase):
     fixtures = [
         'test_project/test_data.json'
@@ -1372,7 +1390,6 @@ class TestModels(TestCase):
         rows = query.select(True)
 
         self.assertGreater(len(rows), 0, 'No records')
-        # TODO make sure this isn't running a query for each access of model.model
 
         logger = Logger()
         logger.start_logging()

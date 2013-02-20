@@ -1,121 +1,8 @@
 from django.db import connection
 from django.db.models import Count, Max, Min, Sum, Avg, Q
-from django.db.models.base import ModelBase
 from django.db.models.sql import AND
-from querybuilder.fields import FieldFactory
 from querybuilder.helpers import set_value_for_keypath
-
-
-class Table(object):
-
-    def __init__(self, table=None, fields=None, schema=None, extract_fields=False, prefix_fields=False, field_prefix=None, owner=None):
-        self.model = None
-        self.owner = owner
-        self.name = None
-        self.alias = None
-        self.auto_alias = None
-        self.type = type(table)
-        self.fields = []
-        self.schema = schema
-        self.extract_fields = extract_fields
-        self.prefix_fields = prefix_fields
-        self.field_prefix = field_prefix
-
-        if self.type is dict:
-            self.alias = table.keys()[0]
-            table = table.values()[0]
-            self.type = type(table)
-
-        if self.type is str:
-            self.name = table
-        elif self.type is ModelBase:
-            self.model = table
-            self.name = self.model._meta.db_table
-
-        if fields:
-            self.set_fields(fields)
-
-    def add_field(self, field):
-        field = FieldFactory(
-            field,
-            table=self,
-        )
-
-        if self.extract_fields and field.name == '*':
-            field.ignore = True
-            if self.type is ModelBase:
-                fields = [model_field.column for model_field in self.model._meta.fields]
-                self.add_fields(fields)
-
-        if field.auto:
-            field.ignore = True
-            field.generate_auto_fields()
-
-        if field.ignore is False:
-            self.fields.append(field)
-
-        # new_fields = []
-        # for field in table_dict['fields']:
-        #     if type(field) is dict:
-        #         new_fields.append(field)
-        #     elif field == '*':
-        #         new_fields.append(field)
-        #     else:
-        #         new_fields.append({
-        #             '{0}__{1}'.format(table_join_name, field): field
-        #         })
-        # table_dict['fields'] = new_fields
-        # if fields and len(fields) and fields[0] == '*':
-        #     table_dict['fields'] = [field.column for field in table_dict['table']._meta.fields]
-
-    def set_fields(self, fields):
-        self.fields = []
-        self.add_fields(fields)
-
-    def add_fields(self, fields):
-        for field in fields:
-            self.add_field(field)
-
-    def get_fields_sql(self):
-        """
-        Loop through this tables fields and calls the get_sql
-        method on each of them to build the field list for the FROM
-        clause
-        :return: :rtype: str
-        """
-        parts = []
-        for field in self.fields:
-            parts.append(field.get_sql())
-        return ', '.join(parts)
-
-    def get_name(self):
-        """
-        Gets the name to reference the table within a query. If
-        a table is aliased, it will return the alias, otherwise
-        it returns the table name
-        :return: :rtype: str
-        """
-        if self.alias:
-            return self.alias
-        elif self.auto_alias:
-            return self.auto_alias
-
-        return self.name
-
-    def get_sql(self):
-        """
-        Gets the FROM sql for a table
-        Ex: table_name AS alias
-        :return: :rtype: str
-        """
-        if self.alias:
-            return '{0} AS {1}'.format(self.name, self.alias)
-        elif self.auto_alias:
-            return '{0} AS {1}'.format(self.name, self.auto_alias)
-        return self.name
-
-    def get_field_prefix(self):
-        return self.field_prefix or self.name
+from test_project.tables import TableFactory, ModelTable
 
 
 class Join(object):
@@ -131,7 +18,7 @@ class Join(object):
         self.schema = schema
 
         self.set_left_table(left_table=left_table)
-        self.set_right_table(Table(
+        self.set_right_table(TableFactory(
             table=right_table,
             fields=fields,
             extract_fields=extract_fields,
@@ -144,7 +31,7 @@ class Join(object):
 
     def set_left_table(self, left_table=None):
         if left_table:
-            self.left_table = Table(
+            self.left_table = TableFactory(
                 table=left_table,
                 owner=self.owner,
             )
@@ -163,7 +50,7 @@ class Join(object):
             return
 
         # find table prefix
-        if self.left_table.type is ModelBase:
+        if type(self.left_table) is ModelTable and type(self.right_table) is ModelTable:
             # loop through fields to find the field for this model
 
             # check if this join type is for a related field
@@ -190,7 +77,7 @@ class Join(object):
 
         condition = ''
 
-        if self.right_table.type is ModelBase:
+        if type(self.right_table) is ModelTable and type(self.right_table) is ModelTable:
             # loop through fields to find the field for this model
 
             # check if this join type is for a related field
@@ -396,7 +283,7 @@ class Query(object):
         if fields is None:
             fields = ['*']
 
-        self.tables.append(Table(
+        self.tables.append(TableFactory(
             table=table,
             fields=fields,
             schema=schema,

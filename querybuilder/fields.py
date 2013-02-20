@@ -46,6 +46,11 @@ class Field(object):
 
         return alias
 
+    def before_add(self):
+        if self.auto:
+            self.ignore = True
+            self.generate_auto_fields()
+
     @abc.abstractmethod
     def get_identifier(self):
         """
