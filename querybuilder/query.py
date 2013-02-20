@@ -503,9 +503,10 @@ class Query(object):
         sql += self.build_groups()
         sql += self.build_order_by()
         sql += self.build_limit()
-        self.sql = sql
 
-        return self.sql.strip()
+        self.sql = sql.strip()
+
+        return self.sql
 
     def format_sql(self):
         sql = ''
@@ -1035,6 +1036,7 @@ class Query(object):
 
 
 class QueryWindow(Query):
+
     def partition_by(self, group):
         return super(QueryWindow, self).group_by(group)
 
@@ -1042,10 +1044,15 @@ class QueryWindow(Query):
         """
         @return: self
         """
-        query = self.build_partition_by_fields()
-        query += self.build_order()
-        query += self.build_limit()
-        return query
+        sql = ''
+        sql += self.build_partition_by_fields()
+        sql += self.build_order_by()
+        sql += self.build_limit()
+        sql = sql.strip()
+        sql = 'OVER ({0})'.format(sql)
+        self.sql = sql
+
+        return self.sql
 
     def build_partition_by_fields(self):
         """

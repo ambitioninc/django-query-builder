@@ -1,10 +1,10 @@
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
-from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField
+from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField
 from querybuilder.logger import Logger, LogManager
 from test_project.models import Account, Order, User
-from querybuilder.query import Query
+from querybuilder.query import Query, QueryWindow
 
 
 def get_comparison_str(item1, item2):
@@ -767,6 +767,84 @@ class TestAggregates(TestCase):
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
+class TestQueryWindows(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_query_window(self):
+        query_window = QueryWindow()
+        query_str = query_window.get_sql()
+        expected_query = 'OVER ()'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_query_window_partition(self):
+        query_window = QueryWindow().partition_by('field_one')
+        query_str = query_window.get_sql()
+        expected_query = 'OVER (PARTITION BY field_one)'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_query_window_order(self):
+        query_window = QueryWindow().order_by('field_one')
+        query_str = query_window.get_sql()
+        expected_query = 'OVER (ORDER BY field_one ASC)'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_query_window_partition_order(self):
+        query_window = QueryWindow().partition_by(
+            'field_one'
+        ).order_by(
+            'field_one'
+        )
+        query_str = query_window.get_sql()
+        expected_query = 'OVER (PARTITION BY field_one ORDER BY field_one ASC)'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_query_window_partition_order_many(self):
+        query_window = QueryWindow().partition_by(
+            'field_one'
+        ).partition_by(
+            'field_two'
+        ).order_by(
+            'field_one'
+        ).order_by(
+            '-field_two'
+        )
+        query_str = query_window.get_sql()
+        expected_query = 'OVER (PARTITION BY field_one, field_two ORDER BY field_one ASC, field_two DESC)'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+
+class TestWindowFunctions(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_rank_no_over(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                RankField()
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT RANK() AS rank FROM test_project_order'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_rank_over(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                RankField(
+                    over=QueryWindow()
+                )
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT RANK() OVER () AS rank FROM test_project_order'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+
 class TestGroupBy(TestCase):
 
     def test_group_by_id(self):
@@ -1099,21 +1177,6 @@ class TestModels(TestCase):
             self.assertIs(hasattr(row, 'account'), True, 'Row does not have nested model')
             self.assertIsInstance(row.account, Account, 'Nested record is not model instance')
         self.assertEqual(logger.count(), 0, 'Queries were executed when none should')
-
-
-class TestWindowFunctions(TestCase):
-    fixtures = [
-        'test_project/test_data.json'
-    ]
-
-    # def test_rank(self):
-    #     query = Query().from_table(
-    #         Order,
-    #         fields=[
-    #             Rank
-    #         ]
-    #     )
-    #     pprint(query.select())
 
 
 class TestLogger(TestCase):

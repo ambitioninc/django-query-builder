@@ -21,7 +21,7 @@ class FieldFactory(object):
 class Field(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, field, table=None, alias=None):
+    def __init__(self, field=None, table=None, alias=None):
         self.field = field
         self.name = None
         self.table = table
@@ -85,23 +85,20 @@ class SimpleField(Field):
 class AggregateField(Field):
     aggregate_name = None
 
-    def __init__(self, field, table=None, alias=None):
+    def __init__(self, field=None, table=None, alias=None, over=None):
         super(AggregateField, self).__init__(field, table, alias)
 
         self.name = self.aggregate_name
+        self.over = over
 
         field_name = self.field
         if field_name == '*':
             field_name = 'all'
 
-        self.auto_alias = '{0}_{1}'.format(self.name.lower(), field_name)
-
-    def get_identifier(self):
-        return '{0}({1}.{2})'.format(
-            self.name.upper(),
-            self.table.get_name(),
-            self.field
-        )
+        if field_name:
+            self.auto_alias = '{0}_{1}'.format(self.name.lower(), field_name)
+        else:
+            self.auto_alias = self.name.lower()
 
     def get_sql(self):
         alias = self.get_alias()
@@ -109,6 +106,24 @@ class AggregateField(Field):
             return '{0} AS {1}'.format(self.get_identifier(), alias)
 
         return self.get_identifier()
+
+    def get_identifier(self):
+        return '{0}({1}){2}'.format(
+            self.name.upper(),
+            self.get_field_identifier(),
+            self.get_over(),
+        )
+
+    def get_field_identifier(self):
+        return '{0}.{1}'.format(
+            self.table.get_name(),
+            self.field,
+        )
+
+    def get_over(self):
+        if self.over:
+            return ' {0}'.format(self.over.get_sql())
+        return ''
 
 
 class CountField(AggregateField):
@@ -137,6 +152,33 @@ class SumField(AggregateField):
 
 class VarianceField(AggregateField):
     aggregate_name = 'Variance'
+
+
+class RankField(AggregateField):
+    aggregate_name = 'Rank'
+
+    def get_field_identifier(self):
+        return ''
+
+
+class LagField(AggregateField):
+    aggregate_name = 'Lag'
+
+    def __init__(self, field=None, table=None, alias=None, over=None, offset=1, default=None):
+        super(LagField, self).__init__(field, table, alias, over)
+        self.offset = offset
+        self.default = default
+
+    def get_field_identifier(self):
+        parts = [self.field]
+
+        if self.offset > 1 or self.default:
+            parts.append(self.offset)
+
+        if self.default:
+            parts.append(self.default)
+
+        return ', '.join(parts)
 
 
 class DatePartField(Field):
