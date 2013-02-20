@@ -83,12 +83,12 @@ class SimpleField(Field):
 
 
 class AggregateField(Field):
-    aggregate_name = None
+    function_name = None
 
     def __init__(self, field=None, table=None, alias=None, over=None):
         super(AggregateField, self).__init__(field, table, alias)
 
-        self.name = self.aggregate_name
+        self.name = self.function_name
         self.over = over
 
         field_name = self.field
@@ -127,58 +127,123 @@ class AggregateField(Field):
 
 
 class CountField(AggregateField):
-    aggregate_name = 'Count'
+    function_name = 'Count'
 
 
 class AvgField(AggregateField):
-    aggregate_name = 'Avg'
+    function_name = 'Avg'
 
 
 class MaxField(AggregateField):
-    aggregate_name = 'Max'
+    function_name = 'Max'
 
 
 class MinField(AggregateField):
-    aggregate_name = 'Min'
+    function_name = 'Min'
 
 
 class StdDevField(AggregateField):
-    aggregate_name = 'StdDev'
+    function_name = 'StdDev'
 
 
 class SumField(AggregateField):
-    aggregate_name = 'Sum'
+    function_name = 'Sum'
 
 
 class VarianceField(AggregateField):
-    aggregate_name = 'Variance'
+    function_name = 'Variance'
 
 
-class RankField(AggregateField):
-    aggregate_name = 'Rank'
+class RowNumberField(AggregateField):
+    function_name = 'row_number'
 
     def get_field_identifier(self):
         return ''
 
 
-class LagField(AggregateField):
-    aggregate_name = 'Lag'
+class RankField(AggregateField):
+    function_name = 'rank'
+
+    def get_field_identifier(self):
+        return ''
+
+
+class DenseRankField(AggregateField):
+    function_name = 'dense_rank'
+
+    def get_field_identifier(self):
+        return ''
+
+
+class PercentRankField(AggregateField):
+    function_name = 'percent_rank'
+
+    def get_field_identifier(self):
+        return ''
+
+
+class CumeDistField(AggregateField):
+    function_name = 'cume_dist'
+
+    def get_field_identifier(self):
+        return ''
+
+
+class NTileField(AggregateField):
+    function_name = 'ntile'
+
+    def __init__(self, field=None, table=None, alias=None, over=None, num_buckets=1):
+        super(NTileField, self).__init__(field, table, alias, over)
+        self.num_buckets = num_buckets
+
+    def get_field_identifier(self):
+        return self.num_buckets
+
+
+class LeadLagField(AggregateField):
 
     def __init__(self, field=None, table=None, alias=None, over=None, offset=1, default=None):
-        super(LagField, self).__init__(field, table, alias, over)
+        super(LeadLagField, self).__init__(field, table, alias, over)
         self.offset = offset
         self.default = default
 
     def get_field_identifier(self):
-        parts = [self.field]
+        if self.default is None:
+            return '{0}, {1}'.format(self.field, self.offset)
+        return "{0}, {1}, '{2}'".format(self.field, self.offset, self.default)
 
-        if self.offset > 1 or self.default:
-            parts.append(self.offset)
 
-        if self.default:
-            parts.append(self.default)
+class LagField(LeadLagField):
+    function_name = 'lag'
 
-        return ', '.join(parts)
+
+class LeadField(LeadLagField):
+    function_name = 'lead'
+
+
+class FirstValueField(AggregateField):
+    function_name = 'first_value'
+
+    def get_field_identifier(self):
+        return self.field
+
+
+class LastValueField(AggregateField):
+    function_name = 'last_value'
+
+    def get_field_identifier(self):
+        return self.field
+
+
+class NthValueField(AggregateField):
+    function_name = 'nth_value'
+
+    def __init__(self, field=None, table=None, alias=None, over=None, n=1):
+        super(NthValueField, self).__init__(field, table, alias, over)
+        self.n = n
+
+    def get_field_identifier(self):
+        return '{0}, {1}'.format(self.field, self.n)
 
 
 class DatePartField(Field):
@@ -230,7 +295,15 @@ class DatePartField(Field):
                 # check if this is the last date grouping
                 if group_name == self.name:
                     datetime_str = self.field
-                    self.add_to_table(GroupEpoch(datetime_str, date_group_name=group_name, table=self.table), epoch_alias, add_group=True)
+                    self.add_to_table(
+                        GroupEpoch(
+                            datetime_str,
+                            date_group_name=group_name,
+                            table=self.table
+                        ),
+                        epoch_alias,
+                        add_group=True
+                    )
                     break
 
         if self.desc:
@@ -293,7 +366,8 @@ class Week(DatePartField):
 class Epoch(DatePartField):
     group_name = 'epoch'
 
-    def __init__(self, field, table=None, alias=None, auto=None, desc=None, include_datetime=False, date_group_name=None):
+    def __init__(self, field, table=None, alias=None, auto=None, desc=None,
+                 include_datetime=False, date_group_name=None):
         super(Epoch, self).__init__(field, table, alias, auto, desc, include_datetime)
         self.date_group_name = date_group_name
 

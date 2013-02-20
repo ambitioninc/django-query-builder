@@ -170,7 +170,7 @@ class Join(object):
             for field in self.left_table.model._meta.get_all_related_objects():
                 if field.model == self.right_table.model:
                     self.right_table.field_prefix = field.get_accessor_name()
-                    if self.right_table.field_prefix[-4:] == '_set':
+                    if len(self.right_table.field_prefix) > 4 and self.right_table.field_prefix[-4:] == '_set':
                         self.right_table.field_prefix = self.right_table.field_prefix[:-4]
                     return
 

@@ -1,7 +1,8 @@
+from pprint import pprint
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
-from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField
+from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField, RowNumberField, LagField, DenseRankField, PercentRankField, CumeDistField, NTileField, LeadField, FirstValueField, LastValueField, NthValueField
 from querybuilder.logger import Logger, LogManager
 from test_project.models import Account, Order, User
 from querybuilder.query import Query, QueryWindow
@@ -842,6 +843,253 @@ class TestWindowFunctions(TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT RANK() OVER () AS rank FROM test_project_order'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_rank_over_order(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                'id',
+                RankField(
+                    over=QueryWindow().order_by(
+                        'id'
+                    )
+                )
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.id, RANK() OVER (ORDER BY id ASC) AS rank FROM test_project_order'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_rank_over_partition(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                'id',
+                RankField(
+                    over=QueryWindow().partition_by(
+                        'account_id'
+                    )
+                )
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.id, RANK() OVER (PARTITION BY account_id) AS rank FROM test_project_order'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_row_number(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                '*',
+                RowNumberField(
+                    over=QueryWindow().order_by(
+                        '-margin'
+                    )
+                )
+            ]
+        ).order_by(
+            'row_number'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.*, ROW_NUMBER() OVER (ORDER BY margin DESC) AS row_number FROM test_project_order ORDER BY row_number ASC'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_rank(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                'id',
+                RankField(
+                    over=QueryWindow().partition_by(
+                        'account_id'
+                    ).order_by(
+                        'id'
+                    )
+                )
+            ]
+        ).order_by(
+            '-rank'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.id, RANK() OVER (PARTITION BY account_id ORDER BY id ASC) AS rank FROM test_project_order ORDER BY rank DESC'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_dense_rank(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                '*',
+                DenseRankField(
+                    over=QueryWindow().order_by(
+                        '-margin'
+                    )
+                )
+            ]
+        ).order_by(
+            'dense_rank'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.*, DENSE_RANK() OVER (ORDER BY margin DESC) AS dense_rank FROM test_project_order ORDER BY dense_rank ASC'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_rank_percent(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                '*',
+                PercentRankField(
+                    over=QueryWindow().order_by(
+                        '-margin'
+                    )
+                )
+            ]
+        ).order_by(
+            'percent_rank'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.*, PERCENT_RANK() OVER (ORDER BY margin DESC) AS percent_rank FROM test_project_order ORDER BY percent_rank ASC'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_cume_dist(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                '*',
+                CumeDistField(
+                    over=QueryWindow().order_by(
+                        '-margin'
+                    )
+                )
+            ]
+        ).order_by(
+            'cume_dist'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.*, CUME_DIST() OVER (ORDER BY margin DESC) AS cume_dist FROM test_project_order ORDER BY cume_dist ASC'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_ntile(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                '*',
+                NTileField(
+                    num_buckets=2,
+                    over=QueryWindow().order_by(
+                        '-margin'
+                    )
+                )
+            ]
+        ).order_by(
+            'ntile'
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.*, NTILE(2) OVER (ORDER BY margin DESC) AS ntile FROM test_project_order ORDER BY ntile ASC'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_lag(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                '*',
+                LagField(
+                    'margin',
+                    over=QueryWindow().order_by(
+                        '-margin'
+                    )
+                )
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.*, LAG(margin, 1) OVER (ORDER BY margin DESC) AS lag_margin FROM test_project_order'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_lag_default(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                '*',
+                LagField(
+                    'margin',
+                    default=0,
+                    over=QueryWindow().order_by(
+                        '-margin'
+                    )
+                )
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.*, LAG(margin, 1, \'0\') OVER (ORDER BY margin DESC) AS lag_margin FROM test_project_order'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_lead(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                '*',
+                LeadField(
+                    'margin',
+                    over=QueryWindow().order_by(
+                        '-margin'
+                    )
+                )
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.*, LEAD(margin, 1) OVER (ORDER BY margin DESC) AS lead_margin FROM test_project_order'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_first_value(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                '*',
+                FirstValueField(
+                    'margin',
+                    over=QueryWindow().order_by(
+                        '-margin'
+                    )
+                )
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.*, FIRST_VALUE(margin) OVER (ORDER BY margin DESC) AS first_value_margin FROM test_project_order'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_last_value(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                '*',
+                LastValueField(
+                    'margin',
+                    over=QueryWindow().order_by(
+                        'margin'
+                    )
+                )
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.*, LAST_VALUE(margin) OVER (ORDER BY margin ASC) AS last_value_margin FROM test_project_order'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_nth_value(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                '*',
+                NthValueField(
+                    'margin',
+                    n=2,
+                    over=QueryWindow().order_by(
+                        '-margin'
+                    )
+                )
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.*, NTH_VALUE(margin, 2) OVER (ORDER BY margin DESC) AS nth_value_margin FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
