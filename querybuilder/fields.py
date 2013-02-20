@@ -146,6 +146,16 @@ class StdDevField(AggregateField):
     function_name = 'StdDev'
 
 
+class NumStdDevField(AggregateField):
+    function_name = 'num_stddev'
+
+    def get_identifier(self):
+        return '(({0} - (AVG({0}){1})) / (STDDEV({0}){1}))'.format(
+            self.get_field_identifier(),
+            self.get_over(),
+        )
+
+
 class SumField(AggregateField):
     function_name = 'Sum'
 

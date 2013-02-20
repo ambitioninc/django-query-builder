@@ -2,7 +2,7 @@ from pprint import pprint
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
-from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField, RowNumberField, LagField, DenseRankField, PercentRankField, CumeDistField, NTileField, LeadField, FirstValueField, LastValueField, NthValueField
+from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField, RowNumberField, LagField, DenseRankField, PercentRankField, CumeDistField, NTileField, LeadField, FirstValueField, LastValueField, NthValueField, NumStdDevField
 from querybuilder.logger import Logger, LogManager
 from test_project.models import Account, Order, User
 from querybuilder.query import Query, QueryWindow
@@ -741,19 +741,10 @@ class TestAggregates(TestCase):
         query = Query().from_table(
             table=Order,
             fields=[
-                '*',
-                StdDevField(
-                    'margin',
-                    over=QueryWindow()
-                ),
-                AvgField(
-                    'margin',
-                    over=QueryWindow()
-                )
+                StdDevField('margin'),
             ]
         )
         query_str = query.get_sql()
-        pprint(query.select())
         expected_query = 'SELECT STDDEV(test_project_order.margin) AS margin_stddev FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -1102,6 +1093,24 @@ class TestWindowFunctions(TestCase):
         )
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_order.*, NTH_VALUE(margin, 2) OVER (ORDER BY margin DESC) AS margin_nth_value FROM test_project_order'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_num_stddev(self):
+        query = Query().from_table(
+            table=Order,
+            fields=[
+                '*',
+                NumStdDevField(
+                    'margin',
+                    over=QueryWindow()
+                )
+            ]
+        ).order_by(
+            '-margin_num_stddev'
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_order.*, ((test_project_order.margin - (AVG(test_project_order.margin) OVER ())) / (STDDEV(test_project_order.margin) OVER ())) AS margin_num_stddev FROM test_project_order ORDER BY margin_num_stddev DESC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 

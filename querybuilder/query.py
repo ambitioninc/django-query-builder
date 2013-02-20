@@ -761,7 +761,10 @@ class Query(object):
         for join_item in self.joins:
             join_parts.append(join_item.get_sql())
 
-        return ' '.join(join_parts)
+        if len(join_parts):
+            combined_joins = ' '.join(join_parts)
+            return '{0} '.format(combined_joins)
+        return ''
 
     def build_where(self):
         """
