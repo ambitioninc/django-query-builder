@@ -446,10 +446,14 @@ class Query(object):
         """
         field_sql_parts = []
         for table in self.tables:
-            field_sql_parts.append(table.get_fields_sql())
+            sql = table.get_fields_sql()
+            if len(sql):
+                field_sql_parts.append(table.get_fields_sql())
         for join_item in self.joins:
             if len(join_item.right_table.fields):
-                field_sql_parts.append(join_item.right_table.get_fields_sql())
+                sql = join_item.right_table.get_fields_sql()
+                if len(sql):
+                    field_sql_parts.append(sql)
         sql = 'SELECT {0} '.format(', '.join(field_sql_parts))
         return sql
 
@@ -648,7 +652,9 @@ class Query(object):
         """
         table_parts = []
         for table in self.tables:
-            table_parts.append(table.get_sql())
+            sql = table.get_sql()
+            if len(sql):
+                table_parts.append(table.get_sql())
 
         sql = 'FROM {0} '.format(', '.join(table_parts))
 
