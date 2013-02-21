@@ -386,6 +386,10 @@ class TestJoins(TestCase):
 
 
 class TestWheres(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
     def test_where_eq(self):
         query = Query().from_table(
             table='test_table'
@@ -516,6 +520,39 @@ class TestWheres(TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE ((NOT(field_name <= %(A0)s)))'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_where_in_single(self):
+        query = Query().from_table(
+            table=Account
+        ).where(Q(
+            id__in=10
+        ))
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.* FROM test_project_account WHERE (id IN (%(A0)s))'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_where_in_csv(self):
+        query = Query().from_table(
+            table=Account
+        ).where(Q(
+            id__in='10,11,12'
+        ))
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.* FROM test_project_account WHERE (id IN (%(A0)s,%(A1)s,%(A2)s))'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_where_in_list(self):
+        query = Query().from_table(
+            table=Account
+        ).where(Q(
+            id__in=[10, 11, 12]
+        ))
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.* FROM test_project_account WHERE (id IN (%(A0)s,%(A1)s,%(A2)s))'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_contains(self):

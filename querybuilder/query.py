@@ -122,6 +122,7 @@ class Where(object):
         'lte': '<=',
         'contains': 'LIKE',
         'startswith': 'LIKE',
+        'in': 'IN',
     }
 
     def __init__(self):
@@ -146,7 +147,6 @@ class Where(object):
             value = '%{0}%'.format(value)
         elif operator == 'startswith':
             value = '{0}%'.format(value)
-
         return value
 
     def build_where_part(self, wheres):
@@ -175,14 +175,38 @@ class Where(object):
                 if wheres.negated:
                     condition = 'NOT({0})'.format(condition)
 
-                value = self.get_condition_value(operator_str, value)
-                named_arg = '{0}A{1}'.format(self.arg_prefix, self.arg_index)
-                self.args[named_arg] = value
-                self.arg_index += 1
-                condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
+                # check if this value is multiple values
+                if operator_str == 'in':
+
+                    # make sure value is a list
+                    if type(value) is not list:
+
+                        # convert to string in case it is a number
+                        value = str(value)
+
+                        # split on commas
+                        value = value.split(',')
+
+
+                    named_args = []
+                    for value_item in value:
+                        named_arg = self.set_arg(value_item)
+                        named_args.append('%({0})s'.format(named_arg))
+                    condition = condition.replace('?', '({0})'.format(','.join(named_args)), 1)
+                else:
+                    value = self.get_condition_value(operator_str, value)
+                    named_arg = self.set_arg(value)
+                    condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
+
                 where_parts.append(condition)
         joined_parts = ' {0} '.format(wheres.connector).join(where_parts)
         return '({0})'.format(joined_parts)
+
+    def set_arg(self, value):
+        named_arg = '{0}A{1}'.format(self.arg_prefix, self.arg_index)
+        self.args[named_arg] = value
+        self.arg_index += 1
+        return named_arg
 
 
 class Group(object):
@@ -841,6 +865,21 @@ class Query(object):
                 self._where.args.update(table.query.get_args())
 
         return self._where.args
+
+    def explain(self, sql=None, sql_args=None):
+        """
+        @return: list
+        """
+        cursor = connection.cursor()
+        if sql is None:
+            sql = self.get_sql()
+            sql_args = self.get_args()
+        elif sql_args is None:
+            sql_args = {}
+
+        cursor.execute('EXPLAIN {0}'.format(sql), sql_args)
+        rows = self._fetch_all_as_dict(cursor)
+        return rows
 
     def select(self, return_models=False, nest=False, bypass_safe_limit=False):
         """
