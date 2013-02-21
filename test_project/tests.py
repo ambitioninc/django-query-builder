@@ -1365,14 +1365,106 @@ class TestInnerQuery(TestCase):
             Account
         )
         query = Query().from_table({
-            'inner': inner_query
+            'Q0': inner_query
         })
 
         query_str = query.get_sql()
-        expected_query = 'SELECT inner.* FROM (SELECT test_project_account.* FROM test_project_account) AS inner'
+        expected_query = 'SELECT Q0.* FROM (SELECT test_project_account.* FROM test_project_account) AS Q0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
+    def test_inner_args(self):
+        inner_query = Query().from_table(
+            Account
+        ).where(
+            Q(id__gt=1) & Q(id__lt=10)
+        )
+        query = Query().from_table(
+            inner_query
+        )
 
+        query_str = query.get_sql()
+        expected_query = 'SELECT T0.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) AS T0'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_inner_outer_args(self):
+        inner_query = Query().from_table(
+            Account
+        ).where(
+            Q(id__gt=1) & Q(id__lt=10)
+        )
+        query = Query().from_table(
+            inner_query
+        ).where(
+            ~Q(id=0)
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT T0.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) AS T0 WHERE ((NOT(id = %(A0)s)))'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_inner_outer_args_many(self):
+        inner_query = Query().from_table(
+            Account
+        ).where(
+            Q(id__gt=1) & Q(id__lt=10)
+        )
+
+        inner_query2 = Query().from_table(
+            Account
+        ).where(
+            Q(id__gt=1) & Q(id__lt=10)
+        )
+
+        query = Query().from_table(
+            inner_query
+        ).from_table(
+            inner_query2
+        ).where(
+            ~Q(id=0)
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT T0.*, T1.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) AS T0, (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1A0)s AND id < %(T1A1)s)) AS T1 WHERE ((NOT(id = %(A0)s)))'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_three_levels(self):
+        inner_inner_query = Query().from_table(
+            Account
+        ).where(
+            Q(id__gt=1) & Q(id__lt=10)
+        )
+
+        inner_inner_query2 = Query().from_table(
+            Account
+        ).where(
+            Q(id__gt=1) & Q(id__lt=10)
+        )
+
+        inner_query = Query().from_table(
+            Account
+        ).where(
+            Q(id__gt=1) & Q(id__lt=10)
+        )
+
+        inner_query2 = Query().from_table(
+            inner_inner_query
+        ).from_table(
+            inner_inner_query2
+        ).where(
+            Q(id__gt=1) & Q(id__lt=10)
+        )
+
+        query = Query().from_table(
+            inner_query
+        ).from_table(
+            inner_query2
+        ).where(
+            ~Q(id=0)
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT T0.*, T1.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) AS T0, (SELECT T1T0.*, T1T1.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1T0A0)s AND id < %(T1T0A1)s)) AS T1T0, (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1T1A0)s AND id < %(T1T1A1)s)) AS T1T1 WHERE (id > %(T1A0)s AND id < %(T1A1)s)) AS T1 WHERE ((NOT(id = %(A0)s)))'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
 class TestModels(TestCase):

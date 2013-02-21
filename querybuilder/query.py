@@ -2,7 +2,7 @@ from django.db import connection
 from django.db.models import Count, Max, Min, Sum, Avg, Q
 from django.db.models.sql import AND
 from querybuilder.helpers import set_value_for_keypath
-from querybuilder.tables import TableFactory, ModelTable
+from querybuilder.tables import TableFactory, ModelTable, QueryTable
 
 
 class Join(object):
@@ -126,10 +126,12 @@ class Where(object):
 
     def __init__(self):
         self.arg_index = 0
+        self.arg_prefix = ''
         self.args = {}
         self.wheres = Q()
 
     def get_sql(self):
+        self.arg_index = 0
         if len(self.wheres):
             where = self.build_where_part(self.wheres)
             return 'WHERE {0} '.format(where)
@@ -173,8 +175,7 @@ class Where(object):
                     condition = 'NOT({0})'.format(condition)
 
                 value = self.get_condition_value(operator_str, value)
-                # named_arg = '{0}_A{1}'.format(self.get_name(self.table), self.arg_index)
-                named_arg = 'A{0}'.format(self.arg_index)
+                named_arg = '{0}A{1}'.format(self.arg_prefix, self.arg_index)
                 self.args[named_arg] = value
                 self.arg_index += 1
                 condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
@@ -252,6 +253,9 @@ class Query(object):
         self.sorters = []
         self._limit = None
         self.model_map = {}
+
+        self.table_prefix = ''
+        # self.table_index = 0
 
         # self._distinct = False
         # self.table = {}
@@ -364,11 +368,22 @@ class Query(object):
         table_index = 0
         table_names = {}
         for table in self.tables:
+            table_prefix = 'T{0}'.format(table_index)
+            auto_alias = '{0}{1}'.format(self.table_prefix, table_prefix)
+
+            # prefix inner query args and update self args
+            if type(table) is QueryTable:
+                table.query.prefix_args(auto_alias)
+                table.query.table_prefix = table_prefix
+
             identifier = table.get_identifier()
             if identifier is None or identifier in table_names:
-                table.auto_alias = 'T{0}'.format(table_index)
-                table_index += 1
+                table.auto_alias = auto_alias
             table_names[identifier] = True
+            table_index += 1
+
+    def prefix_args(self, prefix):
+        self._where.arg_prefix = prefix
 
     def get_sql(self, debug=False, use_cache=True):
         """
