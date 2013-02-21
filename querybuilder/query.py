@@ -279,14 +279,11 @@ class Query(object):
         """
         self.init_defaults()
 
-    def from_table(self, table=None, fields=None, schema=None):
+    def from_table(self, table=None, fields=['*'], schema=None):
         """
         @return: self
         """
         # self.mark_dirty()
-
-        if fields is None:
-            fields = ['*']
 
         self.tables.append(TableFactory(
             table=table,
