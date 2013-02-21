@@ -27,7 +27,7 @@ class TableFactory(object):
 class Table(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, table=None, fields=['*'], schema=None, extract_fields=False, prefix_fields=False,
+    def __init__(self, table=None, fields=None, schema=None, extract_fields=False, prefix_fields=False,
                  field_prefix=None, owner=None, alias=None):
         self.table = table
         self.owner = owner
@@ -41,7 +41,6 @@ class Table(object):
         self.field_prefix = field_prefix
 
         self.init_defaults()
-
         if fields:
             self.set_fields(fields)
 

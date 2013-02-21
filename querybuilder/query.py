@@ -171,6 +171,10 @@ class Where(object):
                     else:
                         field_name = '.'.join(field_parts[:-1])
 
+                # check if we are comparing to null
+                if value is None:
+                    operator = 'IS'
+
                 condition = '{0} {1} ?'.format(field_name, operator)
                 if wheres.negated:
                     condition = 'NOT({0})'.format(condition)
@@ -412,8 +416,8 @@ class Query(object):
         """
         @return: self
         """
-        if self.sql and use_cache and not debug:
-            return self.sql
+        # if self.sql and use_cache and not debug:
+        #     return self.sql
 
         self.check_name_collisions()
 
