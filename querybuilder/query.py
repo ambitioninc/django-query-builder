@@ -132,6 +132,7 @@ class Where(object):
 
     def get_sql(self):
         self.arg_index = 0
+        self.args = {}
         if len(self.wheres):
             where = self.build_where_part(self.wheres)
             return 'WHERE {0} '.format(where)
@@ -371,15 +372,16 @@ class Query(object):
             table_prefix = 'T{0}'.format(table_index)
             auto_alias = '{0}{1}'.format(self.table_prefix, table_prefix)
 
+            identifier = table.get_identifier()
+            if identifier is None or identifier in table_names:
+                table.auto_alias = auto_alias
+            table_names[identifier] = True
+
             # prefix inner query args and update self args
             if type(table) is QueryTable:
                 table.query.prefix_args(auto_alias)
                 table.query.table_prefix = table_prefix
 
-            identifier = table.get_identifier()
-            if identifier is None or identifier in table_names:
-                table.auto_alias = auto_alias
-            table_names[identifier] = True
             table_index += 1
 
     def prefix_args(self, prefix):
@@ -830,6 +832,13 @@ class Query(object):
     #
     #     return table_identifier
 
+    def get_args(self):
+        for table in self.tables:
+            if type(table) is QueryTable:
+                self._where.args.update(table.query.get_args())
+
+        return self._where.args
+
     def select(self, return_models=False, nest=False, bypass_safe_limit=False):
         """
         @return: list
@@ -841,7 +850,7 @@ class Query(object):
                     self.limit(Query.safe_limit)
 
         cursor = connection.cursor()
-        cursor.execute(self.get_sql(), self._where.args)
+        cursor.execute(self.get_sql(), self.get_args())
         rows = self._fetch_all_as_dict(cursor)
 
         if return_models:
