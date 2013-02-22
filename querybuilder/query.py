@@ -1,8 +1,9 @@
 from django.db import connection
 from django.db.models import Count, Max, Min, Sum, Avg, Q
 from django.db.models.sql import AND
+from querybuilder.fields import FieldFactory
 from querybuilder.helpers import set_value_for_keypath
-from querybuilder.tables import TableFactory, ModelTable, QueryTable
+from querybuilder.tables import TableFactory, ModelTable, QueryTable, Table
 
 
 class Join(object):
@@ -216,28 +217,32 @@ class Where(object):
 class Group(object):
 
     def __init__(self, field=None, table=None):
-        self.field = field
-        self.table = table
+        self.field = FieldFactory(field)
+        self.table = TableFactory(table)
+        if self.table and self.field.table is None:
+            self.field.set_table(self.table)
 
     def get_name(self):
         """
         Gets the name to reference the grouped field
         :return: :rtype: str
         """
-        if self.table:
-            return '{0}.{1}'.format(self.table, self.field)
-        return '{0}'.format(self.field)
+        return self.field.get_identifier()
 
 
 class Sorter(object):
 
     def __init__(self, field=None, table=None, desc=False):
         self.desc = desc
-        if field[0] == '-':
+        self.field = FieldFactory(field)
+        self.table = TableFactory(table)
+        if self.table and self.field.table is None:
+            self.field.set_table(self.table)
+
+        if self.field.field[0] == '-':
             self.desc = True
-            field = field[1:]
-        self.field = field
-        self.table = table
+            self.field.field = self.field.field[1:]
+            self.field.name = self.field.name[1:]
 
     def get_name(self):
         """
@@ -248,9 +253,8 @@ class Sorter(object):
             direction = 'DESC'
         else:
             direction = 'ASC'
-        if self.table:
-            return '{0}.{1} {2}'.format(self.table, self.field, direction)
-        return '{0} {1}'.format(self.field, direction)
+
+        return '{0} {1}'.format(self.field.get_identifier(), direction)
 
 
 class Limit(object):
@@ -307,7 +311,7 @@ class Query(object):
         """
         self.init_defaults()
 
-    def from_table(self, table=None, fields=['*'], schema=None):
+    def from_table(self, table=None, fields=['*'], schema=None, **kwargs):
         """
         @return: self
         """
@@ -318,6 +322,7 @@ class Query(object):
             fields=fields,
             schema=schema,
             owner=self,
+            **kwargs
         ))
 
         return self
@@ -862,6 +867,21 @@ class Query(object):
     #         table_identifier = '{0}'.format(table_name)
     #
     #     return table_identifier
+
+    def find_table(self, table):
+        """
+        Finds a table by name or alias. The FROM tables and JOIN tables
+        are included in the search.
+        :param table: str of a table name or alias or a ModelBase instance
+        :return: :rtype: Table
+        """
+        table = TableFactory(table)
+        identifier = table.get_identifier()
+        join_tables = [join_item.right_table for join_item in self.joins]
+        for table in (self.tables + join_tables):
+            if table.get_identifier() == identifier:
+                return table
+        return None
 
     def get_args(self):
         for table in self.tables:

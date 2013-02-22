@@ -1547,7 +1547,7 @@ class TestModels(TestCase):
                 '*'
             ]
         )
-
+        print query.get_sql()
         rows = query.select(True)
 
         self.assertGreater(len(rows), 0, 'No records')
@@ -1684,3 +1684,108 @@ class TestLogger(TestCase):
         LogManager.enable_logging()
         query.select()
         self.assertEqual(logger_one.count(), 2, 'Incorrect number of queries')
+
+
+class TestMiscQuery(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_find_table(self):
+        query = Query().from_table(
+            table=Account
+        ).from_table(
+            table={
+                'account2': Account
+            }
+        ).join(Order)
+
+        table = query.find_table(Account)
+        self.assertIsNotNone(table, 'Table not found')
+
+        result = table.get_identifier()
+        expected = 'test_project_account'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))
+
+    def test_find_table_alias(self):
+        query = Query().from_table(
+            table=Account
+        ).from_table(
+            table={
+                'account2': Account
+            }
+        ).join(Order)
+
+        table = query.find_table('account2')
+        self.assertIsNotNone(table, 'Table not found')
+
+        result = table.get_identifier()
+        expected = 'account2'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))
+
+    def test_find_join_table(self):
+        query = Query().from_table(
+            table=Account
+        ).from_table(
+            table={
+                'account2': Account
+            }
+        ).join(Order)
+
+        table = query.find_table(Order)
+        self.assertIsNotNone(table, 'Table not found')
+
+        result = table.get_identifier()
+        expected = 'test_project_order'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))
+
+
+class TestMiscTable(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_find_field(self):
+        query = Query().from_table(
+            table=Account,
+            extract_fields=True,
+        ).from_table(
+            table={
+                'account2': Account
+            },
+            fields=[{
+                'name': 'first_name'
+            }]
+        ).join(Order)
+
+        table = query.tables[0]
+        field = table.find_field('id')
+        self.assertIsNotNone(field, 'Field not found')
+
+        result = field.get_identifier()
+        expected = 'test_project_account.id'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))
+
+    def test_find_field_alias(self):
+        query = Query().from_table(
+            table=Account,
+            extract_fields=True,
+        ).from_table(
+            table={
+                'account2': Account
+            },
+            fields=[{
+                'name': 'first_name'
+            }]
+        ).join(Order)
+
+        table = query.tables[1]
+        field = table.find_field(alias='name')
+        self.assertIsNotNone(field, 'Field not found')
+
+        result = field.get_identifier()
+        expected = 'name'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))
+        result = field.name
+        expected = 'first_name'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))
