@@ -244,7 +244,7 @@ class Sorter(object):
             self.field.field = self.field.field[1:]
             self.field.name = self.field.name[1:]
 
-    def get_name(self):
+    def get_name(self, use_alias=True):
         """
         Gets the name to reference the sorted field
         :return: :rtype: str
@@ -254,7 +254,9 @@ class Sorter(object):
         else:
             direction = 'ASC'
 
-        return '{0} {1}'.format(self.field.get_identifier(), direction)
+        if use_alias:
+            return '{0} {1}'.format(self.field.get_identifier(), direction)
+        return '{0} {1}'.format(self.field.get_select_sql(), direction)
 
 
 class Limit(object):
@@ -724,14 +726,14 @@ class Query(object):
             return 'GROUP BY {0} '.format(', '.join(groups))
         return ''
 
-    def build_order_by(self):
+    def build_order_by(self, use_alias=True):
         """
         @return: str
         """
         if len(self.sorters):
             sorters = []
             for sorter in self.sorters:
-                sorters.append(sorter.get_name())
+                sorters.append(sorter.get_name(use_alias=use_alias))
             return 'ORDER BY {0} '.format(', '.join(sorters))
         return ''
 
@@ -1027,7 +1029,7 @@ class QueryWindow(Query):
         """
         sql = ''
         sql += self.build_partition_by_fields()
-        sql += self.build_order_by()
+        sql += self.build_order_by(use_alias=False)
         sql += self.build_limit()
         sql = sql.strip()
         sql = 'OVER ({0})'.format(sql)

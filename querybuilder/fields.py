@@ -94,13 +94,16 @@ class AggregateField(Field):
 
     def __init__(self, field=None, table=None, alias=None, over=None):
         super(AggregateField, self).__init__(field, table, alias)
+        self.field = FieldFactory(field)
 
         self.name = self.function_name
         self.over = over
 
-        field_name = self.field
-        if field_name == '*':
-            field_name = 'all'
+        field_name = None
+        if self.field:
+            field_name = self.field.field
+            if field_name == '*':
+                field_name = 'all'
 
         if field_name:
             self.auto_alias = '{0}_{1}'.format(field_name, self.name.lower())
@@ -115,17 +118,17 @@ class AggregateField(Field):
         )
 
     def get_field_identifier(self):
-        if self.table:
-            return '{0}.{1}'.format(
-                self.table.get_identifier(),
-                self.field,
-            )
-        return self.field
+        return self.field.get_identifier()
 
     def get_over(self):
         if self.over:
             return ' {0}'.format(self.over.get_sql())
         return ''
+
+    def set_table(self, table):
+        super(AggregateField, self).set_table(table)
+        if self.field and self.field.table is None:
+            self.field.table = self.table
 
 
 class CountField(AggregateField):
@@ -221,8 +224,8 @@ class LeadLagField(AggregateField):
 
     def get_field_identifier(self):
         if self.default is None:
-            return '{0}, {1}'.format(self.field, self.offset)
-        return "{0}, {1}, '{2}'".format(self.field, self.offset, self.default)
+            return '{0}, {1}'.format(self.field.get_identifier(), self.offset)
+        return "{0}, {1}, '{2}'".format(self.field.get_identifier(), self.offset, self.default)
 
 
 class LagField(LeadLagField):
@@ -236,15 +239,9 @@ class LeadField(LeadLagField):
 class FirstValueField(AggregateField):
     function_name = 'first_value'
 
-    def get_field_identifier(self):
-        return self.field
-
 
 class LastValueField(AggregateField):
     function_name = 'last_value'
-
-    def get_field_identifier(self):
-        return self.field
 
 
 class NthValueField(AggregateField):
@@ -255,7 +252,7 @@ class NthValueField(AggregateField):
         self.n = n
 
     def get_field_identifier(self):
-        return '{0}, {1}'.format(self.field, self.n)
+        return '{0}, {1}'.format(self.field.get_identifier(), self.n)
 
 
 class DatePartField(Field):
@@ -289,6 +286,8 @@ class DatePartField(Field):
         if self.name == 'all':
             datetime_str = self.field
             self.add_to_table(AllEpoch(datetime_str, table=self.table), epoch_alias)
+            # do not add the date order by for "all" grouping because we want to order by rank
+            return
         elif self.name == 'none':
             datetime_str = self.field
             self.add_to_table(Epoch(datetime_str, table=self.table), epoch_alias, add_group=True)
