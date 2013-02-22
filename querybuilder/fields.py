@@ -100,7 +100,7 @@ class AggregateField(Field):
         self.over = over
 
         field_name = None
-        if self.field:
+        if self.field and type(self.field.field) is str:
             field_name = self.field.field
             if field_name == '*':
                 field_name = 'all'
@@ -224,8 +224,8 @@ class LeadLagField(AggregateField):
 
     def get_field_identifier(self):
         if self.default is None:
-            return '{0}, {1}'.format(self.field.get_identifier(), self.offset)
-        return "{0}, {1}, '{2}'".format(self.field.get_identifier(), self.offset, self.default)
+            return '{0}, {1}'.format(self.field.get_select_sql(), self.offset)
+        return "{0}, {1}, '{2}'".format(self.field.get_select_sql(), self.offset, self.default)
 
 
 class LagField(LeadLagField):
@@ -252,7 +252,7 @@ class NthValueField(AggregateField):
         self.n = n
 
     def get_field_identifier(self):
-        return '{0}, {1}'.format(self.field.get_identifier(), self.n)
+        return '{0}, {1}'.format(self.field.get_select_sql(), self.n)
 
 
 class DatePartField(Field):
