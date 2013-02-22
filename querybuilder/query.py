@@ -236,10 +236,16 @@ class Sorter(object):
         self.desc = desc
         self.field = FieldFactory(field)
         self.table = TableFactory(table)
+
+        # if the field is not associated with a table but a table was
+        # passed in, set the field's table to the passed table
         if self.table and self.field.table is None:
             self.field.set_table(self.table)
 
-        if self.field.field[0] == '-':
+        # if the specified field is a string with '-' at the beginning
+        # the '-' needs to be removed and this sorter needs to be
+        # set to desc
+        if type(self.field.field) is str and self.field.field[0] == '-':
             self.desc = True
             self.field.field = self.field.field[1:]
             self.field.name = self.field.name[1:]
