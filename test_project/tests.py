@@ -1,4 +1,3 @@
-from pprint import pprint
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
@@ -1547,7 +1546,6 @@ class TestModels(TestCase):
                 '*'
             ]
         )
-        print query.get_sql()
         rows = query.select(True)
 
         self.assertGreater(len(rows), 0, 'No records')
