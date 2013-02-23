@@ -1026,8 +1026,8 @@ class Query(object):
 
 class QueryWindow(Query):
 
-    def partition_by(self, group):
-        return super(QueryWindow, self).group_by(group)
+    def partition_by(self, field=None, table=None):
+        return super(QueryWindow, self).group_by(field, table)
 
     def get_sql(self):
         """
