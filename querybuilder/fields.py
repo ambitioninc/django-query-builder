@@ -236,6 +236,30 @@ class LeadField(LeadLagField):
     function_name = 'lead'
 
 
+class LeadLagDifferenceField(LeadLagField):
+
+    def get_select_sql(self):
+        return '(({0}) - ({1}({2}){3}))'.format(
+            self.field.get_select_sql(),
+            self.name.upper(),
+            self.get_field_identifier(),
+            self.get_over(),
+        )
+
+    def get_field_identifier(self):
+        if self.default is None:
+            return '{0}, {1}'.format(self.field.get_select_sql(), self.offset)
+        return "{0}, {1}, '{2}'".format(self.field.get_select_sql(), self.offset, self.default)
+
+
+class LagDifferenceField(LeadLagDifferenceField):
+    function_name = 'lag'
+
+
+class LeadDifferenceField(LeadLagDifferenceField):
+    function_name = 'lead'
+
+
 class FirstValueField(AggregateField):
     function_name = 'first_value'
 
