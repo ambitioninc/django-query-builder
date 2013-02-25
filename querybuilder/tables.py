@@ -22,6 +22,7 @@ class TableFactory(object):
             for key, value in kwargs.items():
                 setattr(table, key, value)
             return table
+        return None
 
 
 class Table(object):
@@ -89,9 +90,8 @@ class Table(object):
     def add_field(self, field):
         field = FieldFactory(
             field,
-            table=self,
         )
-
+        field.set_table(self)
         self.before_add_field(field)
         field.before_add()
 
@@ -123,6 +123,16 @@ class Table(object):
 
     def get_field_prefix(self):
         return self.field_prefix or self.name
+
+    def find_field(self, field=None, alias=None):
+        if alias:
+            field = alias
+        field = FieldFactory(field, table=self, alias=alias)
+        identifier = field.get_identifier()
+        for field in self.fields:
+            if field.get_identifier() == identifier:
+                return field
+        return None
 
 
 class SimpleTable(Table):

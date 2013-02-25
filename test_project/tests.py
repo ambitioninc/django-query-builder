@@ -1,4 +1,3 @@
-from pprint import pprint
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
@@ -1061,7 +1060,7 @@ class TestWindowFunctions(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, LAG(margin, 1) OVER (ORDER BY margin DESC) AS margin_lag FROM test_project_order'
+        expected_query = 'SELECT test_project_order.*, LAG(test_project_order.margin, 1) OVER (ORDER BY margin DESC) AS margin_lag FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_lag_default(self):
@@ -1079,7 +1078,7 @@ class TestWindowFunctions(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, LAG(margin, 1, \'0\') OVER (ORDER BY margin DESC) AS margin_lag FROM test_project_order'
+        expected_query = 'SELECT test_project_order.*, LAG(test_project_order.margin, 1, \'0\') OVER (ORDER BY margin DESC) AS margin_lag FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_lead(self):
@@ -1096,7 +1095,7 @@ class TestWindowFunctions(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, LEAD(margin, 1) OVER (ORDER BY margin DESC) AS margin_lead FROM test_project_order'
+        expected_query = 'SELECT test_project_order.*, LEAD(test_project_order.margin, 1) OVER (ORDER BY margin DESC) AS margin_lead FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_first_value(self):
@@ -1113,7 +1112,7 @@ class TestWindowFunctions(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, FIRST_VALUE(margin) OVER (ORDER BY margin DESC) AS margin_first_value FROM test_project_order'
+        expected_query = 'SELECT test_project_order.*, FIRST_VALUE(test_project_order.margin) OVER (ORDER BY margin DESC) AS margin_first_value FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_last_value(self):
@@ -1130,7 +1129,7 @@ class TestWindowFunctions(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, LAST_VALUE(margin) OVER (ORDER BY margin ASC) AS margin_last_value FROM test_project_order'
+        expected_query = 'SELECT test_project_order.*, LAST_VALUE(test_project_order.margin) OVER (ORDER BY margin ASC) AS margin_last_value FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_nth_value(self):
@@ -1148,7 +1147,7 @@ class TestWindowFunctions(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, NTH_VALUE(margin, 2) OVER (ORDER BY margin DESC) AS margin_nth_value FROM test_project_order'
+        expected_query = 'SELECT test_project_order.*, NTH_VALUE(test_project_order.margin, 2) OVER (ORDER BY margin DESC) AS margin_nth_value FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_num_stddev(self):
@@ -1395,7 +1394,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(epoch from MIN(test_project_order.time)) as INT) AS time__epoch FROM test_project_order ORDER BY time__epoch ASC'
+        expected_query = 'SELECT CAST(extract(epoch from MIN(test_project_order.time)) as INT) AS time__epoch FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
@@ -1547,7 +1546,6 @@ class TestModels(TestCase):
                 '*'
             ]
         )
-
         rows = query.select(True)
 
         self.assertGreater(len(rows), 0, 'No records')
@@ -1684,3 +1682,108 @@ class TestLogger(TestCase):
         LogManager.enable_logging()
         query.select()
         self.assertEqual(logger_one.count(), 2, 'Incorrect number of queries')
+
+
+class TestMiscQuery(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_find_table(self):
+        query = Query().from_table(
+            table=Account
+        ).from_table(
+            table={
+                'account2': Account
+            }
+        ).join(Order)
+
+        table = query.find_table(Account)
+        self.assertIsNotNone(table, 'Table not found')
+
+        result = table.get_identifier()
+        expected = 'test_project_account'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))
+
+    def test_find_table_alias(self):
+        query = Query().from_table(
+            table=Account
+        ).from_table(
+            table={
+                'account2': Account
+            }
+        ).join(Order)
+
+        table = query.find_table('account2')
+        self.assertIsNotNone(table, 'Table not found')
+
+        result = table.get_identifier()
+        expected = 'account2'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))
+
+    def test_find_join_table(self):
+        query = Query().from_table(
+            table=Account
+        ).from_table(
+            table={
+                'account2': Account
+            }
+        ).join(Order)
+
+        table = query.find_table(Order)
+        self.assertIsNotNone(table, 'Table not found')
+
+        result = table.get_identifier()
+        expected = 'test_project_order'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))
+
+
+class TestMiscTable(TestCase):
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_find_field(self):
+        query = Query().from_table(
+            table=Account,
+            extract_fields=True,
+        ).from_table(
+            table={
+                'account2': Account
+            },
+            fields=[{
+                'name': 'first_name'
+            }]
+        ).join(Order)
+
+        table = query.tables[0]
+        field = table.find_field('id')
+        self.assertIsNotNone(field, 'Field not found')
+
+        result = field.get_identifier()
+        expected = 'test_project_account.id'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))
+
+    def test_find_field_alias(self):
+        query = Query().from_table(
+            table=Account,
+            extract_fields=True,
+        ).from_table(
+            table={
+                'account2': Account
+            },
+            fields=[{
+                'name': 'first_name'
+            }]
+        ).join(Order)
+
+        table = query.tables[1]
+        field = table.find_field(alias='name')
+        self.assertIsNotNone(field, 'Field not found')
+
+        result = field.get_identifier()
+        expected = 'name'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))
+        result = field.name
+        expected = 'first_name'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))

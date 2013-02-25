@@ -1,8 +1,9 @@
 from django.db import connection
 from django.db.models import Count, Max, Min, Sum, Avg, Q
 from django.db.models.sql import AND
+from querybuilder.fields import FieldFactory
 from querybuilder.helpers import set_value_for_keypath
-from querybuilder.tables import TableFactory, ModelTable, QueryTable
+from querybuilder.tables import TableFactory, ModelTable, QueryTable, Table
 
 
 class Join(object):
@@ -216,30 +217,40 @@ class Where(object):
 class Group(object):
 
     def __init__(self, field=None, table=None):
-        self.field = field
-        self.table = table
+        self.field = FieldFactory(field)
+        self.table = TableFactory(table)
+        if self.table and self.field.table is None:
+            self.field.set_table(self.table)
 
     def get_name(self):
         """
         Gets the name to reference the grouped field
         :return: :rtype: str
         """
-        if self.table:
-            return '{0}.{1}'.format(self.table, self.field)
-        return '{0}'.format(self.field)
+        return self.field.get_identifier()
 
 
 class Sorter(object):
 
     def __init__(self, field=None, table=None, desc=False):
         self.desc = desc
-        if field[0] == '-':
-            self.desc = True
-            field = field[1:]
-        self.field = field
-        self.table = table
+        self.field = FieldFactory(field)
+        self.table = TableFactory(table)
 
-    def get_name(self):
+        # if the field is not associated with a table but a table was
+        # passed in, set the field's table to the passed table
+        if self.table and self.field.table is None:
+            self.field.set_table(self.table)
+
+        # if the specified field is a string with '-' at the beginning
+        # the '-' needs to be removed and this sorter needs to be
+        # set to desc
+        if type(self.field.field) is str and self.field.field[0] == '-':
+            self.desc = True
+            self.field.field = self.field.field[1:]
+            self.field.name = self.field.name[1:]
+
+    def get_name(self, use_alias=True):
         """
         Gets the name to reference the sorted field
         :return: :rtype: str
@@ -248,9 +259,10 @@ class Sorter(object):
             direction = 'DESC'
         else:
             direction = 'ASC'
-        if self.table:
-            return '{0}.{1} {2}'.format(self.table, self.field, direction)
-        return '{0} {1}'.format(self.field, direction)
+
+        if use_alias:
+            return '{0} {1}'.format(self.field.get_identifier(), direction)
+        return '{0} {1}'.format(self.field.get_select_sql(), direction)
 
 
 class Limit(object):
@@ -307,7 +319,7 @@ class Query(object):
         """
         self.init_defaults()
 
-    def from_table(self, table=None, fields=['*'], schema=None):
+    def from_table(self, table=None, fields=['*'], schema=None, **kwargs):
         """
         @return: self
         """
@@ -318,6 +330,7 @@ class Query(object):
             fields=fields,
             schema=schema,
             owner=self,
+            **kwargs
         ))
 
         return self
@@ -719,14 +732,14 @@ class Query(object):
             return 'GROUP BY {0} '.format(', '.join(groups))
         return ''
 
-    def build_order_by(self):
+    def build_order_by(self, use_alias=True):
         """
         @return: str
         """
         if len(self.sorters):
             sorters = []
             for sorter in self.sorters:
-                sorters.append(sorter.get_name())
+                sorters.append(sorter.get_name(use_alias=use_alias))
             return 'ORDER BY {0} '.format(', '.join(sorters))
         return ''
 
@@ -863,6 +876,21 @@ class Query(object):
     #
     #     return table_identifier
 
+    def find_table(self, table):
+        """
+        Finds a table by name or alias. The FROM tables and JOIN tables
+        are included in the search.
+        :param table: str of a table name or alias or a ModelBase instance
+        :return: :rtype: Table
+        """
+        table = TableFactory(table)
+        identifier = table.get_identifier()
+        join_tables = [join_item.right_table for join_item in self.joins]
+        for table in (self.tables + join_tables):
+            if table.get_identifier() == identifier:
+                return table
+        return None
+
     def get_args(self):
         for table in self.tables:
             if type(table) is QueryTable:
@@ -998,8 +1026,8 @@ class Query(object):
 
 class QueryWindow(Query):
 
-    def partition_by(self, group):
-        return super(QueryWindow, self).group_by(group)
+    def partition_by(self, field=None, table=None):
+        return super(QueryWindow, self).group_by(field, table)
 
     def get_sql(self):
         """
@@ -1007,7 +1035,7 @@ class QueryWindow(Query):
         """
         sql = ''
         sql += self.build_partition_by_fields()
-        sql += self.build_order_by()
+        sql += self.build_order_by(use_alias=False)
         sql += self.build_limit()
         sql = sql.strip()
         sql = 'OVER ({0})'.format(sql)

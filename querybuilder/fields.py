@@ -16,6 +16,7 @@ class FieldFactory(object):
             for key, value in kwargs.items():
                 setattr(field, key, value)
             return field
+        return None
 
 
 class Field(object):
@@ -38,7 +39,7 @@ class Field(object):
         """
         alias = self.get_alias()
         if alias:
-            return '{0} AS {1}'.format(self.get_identifier(), alias)
+            return '{0} AS {1}'.format(self.get_select_sql(), alias)
 
         return self.get_identifier()
 
@@ -49,7 +50,7 @@ class Field(object):
         elif self.auto_alias:
             alias = self.auto_alias
 
-        if self.table.prefix_fields:
+        if self.table and self.table.prefix_fields:
             field_prefix = self.table.get_field_prefix()
             if alias:
                 alias = '{0}__{1}'.format(field_prefix, alias)
@@ -58,18 +59,28 @@ class Field(object):
 
         return alias
 
-    @abc.abstractmethod
     def get_identifier(self):
         """
         Gets the name for the field of how it should
-        be references within a query. It will be
+        be referenced within a query. It will be
         prefixed with the table name or table alias
         :return: :rtype: str
         """
-        pass
+        alias = self.get_alias()
+        if alias:
+            return alias
+        return self.get_select_sql()
+
+    def get_select_sql(self):
+        if self.table:
+            return '{0}.{1}'.format(self.table.get_identifier(), self.name)
+        return '{0}'.format(self.name)
 
     def before_add(self):
         pass
+
+    def set_table(self, table):
+        self.table = table
 
 
 class SimpleField(Field):
@@ -77,29 +88,29 @@ class SimpleField(Field):
         super(SimpleField, self).__init__(field, table, alias)
         self.name = field
 
-    def get_identifier(self):
-        return '{0}.{1}'.format(self.table.get_identifier(), self.name)
-
 
 class AggregateField(Field):
     function_name = None
 
     def __init__(self, field=None, table=None, alias=None, over=None):
         super(AggregateField, self).__init__(field, table, alias)
+        self.field = FieldFactory(field)
 
         self.name = self.function_name
         self.over = over
 
-        field_name = self.field
-        if field_name == '*':
-            field_name = 'all'
+        field_name = None
+        if self.field and type(self.field.field) is str:
+            field_name = self.field.field
+            if field_name == '*':
+                field_name = 'all'
 
         if field_name:
             self.auto_alias = '{0}_{1}'.format(field_name, self.name.lower())
         else:
             self.auto_alias = self.name.lower()
 
-    def get_identifier(self):
+    def get_select_sql(self):
         return '{0}({1}){2}'.format(
             self.name.upper(),
             self.get_field_identifier(),
@@ -107,15 +118,17 @@ class AggregateField(Field):
         )
 
     def get_field_identifier(self):
-        return '{0}.{1}'.format(
-            self.table.get_identifier(),
-            self.field,
-        )
+        return self.field.get_identifier()
 
     def get_over(self):
         if self.over:
             return ' {0}'.format(self.over.get_sql())
         return ''
+
+    def set_table(self, table):
+        super(AggregateField, self).set_table(table)
+        if self.field and self.field.table is None:
+            self.field.table = self.table
 
 
 class CountField(AggregateField):
@@ -141,7 +154,7 @@ class StdDevField(AggregateField):
 class NumStdDevField(AggregateField):
     function_name = 'num_stddev'
 
-    def get_identifier(self):
+    def get_select_sql(self):
         return '(({0} - (AVG({0}){1})) / (STDDEV({0}){1}))'.format(
             self.get_field_identifier(),
             self.get_over(),
@@ -211,8 +224,8 @@ class LeadLagField(AggregateField):
 
     def get_field_identifier(self):
         if self.default is None:
-            return '{0}, {1}'.format(self.field, self.offset)
-        return "{0}, {1}, '{2}'".format(self.field, self.offset, self.default)
+            return '{0}, {1}'.format(self.field.get_select_sql(), self.offset)
+        return "{0}, {1}, '{2}'".format(self.field.get_select_sql(), self.offset, self.default)
 
 
 class LagField(LeadLagField):
@@ -223,18 +236,36 @@ class LeadField(LeadLagField):
     function_name = 'lead'
 
 
-class FirstValueField(AggregateField):
-    function_name = 'first_value'
+class LeadLagDifferenceField(LeadLagField):
+
+    def get_select_sql(self):
+        return '(({0}) - ({1}({2}){3}))'.format(
+            self.field.get_select_sql(),
+            self.name.upper(),
+            self.get_field_identifier(),
+            self.get_over(),
+        )
 
     def get_field_identifier(self):
-        return self.field
+        if self.default is None:
+            return '{0}, {1}'.format(self.field.get_select_sql(), self.offset)
+        return "{0}, {1}, '{2}'".format(self.field.get_select_sql(), self.offset, self.default)
+
+
+class LagDifferenceField(LeadLagDifferenceField):
+    function_name = 'lag'
+
+
+class LeadDifferenceField(LeadLagDifferenceField):
+    function_name = 'lead'
+
+
+class FirstValueField(AggregateField):
+    function_name = 'first_value'
 
 
 class LastValueField(AggregateField):
     function_name = 'last_value'
-
-    def get_field_identifier(self):
-        return self.field
 
 
 class NthValueField(AggregateField):
@@ -245,7 +276,7 @@ class NthValueField(AggregateField):
         self.n = n
 
     def get_field_identifier(self):
-        return '{0}, {1}'.format(self.field, self.n)
+        return '{0}, {1}'.format(self.field.get_select_sql(), self.n)
 
 
 class DatePartField(Field):
@@ -261,7 +292,7 @@ class DatePartField(Field):
 
         self.auto_alias = '{0}__{1}'.format(self.field, self.name)
 
-    def get_identifier(self):
+    def get_select_sql(self):
         lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
         return 'CAST(extract({0} from {1}) as INT)'.format(self.name, lookup_field)
 
@@ -279,6 +310,8 @@ class DatePartField(Field):
         if self.name == 'all':
             datetime_str = self.field
             self.add_to_table(AllEpoch(datetime_str, table=self.table), epoch_alias)
+            # do not add the date order by for "all" grouping because we want to order by rank
+            return
         elif self.name == 'none':
             datetime_str = self.field
             self.add_to_table(Epoch(datetime_str, table=self.table), epoch_alias, add_group=True)
@@ -374,7 +407,7 @@ class Epoch(DatePartField):
 
 class GroupEpoch(Epoch):
 
-    def get_identifier(self):
+    def get_select_sql(self):
         lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
         return 'CAST(extract({0} from date_trunc(\'{1}\', {2})) as INT)'.format(
             self.name,
@@ -385,7 +418,7 @@ class GroupEpoch(Epoch):
 
 class AllEpoch(Epoch):
 
-    def get_identifier(self):
+    def get_select_sql(self):
         lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
         return 'CAST(extract({0} from MIN({1})) as INT)'.format(
             self.name,
