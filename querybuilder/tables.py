@@ -109,17 +109,20 @@ class Table(object):
         for field in fields:
             self.add_field(field)
 
-    def get_fields_sql(self):
+    def get_field_sql(self):
         """
         Loop through this tables fields and calls the get_sql
         method on each of them to build the field list for the FROM
         clause
         :return: :rtype: str
         """
-        parts = []
-        for field in self.fields:
-            parts.append(field.get_sql())
-        return ', '.join(parts)
+        return [field.get_sql() for field in self.fields]
+
+    def get_field_names(self):
+        return [field.get_name() for field in self.fields]
+
+    def get_field_identifiers(self):
+        return [field.get_identifier() for field in self.fields]
 
     def get_field_prefix(self):
         return self.field_prefix or self.name

@@ -481,21 +481,32 @@ class Query(object):
 
         return sql
 
+    def get_field_names(self):
+        field_names = []
+        for table in self.tables:
+            field_names += table.get_field_names()
+        for join_item in self.joins:
+            field_names += join_item.right_table.get_field_names()
+        return field_names
+
+    def get_field_identifiers(self):
+        field_identifiers = []
+        for table in self.tables:
+            field_identifiers += table.get_field_identifiers()
+        for join_item in self.joins:
+            field_identifiers += join_item.right_table.get_field_identifiers()
+        return field_identifiers
+
     def build_select_fields(self):
         """
         @return: str
         """
-        field_sql_parts = []
+        field_sql = []
         for table in self.tables:
-            sql = table.get_fields_sql()
-            if len(sql):
-                field_sql_parts.append(table.get_fields_sql())
+            field_sql += table.get_field_sql()
         for join_item in self.joins:
-            if len(join_item.right_table.fields):
-                sql = join_item.right_table.get_fields_sql()
-                if len(sql):
-                    field_sql_parts.append(sql)
-        sql = 'SELECT {0} '.format(', '.join(field_sql_parts))
+            field_sql += join_item.right_table.get_field_sql()
+        sql = 'SELECT {0} '.format(', '.join(field_sql))
         return sql
 
         # fields = []
