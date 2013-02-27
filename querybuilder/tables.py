@@ -125,7 +125,7 @@ class Table(object):
         return [field.get_identifier() for field in self.fields]
 
     def get_field_prefix(self):
-        return self.field_prefix or self.name
+        return self.field_prefix or self.get_identifier()
 
     def find_field(self, field=None, alias=None):
         if alias:
