@@ -8,7 +8,7 @@ from querybuilder.tables import TableFactory, ModelTable, QueryTable, Table
 
 class Join(object):
 
-    def __init__(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, owner=None, extract_fields=True, prefix_fields=True):
+    def __init__(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, owner=None, extract_fields=True, prefix_fields=True, field_prefix=None):
         self.owner = owner
         self.left_table = None
         self.right_table = None
@@ -25,6 +25,7 @@ class Join(object):
             extract_fields=extract_fields,
             prefix_fields=prefix_fields,
             owner=self.owner,
+            field_prefix=field_prefix,
         ))
 
     def get_sql(self):
@@ -57,9 +58,10 @@ class Join(object):
             # check if this join type is for a related field
             for field in self.left_table.model._meta.get_all_related_objects():
                 if field.model == self.right_table.model:
-                    self.right_table.field_prefix = field.get_accessor_name()
-                    if len(self.right_table.field_prefix) > 4 and self.right_table.field_prefix[-4:] == '_set':
-                        self.right_table.field_prefix = self.right_table.field_prefix[:-4]
+                    if self.right_table.field_prefix is None:
+                        self.right_table.field_prefix = field.get_accessor_name()
+                        if len(self.right_table.field_prefix) > 4 and self.right_table.field_prefix[-4:] == '_set':
+                            self.right_table.field_prefix = self.right_table.field_prefix[:-4]
                     return
 
             # check if this join type is for a foreign key
@@ -69,7 +71,8 @@ class Join(object):
                     field.get_internal_type() == 'ForeignKey'
                 ):
                     if field.rel.to == self.right_table.model:
-                        self.right_table.field_prefix = field.name
+                        if self.right_table.field_prefix is None:
+                            self.right_table.field_prefix = field.name
                         return
 
     def get_condition(self):
@@ -335,7 +338,7 @@ class Query(object):
 
         return self
 
-    def join(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True):
+    def join(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True, field_prefix=None):
         """
         @return: self
         """
@@ -349,16 +352,17 @@ class Query(object):
             schema=schema,
             owner=self,
             extract_fields=extract_fields,
-            prefix_fields=prefix_fields
+            prefix_fields=prefix_fields,
+            field_prefix=field_prefix,
         ))
 
         return self
 
-    def join_left(self, right_table=None, fields=None, condition=None, join_type='LEFT JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True):
+    def join_left(self, right_table=None, fields=None, condition=None, join_type='LEFT JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True, field_prefix=None):
         """
         @return: self
         """
-        return self.join(right_table=right_table, fields=fields, condition=condition, join_type=join_type, schema=schema, left_table=left_table, extract_fields=extract_fields, prefix_fields=prefix_fields)
+        return self.join(right_table=right_table, fields=fields, condition=condition, join_type=join_type, schema=schema, left_table=left_table, extract_fields=extract_fields, prefix_fields=prefix_fields, field_prefix=field_prefix)
 
     def where(self, q, where_type=AND):
         """
@@ -954,7 +958,6 @@ class Query(object):
                         row.pop(key)
 
             # make models
-
             if return_models:
                 model_class = self.tables[0].model
                 new_rows = []
