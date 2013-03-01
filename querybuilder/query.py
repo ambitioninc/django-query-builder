@@ -343,6 +343,8 @@ class Query(object):
         @return: self
         """
         # self.mark_dirty()
+        # TODO: fix bug when joining from simple table to model table with no condition
+        # it assumes left_table.model
         self.joins.append(Join(
             left_table=left_table,
             right_table=right_table,
