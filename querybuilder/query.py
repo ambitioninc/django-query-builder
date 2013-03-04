@@ -8,7 +8,7 @@ from querybuilder.tables import TableFactory, ModelTable, QueryTable, Table
 
 class Join(object):
 
-    def __init__(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, owner=None, extract_fields=True, prefix_fields=True):
+    def __init__(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, owner=None, extract_fields=True, prefix_fields=True, field_prefix=None):
         self.owner = owner
         self.left_table = None
         self.right_table = None
@@ -25,6 +25,7 @@ class Join(object):
             extract_fields=extract_fields,
             prefix_fields=prefix_fields,
             owner=self.owner,
+            field_prefix=field_prefix,
         ))
 
     def get_sql(self):
@@ -57,9 +58,10 @@ class Join(object):
             # check if this join type is for a related field
             for field in self.left_table.model._meta.get_all_related_objects():
                 if field.model == self.right_table.model:
-                    self.right_table.field_prefix = field.get_accessor_name()
-                    if len(self.right_table.field_prefix) > 4 and self.right_table.field_prefix[-4:] == '_set':
-                        self.right_table.field_prefix = self.right_table.field_prefix[:-4]
+                    if self.right_table.field_prefix is None:
+                        self.right_table.field_prefix = field.get_accessor_name()
+                        if len(self.right_table.field_prefix) > 4 and self.right_table.field_prefix[-4:] == '_set':
+                            self.right_table.field_prefix = self.right_table.field_prefix[:-4]
                     return
 
             # check if this join type is for a foreign key
@@ -69,7 +71,8 @@ class Join(object):
                     field.get_internal_type() == 'ForeignKey'
                 ):
                     if field.rel.to == self.right_table.model:
-                        self.right_table.field_prefix = field.name
+                        if self.right_table.field_prefix is None:
+                            self.right_table.field_prefix = field.name
                         return
 
     def get_condition(self):
@@ -335,11 +338,13 @@ class Query(object):
 
         return self
 
-    def join(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True):
+    def join(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True, field_prefix=None):
         """
         @return: self
         """
         # self.mark_dirty()
+        # TODO: fix bug when joining from simple table to model table with no condition
+        # it assumes left_table.model
         self.joins.append(Join(
             left_table=left_table,
             right_table=right_table,
@@ -349,16 +354,17 @@ class Query(object):
             schema=schema,
             owner=self,
             extract_fields=extract_fields,
-            prefix_fields=prefix_fields
+            prefix_fields=prefix_fields,
+            field_prefix=field_prefix,
         ))
 
         return self
 
-    def join_left(self, right_table=None, fields=None, condition=None, join_type='LEFT JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True):
+    def join_left(self, right_table=None, fields=None, condition=None, join_type='LEFT JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True, field_prefix=None):
         """
         @return: self
         """
-        return self.join(right_table=right_table, fields=fields, condition=condition, join_type=join_type, schema=schema, left_table=left_table, extract_fields=extract_fields, prefix_fields=prefix_fields)
+        return self.join(right_table=right_table, fields=fields, condition=condition, join_type=join_type, schema=schema, left_table=left_table, extract_fields=extract_fields, prefix_fields=prefix_fields, field_prefix=field_prefix)
 
     def where(self, q, where_type=AND):
         """
@@ -481,21 +487,32 @@ class Query(object):
 
         return sql
 
+    def get_field_names(self):
+        field_names = []
+        for table in self.tables:
+            field_names += table.get_field_names()
+        for join_item in self.joins:
+            field_names += join_item.right_table.get_field_names()
+        return field_names
+
+    def get_field_identifiers(self):
+        field_identifiers = []
+        for table in self.tables:
+            field_identifiers += table.get_field_identifiers()
+        for join_item in self.joins:
+            field_identifiers += join_item.right_table.get_field_identifiers()
+        return field_identifiers
+
     def build_select_fields(self):
         """
         @return: str
         """
-        field_sql_parts = []
+        field_sql = []
         for table in self.tables:
-            sql = table.get_fields_sql()
-            if len(sql):
-                field_sql_parts.append(table.get_fields_sql())
+            field_sql += table.get_field_sql()
         for join_item in self.joins:
-            if len(join_item.right_table.fields):
-                sql = join_item.right_table.get_fields_sql()
-                if len(sql):
-                    field_sql_parts.append(sql)
-        sql = 'SELECT {0} '.format(', '.join(field_sql_parts))
+            field_sql += join_item.right_table.get_field_sql()
+        sql = 'SELECT {0} '.format(', '.join(field_sql))
         return sql
 
         # fields = []
@@ -943,7 +960,6 @@ class Query(object):
                         row.pop(key)
 
             # make models
-
             if return_models:
                 model_class = self.tables[0].model
                 new_rows = []

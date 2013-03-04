@@ -43,6 +43,12 @@ class Field(object):
 
         return self.get_identifier()
 
+    def get_name(self):
+        alias = self.get_alias()
+        if alias:
+            return alias
+        return self.name
+
     def get_alias(self):
         alias = None
         if self.alias:
