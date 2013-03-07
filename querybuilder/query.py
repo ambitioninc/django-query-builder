@@ -1,3 +1,4 @@
+from copy import deepcopy
 from django.db import connection
 from django.db.models import Count, Max, Min, Sum, Avg, Q
 from django.db.models.sql import AND
@@ -908,6 +909,10 @@ class Query(object):
                 return table
         return None
 
+    def wrap(self):
+        query = Query().from_table(deepcopy(self))
+        self.__dict__.update(query.__dict__)
+
     def get_args(self):
         for table in self.tables:
             if type(table) is QueryTable:
@@ -930,7 +935,7 @@ class Query(object):
         rows = self._fetch_all_as_dict(cursor)
         return rows
 
-    def select(self, return_models=False, nest=False, bypass_safe_limit=False):
+    def select(self, return_models=False, nest=False, bypass_safe_limit=False, sql=None, sql_args=None):
         """
         @return: list
         """
@@ -941,7 +946,11 @@ class Query(object):
                     self.limit(Query.safe_limit)
 
         cursor = connection.cursor()
-        cursor.execute(self.get_sql(), self.get_args())
+        if sql is None:
+            sql = self.get_sql()
+        if sql_args is None:
+            sql_args = self.get_args()
+        cursor.execute(sql, sql_args)
         rows = self._fetch_all_as_dict(cursor)
 
         if return_models:
