@@ -140,6 +140,9 @@ class AggregateField(Field):
 class CountField(AggregateField):
     function_name = 'Count'
 
+    def get_select_sql(self):
+        sql = super(CountField, self).get_select_sql()
+        return 'CAST({0} AS FLOAT)'.format(sql)
 
 class AvgField(AggregateField):
     function_name = 'Avg'
