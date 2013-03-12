@@ -713,14 +713,6 @@ class Query(object):
             for row in cursor.fetchall()
         ]
 
-    def get_inner_queries(self):
-        inner_queries = []
-        for inner_query in self.inner_queries:
-            if inner_query['type'] is Query:
-                inner_queries.append(inner_query)
-                inner_queries += inner_query['table'].get_inner_queries()
-        return inner_queries
-
 
 class QueryWindow(Query):
 
