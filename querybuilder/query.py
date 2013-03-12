@@ -673,7 +673,7 @@ class Query(object):
             CountField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
-        return rows[0].values()[0]
+        return int(rows[0].values()[0])
 
     def max(self, field):
         q = Query().from_table(self, fields=[

@@ -1634,9 +1634,9 @@ class TestAggregateMethods(TestCase):
         query = Query().from_table(
             User
         )
-        count = query.count()
-        print count
-        self.fail('no')
+        received_count = query.count()
+        expected_count = len(User.objects.all())
+        self.assertEqual(received_count, expected_count)
 
     def test_max(self):
         pass
