@@ -1834,6 +1834,41 @@ class TestMiscQuery(TestCase):
         expected_query = 'SELECT T0.* FROM (SELECT T0T0.* FROM (SELECT test_project_account.* FROM test_project_account) AS T0T0) AS T0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
+    def test_select_sql(self):
+        sql = 'SELECT id FROM test_project_account ORDER BY id LIMIT 1'
+        rows = Query().select(sql=sql)
+        received = rows[0]['id']
+        expected = User.objects.all().order_by('id')[0].id
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
+
+    def test_select_sql_args(self):
+        sql = 'SELECT id FROM test_project_account WHERE id = %(my_id)s'
+        sql_args = {
+            'my_id': 2
+        }
+        rows = Query().select(sql=sql, sql_args=sql_args)
+        received = rows[0]['id']
+        expected = User.objects.all().filter(id=2)[0].id
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
+
+    def test_explain(self):
+        pass
+
+
 
 class TestMiscTable(TestCase):
     fixtures = [
