@@ -106,6 +106,10 @@ class Table(object):
         self.add_fields(fields)
 
     def add_fields(self, fields):
+        if type(fields) is str:
+            fields = [fields]
+        elif type(fields) is tuple:
+            fields = list(fields)
         for field in fields:
             self.add_field(field)
 
