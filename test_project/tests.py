@@ -261,7 +261,6 @@ class TestJoins(TestCase):
         expected_query = 'SELECT other_table.field_one AS other_table__field_one, other_table.field_two AS other_table__field_two FROM test_project_account JOIN other_table ON other_table.test_id = test_project_account.id'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
-
     # TODO: the foreign key join should do an extra query and
     # merge the results in python afterwards
     def test_join_model_foreign_key(self):
@@ -1709,9 +1708,6 @@ class TestAggregateMethods(TestCase):
                 received
             )
         )
-
-
-
 
 
 class TestLogger(TestCase):

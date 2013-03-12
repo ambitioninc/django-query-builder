@@ -167,4 +167,3 @@ class QueryTable(Table):
 
     def get_from_name(self):
         return '({0})'.format(self.query.get_sql())
-

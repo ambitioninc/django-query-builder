@@ -151,6 +151,7 @@ class CountField(AggregateField):
     #     sql = super(CountField, self).get_select_sql()
     #     return 'CAST({0} AS FLOAT)'.format(sql)
 
+
 class AvgField(AggregateField):
     function_name = 'Avg'
 

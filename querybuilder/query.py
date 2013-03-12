@@ -199,7 +199,6 @@ class Where(object):
                         # split on commas
                         value = value.split(',')
 
-
                     named_args = []
                     for value_item in value:
                         named_arg = self.set_arg(value_item)
