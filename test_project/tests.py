@@ -1826,6 +1826,14 @@ class TestMiscQuery(TestCase):
         expected = 'test_project_order'
         self.assertEqual(result, expected, get_comparison_str(result, expected))
 
+    def test_wrap(self):
+        query = Query().from_table(
+            Account
+        ).wrap().wrap()
+        query_str = query.get_sql()
+        expected_query = 'SELECT T0.* FROM (SELECT T0T0.* FROM (SELECT test_project_account.* FROM test_project_account) AS T0T0) AS T0'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
 
 class TestMiscTable(TestCase):
     fixtures = [
