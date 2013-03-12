@@ -1624,6 +1624,36 @@ class TestModels(TestCase):
         self.assertEqual(logger.count(), 0, 'Queries were executed when none should')
 
 
+class TestAggregateMethods(TestCase):
+
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_count(self):
+        query = Query().from_table(
+            User
+        )
+        count = query.count()
+        print count
+        self.fail('no')
+
+    def test_max(self):
+        pass
+
+    def test_min(self):
+        pass
+
+    def test_sum(self):
+        pass
+
+    def test_average(self):
+        pass
+
+
+
+
+
 class TestLogger(TestCase):
     fixtures = [
         'test_project/test_data.json'

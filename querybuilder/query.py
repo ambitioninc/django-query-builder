@@ -2,7 +2,7 @@ from copy import deepcopy
 from django.db import connection
 from django.db.models import Count, Max, Min, Sum, Avg, Q
 from django.db.models.sql import AND
-from querybuilder.fields import FieldFactory
+from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath
 from querybuilder.tables import TableFactory, ModelTable, QueryTable, Table
 
@@ -670,35 +670,35 @@ class Query(object):
 
     def count(self, field='*'):
         q = Query().from_table(self, fields=[
-            Count(field)
+            CountField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
         return rows[0].values()[0]
 
     def max(self, field):
         q = Query().from_table(self, fields=[
-            Max(field)
+            MaxField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
         return rows[0].values()[0]
 
     def min(self, field):
         q = Query().from_table(self, fields=[
-            Min(field)
+            MinField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
         return rows[0].values()[0]
 
     def sum(self, field):
         q = Query().from_table(self, fields=[
-            Sum(field)
+            SumField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
         return rows[0].values()[0]
 
     def avg(self, field):
         q = Query().from_table(self, fields=[
-            Avg(field)
+            AvgField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
         return rows[0].values()[0]
