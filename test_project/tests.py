@@ -1,3 +1,4 @@
+from pprint import pprint
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
@@ -1866,8 +1867,12 @@ class TestMiscQuery(TestCase):
         )
 
     def test_explain(self):
-        pass
-
+        sql = 'SELECT id FROM test_project_account WHERE id = %(my_id)s'
+        sql_args = {
+            'my_id': 2
+        }
+        rows = Query().explain(sql=sql, sql_args=sql_args)
+        self.assertTrue(len(rows) > 0, 'Explain did not return anything')
 
 
 class TestMiscTable(TestCase):
