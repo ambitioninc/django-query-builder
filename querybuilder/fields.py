@@ -35,14 +35,18 @@ class Field(object):
 
     def get_sql(self):
         """
-        Gets the FROM sql part for a field
+        Gets the SELECT sql part for a field
         Ex: field_name AS alias
         :return: :rtype: str
         """
         alias = self.get_alias()
         if alias:
+            if self.cast:
+                return 'CAST({0} AS {1}) AS {2}'.format(self.get_select_sql(), self.cast.upper(), alias)
             return '{0} AS {1}'.format(self.get_select_sql(), alias)
 
+        if self.cast:
+            return 'CAST({0} AS {1})'.format(self.get_identifier(), self.cast.upper())
         return self.get_identifier()
 
     def get_name(self):

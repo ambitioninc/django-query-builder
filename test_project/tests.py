@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
-from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField, RowNumberField, LagField, DenseRankField, PercentRankField, CumeDistField, NTileField, LeadField, FirstValueField, LastValueField, NthValueField, NumStdDevField
+from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField, RowNumberField, LagField, DenseRankField, PercentRankField, CumeDistField, NTileField, LeadField, FirstValueField, LastValueField, NthValueField, NumStdDevField, Field
 from querybuilder.logger import Logger, LogManager
 from test_project.models import Account, Order, User
 from querybuilder.query import Query, QueryWindow
@@ -1896,15 +1896,25 @@ class TestMiscField(TestCase):
         query = Query().from_table(
             table=Account,
             fields=[
-                '*',
-                CountField('id', )
+                CountField(
+                    'id',
+                    alias='count',
+                    cast='float'
+                )
             ]
         )
 
-        table = query.tables[0]
-        field = table.find_field('id')
-        self.assertIsNotNone(field, 'Field not found')
+        query_str = query.get_sql()
+        expected_query = 'SELECT CAST(COUNT(test_project_account.id) AS FLOAT) AS count FROM test_project_account'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
-        result = field.get_identifier()
-        expected = 'test_project_account.id'
-        self.assertEqual(result, expected, get_comparison_str(result, expected))
+        received = query.select()[0]['count']
+        expected = float(len(User.objects.all()))
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
