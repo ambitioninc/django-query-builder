@@ -1634,21 +1634,80 @@ class TestAggregateMethods(TestCase):
         query = Query().from_table(
             User
         )
-        received_count = query.count()
-        expected_count = len(User.objects.all())
-        self.assertEqual(received_count, expected_count)
+        received = query.count()
+        expected = len(User.objects.all())
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
 
     def test_max(self):
-        pass
+        query = Query().from_table(
+            User
+        )
+        received = query.max('id')
+        expected = User.objects.all().order_by('-id')[0].id
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
 
     def test_min(self):
-        pass
+        query = Query().from_table(
+            User
+        )
+        received = query.min('id')
+        expected = User.objects.all().order_by('id')[0].id
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
 
     def test_sum(self):
-        pass
+        query = Query().from_table(
+            Order
+        )
+        received = query.sum('margin')
+        expected = sum([order.margin for order in Order.objects.all()])
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
 
     def test_average(self):
-        pass
+        query = Query().from_table(
+            Order
+        )
+        received = query.avg('margin')
+        items = [order.margin for order in Order.objects.all()]
+        average = 0
+        if len(items):
+            average = sum(items) / len(items)
+        expected = average
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
 
 
 
