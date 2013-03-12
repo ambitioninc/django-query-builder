@@ -348,6 +348,9 @@ class Query(object):
     """
 
     def init_defaults(self):
+        """
+        Sets the default values for this instance
+        """
         self.sql = None
         self.tables = []
         self.joins = []
@@ -360,12 +363,22 @@ class Query(object):
 
     def __init__(self):
         """
+        Initializes this instance by calling ``self.init_defaults``
         @return: self
         """
         self.init_defaults()
 
-    def from_table(self, table=None, fields=['*'], schema=None, **kwargs):
+    def from_table(self, table=None, fields='*', schema=None, **kwargs):
         """
+        Adds a ``Table`` and any optional fields to the list of tables
+        this query is selecting from.
+        @param table: The table to select fields from. This can be a string of the table
+            name, a dict of {'alias': table}, or a ``Table`` instance
+        @type table: str or dict or Table
+        @param fields: The fields to select from ``table``. Defaults to '*'. This can be
+            a single field, a tuple of fields, or a list of fields. Each field can be a string
+            or ``Field`` instance
+        @type fields: str or tuple or list or Field
         @return: self
         """
         # self.mark_dirty()
