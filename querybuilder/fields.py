@@ -22,7 +22,7 @@ class FieldFactory(object):
 class Field(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, field=None, table=None, alias=None):
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None):
         self.field = field
         self.name = None
         self.table = table
@@ -30,6 +30,8 @@ class Field(object):
         self.auto_alias = None
         self.ignore = False
         self.auto = False
+        self.cast = cast
+        self.distinct = distinct
 
     def get_sql(self):
         """
@@ -90,16 +92,17 @@ class Field(object):
 
 
 class SimpleField(Field):
-    def __init__(self, field, table=None, alias=None):
-        super(SimpleField, self).__init__(field, table, alias)
+
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None):
+        super(SimpleField, self).__init__(field, table, alias, cast, distinct)
         self.name = field
 
 
 class AggregateField(Field):
     function_name = None
 
-    def __init__(self, field=None, table=None, alias=None, over=None):
-        super(AggregateField, self).__init__(field, table, alias)
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, over=None):
+        super(AggregateField, self).__init__(field, table, alias, cast, distinct)
         self.field = FieldFactory(field)
 
         self.name = self.function_name
@@ -140,9 +143,9 @@ class AggregateField(Field):
 class CountField(AggregateField):
     function_name = 'Count'
 
-    def get_select_sql(self):
-        sql = super(CountField, self).get_select_sql()
-        return 'CAST({0} AS FLOAT)'.format(sql)
+    # def get_select_sql(self):
+    #     sql = super(CountField, self).get_select_sql()
+    #     return 'CAST({0} AS FLOAT)'.format(sql)
 
 class AvgField(AggregateField):
     function_name = 'Avg'
@@ -216,8 +219,8 @@ class CumeDistField(AggregateField):
 class NTileField(AggregateField):
     function_name = 'ntile'
 
-    def __init__(self, field=None, table=None, alias=None, over=None, num_buckets=1):
-        super(NTileField, self).__init__(field, table, alias, over)
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, over=None, num_buckets=1):
+        super(NTileField, self).__init__(field, table, alias, cast, distinct, over)
         self.num_buckets = num_buckets
 
     def get_field_identifier(self):
@@ -226,8 +229,8 @@ class NTileField(AggregateField):
 
 class LeadLagField(AggregateField):
 
-    def __init__(self, field=None, table=None, alias=None, over=None, offset=1, default=None):
-        super(LeadLagField, self).__init__(field, table, alias, over)
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, over=None, offset=1, default=None):
+        super(LeadLagField, self).__init__(field, table, alias, cast, distinct, over)
         self.offset = offset
         self.default = default
 
@@ -280,8 +283,8 @@ class LastValueField(AggregateField):
 class NthValueField(AggregateField):
     function_name = 'nth_value'
 
-    def __init__(self, field=None, table=None, alias=None, over=None, n=1):
-        super(NthValueField, self).__init__(field, table, alias, over)
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, over=None, n=1):
+        super(NthValueField, self).__init__(field, table, alias, cast, distinct, over)
         self.n = n
 
     def get_field_identifier(self):
@@ -291,8 +294,8 @@ class NthValueField(AggregateField):
 class DatePartField(Field):
     group_name = None
 
-    def __init__(self, field, table=None, alias=None, auto=None, desc=None, include_datetime=False):
-        super(DatePartField, self).__init__(field, table, alias)
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, auto=None, desc=None, include_datetime=False):
+        super(DatePartField, self).__init__(field, table, alias, cast, distinct)
 
         self.name = self.group_name
         self.auto = auto

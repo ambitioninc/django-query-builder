@@ -1884,3 +1884,27 @@ class TestMiscTable(TestCase):
         result = field.name
         expected = 'first_name'
         self.assertEqual(result, expected, get_comparison_str(result, expected))
+
+
+class TestMiscField(TestCase):
+
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_cast(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                '*',
+                CountField('id', )
+            ]
+        )
+
+        table = query.tables[0]
+        field = table.find_field('id')
+        self.assertIsNotNone(field, 'Field not found')
+
+        result = field.get_identifier()
+        expected = 'test_project_account.id'
+        self.assertEqual(result, expected, get_comparison_str(result, expected))
