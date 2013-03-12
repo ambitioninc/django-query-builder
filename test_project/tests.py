@@ -1,8 +1,7 @@
-from pprint import pprint
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
-from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField, RowNumberField, LagField, DenseRankField, PercentRankField, CumeDistField, NTileField, LeadField, FirstValueField, LastValueField, NthValueField, NumStdDevField, Field
+from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField, RowNumberField, LagField, DenseRankField, PercentRankField, CumeDistField, NTileField, LeadField, FirstValueField, LastValueField, NthValueField, NumStdDevField
 from querybuilder.logger import Logger, LogManager
 from test_project.models import Account, Order, User
 from querybuilder.query import Query, QueryWindow

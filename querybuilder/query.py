@@ -1,10 +1,10 @@
 from copy import deepcopy
 from django.db import connection
-from django.db.models import Count, Max, Min, Sum, Avg, Q
+from django.db.models import Q
 from django.db.models.sql import AND
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath
-from querybuilder.tables import TableFactory, ModelTable, QueryTable, Table
+from querybuilder.tables import TableFactory, ModelTable, QueryTable
 
 
 class Join(object):
