@@ -583,8 +583,12 @@ class Query(object):
         return None
 
     def wrap(self):
+        """
+        @return: self
+        """
         query = Query().from_table(deepcopy(self))
         self.__dict__.update(query.__dict__)
+        return self
 
     def get_args(self):
         for table in self.tables:
