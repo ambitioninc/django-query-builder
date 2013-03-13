@@ -870,30 +870,45 @@ class Query(object):
                 if self.count() > Query.safe_limit:
                     self.limit(Query.safe_limit)
 
-        cursor = connection.cursor()
+        # determine which sql to use
         if sql is None:
             sql = self.get_sql()
+
+        # determine which sql args to use
         if sql_args is None:
             sql_args = self.get_args()
+
+        # get the cursor to execute the query
+        cursor = connection.cursor()
+
+        #execute the query
         cursor.execute(sql, sql_args)
+
+        # get the results as a list of dictionaries
         rows = self._fetch_all_as_dict(cursor)
 
+        # check if models should be returned instead of dictionaries
         if return_models:
+
+            # set nesting to true, so the nested models can easily load the data
             nest = True
 
-            # build model map
+            # build model map of map name to model
             model_map = {}
             for join_item in self.joins:
                 model_map[join_item.right_table.field_prefix] = join_item.right_table.model
 
+        # check if results should be nested
         if nest:
+
+            # convert keys with double underscores to dictionaries
             for row in rows:
                 for key, value in row.items():
                     set_value_for_keypath(row, key, value, True, '__')
                     if '__' in key:
                         row.pop(key)
 
-            # make models
+            # create models if needed
             if return_models:
                 model_class = self.tables[0].model
                 new_rows = []
