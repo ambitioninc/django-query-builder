@@ -5,7 +5,20 @@ from querybuilder.fields import FieldFactory
 
 
 class TableFactory(object):
+    """
+    Creates the correct table class based on the type of the passed table
+    """
+
     def __new__(cls, table, *args, **kwargs):
+        """
+        Determines which type of table class to instantiate based on the table argument
+        @param table: The table used in determining which type of Table object to return.
+            This can be a string of the table name, a dict of {'alias': table},
+            a ``Table`` instance, a django model class, or a Query instance
+        @type table: str or dict or Table or ModelBase or Query
+        @return: The Table instance if a valid type was determined, otherwise None
+        @rtype: Table or None
+        """
         table_type = type(table)
         if table_type is dict:
             kwargs.update(alias=table.keys()[0])
