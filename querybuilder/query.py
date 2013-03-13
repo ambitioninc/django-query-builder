@@ -8,12 +8,48 @@ from querybuilder.tables import TableFactory, ModelTable, QueryTable
 
 class Join(object):
     """
-
+    Represents the JOIN clauses of a Query. The join can be of any join type.
     """
 
     def __init__(self, right_table=None, fields=None, condition=None, join_type='JOIN',
                  schema=None, left_table=None, owner=None, extract_fields=True,
                  prefix_fields=True, field_prefix=None):
+        """
+        Initializes the default values and assigns any passed params
+        @param right_table: The table being joined with. This can be a string of the table
+            name, a dict of {'alias': table}, or a ``Table`` instance
+        @type right_table: str or dict or Table
+        @param fields: The fields to select from ``table``. Defaults to None. This can be
+            a single field, a tuple of fields, or a list of fields. Each field can be a string
+            or ``Field`` instance
+        @type fields: str or tuple or list or Field
+        @param condition: The join condition specifying the fields being joined. If the two tables being
+            joined are instances of ``ModelTable`` then the condition should be created automatically.
+        @type condition: str
+        @param join_type: The type of join (JOIN, LEFT JOIN, INNER JOIN, etc). Defaults to 'JOIN'
+        @type join_type: str
+        @param schema: This is not implemented, but it will be a string of the db schema name
+        @type schema: str
+        @param left_table: The left table being joined with. This can be a string of the table
+            name, a dict of {'alias': table}, or a ``Table`` instance. Defaults to the first table
+            in the query.
+        @type left_table: str or dict or Table or None
+        @param owner: A reference to the query managing this Join object
+        @type owner: Query
+        @param extract_fields: If True and joining with a ``ModelTable``, then '*'
+            fields will be converted to individual fields for each column in the table. Defaults
+            to True.
+        @type extract_fields: bool
+        @param prefix_fields: If True, then the joined table will have each of its field names
+            prefixed with the field_prefix. If not field_prefix is specified, a name will be
+            generated based on the join field name. This is usually used with nesting results
+            in order to create models in python or javascript. Defaults to True.
+        @type prefix_fields: bool
+        @param field_prefix: The field prefix to be used in front of each field name if prefix_fields
+            is set to True. If no field_prefix is set, one will be automatically created based on
+            the join field name.
+        @type field_prefix: str
+        """
         self.owner = owner
         self.left_table = None
         self.right_table = None
@@ -34,9 +70,22 @@ class Join(object):
         ))
 
     def get_sql(self):
+        """
+        Generates the JOIN sql for the join tables and join condition
+        @return: the JOIN sql for the join tables and join condition
+        @rtype: str
+        """
         return '{0} {1} ON {2}'.format(self.join_type, self.right_table.get_sql(), self.get_condition())
 
     def set_left_table(self, left_table=None):
+        """
+        Sets the left table for this join clause. If no table is specified, the first table
+        in the query will be used
+        @param left_table: The left table being joined with. This can be a string of the table
+            name, a dict of {'alias': table}, or a ``Table`` instance. Defaults to the first table
+            in the query.
+        @type left_table: str or dict or Table or None
+        """
         if left_table:
             self.left_table = TableFactory(
                 table=left_table,
@@ -46,12 +95,22 @@ class Join(object):
             self.left_table = self.get_left_table()
 
     def get_left_table(self):
+        """
+        Returns the left table if one was specified, otherwise the first
+        table in the query is returned
+        @return: the left table if one was specified, otherwise the first table in the query
+        @rtype: Table
+        """
         if self.left_table:
             return self.left_table
         if len(self.owner.tables):
             return self.owner.tables[0]
 
     def set_right_table(self, table):
+        """
+        Sets the right table for this join clause and try to automatically set the condition
+        if one isn't specified
+        """
         self.right_table = table
         if self.left_table is None:
             return
@@ -81,6 +140,11 @@ class Join(object):
                         return
 
     def get_condition(self):
+        """
+        Determines the condition to be used in the condition part of the join sql.
+        @return: The condition for the join clause
+        @rtype: str or None
+        """
         if self.condition:
             return self.condition
 
