@@ -438,25 +438,33 @@ class Query(object):
             prefix_fields=prefix_fields,
             field_prefix=field_prefix,
         ))
-        self.j
 
         return self
 
     def join_left(self, right_table=None, fields=None, condition=None, join_type='LEFT JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True, field_prefix=None):
         """
+        Wrapper for ``self.join`` with a default join of 'LEFT JOIN'
         @return: self
         """
         return self.join(right_table=right_table, fields=fields, condition=condition, join_type=join_type, schema=schema, left_table=left_table, extract_fields=extract_fields, prefix_fields=prefix_fields, field_prefix=field_prefix)
 
-    def where(self, q, where_type=AND):
+    def where(self, q=None, where_type='AND', **kwargs):
         """
-        Adds a Q object to the query's where condition
-        :param where: django Q object with where condition
-        :param where_type: django where type. AND, OR
+        Adds a Q object to the query's ``Where`` instance.
+        @param q: A django ``Q`` instance. This will be added to the query's ``Where`` object. If no
+            Q object is passed, the kwargs will be examined for params to be added to Q objects
+        @type q: Q
+        @param where_type: The connection type of the where condition ('AND', 'OR')
+        @param where_type: str
         @return: self
         """
         # self.mark_dirty()
-        self._where.wheres.add(q, where_type)
+        if q is not None:
+            self._where.wheres.add(q, where_type)
+        if len(kwargs):
+            for key, value in kwargs.items():
+                q = Q(**{key:value})
+                self._where.wheres.add(q, where_type)
         return self
 
     def group_by(self, field=None, table=None):
