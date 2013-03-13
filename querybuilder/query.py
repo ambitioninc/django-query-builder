@@ -550,6 +550,10 @@ class Query(object):
             table_index += 1
 
     def prefix_args(self, prefix):
+        """
+        Adds an argument prefix to the query's ``Where`` object. This should only
+        be called internally.
+        """
         self._where.arg_prefix = prefix
 
     def get_sql(self, debug=False, use_cache=True):
