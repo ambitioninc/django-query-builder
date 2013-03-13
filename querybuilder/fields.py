@@ -608,13 +608,15 @@ class DatePartField(Field):
             unix timestamp. Defaults to False.
         @type include_datetime: bool
         """
-        self.cast = 'INT'
         super(DatePartField, self).__init__(field, table, alias, cast, distinct)
 
         self.name = self.group_name
         self.auto = auto
         self.desc = desc
         self.include_datetime = include_datetime
+
+        if self.cast is None:
+            self.cast = 'INT'
 
         self.auto_alias = '{0}__{1}'.format(self.field, self.name)
 
@@ -737,7 +739,7 @@ class GroupEpoch(Epoch):
 
     def get_select_sql(self):
         lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
-        return 'CAST(extract({0} from date_trunc(\'{1}\', {2})) as INT)'.format(
+        return 'EXTRACT({0} FROM date_trunc(\'{1}\', {2}))'.format(
             self.name,
             self.date_group_name,
             lookup_field
@@ -748,7 +750,7 @@ class AllEpoch(Epoch):
 
     def get_select_sql(self):
         lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
-        return 'CAST(extract({0} from MIN({1})) as INT)'.format(
+        return 'EXTRACT({0} FROM MIN({1}))'.format(
             self.name,
             lookup_field
         )
