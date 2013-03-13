@@ -805,6 +805,13 @@ class Query(object):
         return self
 
     def get_args(self):
+        """
+        Gets the args for the query which will be escaped when being executed by the
+        db. All inner queries are inspected and their args are combined with this
+        query's args.
+        @return: all args for this query as a dict
+        @rtype: dict
+        """
         for table in self.tables:
             if type(table) is QueryTable:
                 self._where.args.update(table.query.get_args())
@@ -813,7 +820,15 @@ class Query(object):
 
     def explain(self, sql=None, sql_args=None):
         """
-        @return: list
+        Runs EXPLAIN on this query
+        @param sql: The sql to run EXPLAIN on. If None is specified, the query will
+            use ``self.get_sql()``
+        @type sql: str or None
+        @param sql_args: A dictionary of the arguments to be escaped in the query. If None and
+            sql is None, the query will use ``self.get_args()``
+        @type sql_args: dict or None
+        @return: list of each line of output from the EXPLAIN statement
+        @rtype: list of str
         """
         cursor = connection.cursor()
         if sql is None:
@@ -828,7 +843,26 @@ class Query(object):
 
     def select(self, return_models=False, nest=False, bypass_safe_limit=False, sql=None, sql_args=None):
         """
-        @return: list
+        Executes the SELECT statement and returns the rows as a list of dictionaries or a list of
+        model instances
+        @param return_models: Set to True to return a list of models instead of a list of dictionaries.
+            Defaults to False
+        @type return_models: bool
+        @param nest: Set to True to treat all double underscores in keynames as nested data. This will
+            convert all keys with double underscores to dictionaries keyed off of the left side of
+            the underscores. Ex: {"id": 1", "account__id": 1, "account__name": "Name"} becomes
+            {"id": 1, "account": {"id": 1, "name": "Name"}}
+        @type nest: bool
+        @param bypass_safe_limit: Ignores the safe_limit option even if the safe_limit is enabled
+        @type bypass_safe_limit: bool
+        @param sql: The sql to execute in the SELECT statement. If one is not specified, then the
+            query will use ``self.get_sql()``
+        @type sql: str or None
+        @param sql_args: The sql args to be used in the SELECT statement. If none are specified, then
+            the query wil use ``self.get_args()``
+        @type sql_args: str or None
+        @return: list of dictionaries of the rows
+        @rtype: list of dict
         """
         # Check if we need to set a safe limit
         if bypass_safe_limit is False:
