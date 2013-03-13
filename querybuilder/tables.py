@@ -262,20 +262,38 @@ class Table(object):
 
 
 class SimpleTable(Table):
+    """
+    A table that is created with just the string name of the table
+    """
 
     def init_defaults(self):
+        """
+        Sets the name of the table to the passed in table value
+        """
         super(SimpleTable, self).init_defaults()
         self.name = self.table
 
 
 class ModelTable(Table):
+    """
+    A table that is created by passing a django model for the table field. This allows
+    fields to be extract and for joins to be made without specifying a condition.
+    """
 
     def init_defaults(self):
+        """
+        Sets a model instance variable to the table value and sets the name to the
+        table name as determined from the model class
+        """
         super(ModelTable, self).init_defaults()
         self.model = self.table
         self.name = self.model._meta.db_table
 
     def before_add_field(self, field):
+        """
+        If extract_fields is set to True, then '*' fields will be removed and each
+        individual field will read from the model meta data and added.
+        """
         if self.extract_fields and field.name == '*':
             field.ignore = True
             fields = [model_field.column for model_field in self.model._meta.fields]
@@ -283,10 +301,20 @@ class ModelTable(Table):
 
 
 class QueryTable(Table):
+    """
+    A table that contains a Query object. This is used for inner queries in more complex
+    queries, usually involving window functions or some sort of aggregation.
+    """
 
     def init_defaults(self):
+        """
+        Sets a query instance variable to the table value
+        """
         super(QueryTable, self).init_defaults()
         self.query = self.table
 
     def get_from_name(self):
+        """
+        Return the query sql in the FROM clause of the query when building the table sql
+        """
         return '({0})'.format(self.query.get_sql())
