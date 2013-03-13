@@ -14,7 +14,7 @@ While the raw function lets you execute custom sql, it doesn't provide any way f
 
 ## Examples
 
-### Selecting fields
+### Selecting records as dictionaries
 
 Select all fields from a table:
 ```python
@@ -64,6 +64,16 @@ query.get_sql()
     <td>2</td><td>Person 2</td>
   </tr>
 </table>
+
+### Selecting records as models
+Select all fields from a table:
+```python
+query = Query().from_table('account')
+query.select(return_models=True)
+# [<Account: Account object>, <Account: Account object>]
+query.get_sql()
+# "SELECT account.* FROM account"
+```
 
 ### Sorting
 
@@ -141,5 +151,5 @@ outer_query = Query().from_table(inner_query)
 ```
 
 ## Reference Material
-- postgres window function docs
-- link 2
+* http://www.postgresql.org/docs/9.1/static/functions-window.html
+
