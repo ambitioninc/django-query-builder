@@ -781,8 +781,10 @@ class Query(object):
         """
         Finds a table by name or alias. The FROM tables and JOIN tables
         are included in the search.
-        :param table: str of a table name or alias or a ModelBase instance
-        :return: :rtype: Table
+        @param table: string of the table name or alias or a ModelBase instance
+        @type table: str or ModelBase
+        @return: The table if it is found, otherwise None
+        @rtype: Table or None
         """
         table = TableFactory(table)
         identifier = table.get_identifier()
@@ -794,7 +796,9 @@ class Query(object):
 
     def wrap(self):
         """
-        @return: self
+        Wraps the query by selecting all fields from itself
+        @return: The wrapped query
+        @rtype: self
         """
         query = Query().from_table(deepcopy(self))
         self.__dict__.update(query.__dict__)
