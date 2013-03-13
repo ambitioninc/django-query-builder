@@ -1036,13 +1036,24 @@ class Query(object):
 
 
 class QueryWindow(Query):
+    """
+    This is a query window that is meant to be used in the OVER clause of
+    window functions. It extends ``Query``, but the only methods that will
+    be used are ``order_by`` and ``partition_by`` (which just calls ``group_by``)
+    """
 
     def partition_by(self, field=None, table=None):
-        return super(QueryWindow, self).group_by(field, table)
+        """
+        Equivalent to ``order_by``, but named accordingly to the syntax of
+        a window function
+        """
+        return self.group_by(field, table)
 
     def get_sql(self):
         """
-        @return: self
+        Generates the sql for this query window and returns the sql as a string.
+        @return: The generated sql for this query window
+        @rtype: str
         """
         sql = ''
         sql += self.build_partition_by_fields()
@@ -1056,7 +1067,10 @@ class QueryWindow(Query):
 
     def build_partition_by_fields(self):
         """
-        @return: str
+        Equivalent to ``self.build_groups()`` except for the GROUP BY
+        clause being named PARTITION BY
+        @return: The sql to be used in the PARTITION BY clause
+        @rtype: str
         """
-        select_sql = super(QueryWindow, self).build_groups()
+        select_sql = self.build_groups()
         return select_sql.replace('GROUP BY', 'PARTITION BY', 1)
