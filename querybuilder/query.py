@@ -1,7 +1,6 @@
 from copy import deepcopy
 from django.db import connection
 from django.db.models import Q
-from django.db.models.sql import AND
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
@@ -12,7 +11,9 @@ class Join(object):
 
     """
 
-    def __init__(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, owner=None, extract_fields=True, prefix_fields=True, field_prefix=None):
+    def __init__(self, right_table=None, fields=None, condition=None, join_type='JOIN',
+                 schema=None, left_table=None, owner=None, extract_fields=True,
+                 prefix_fields=True, field_prefix=None):
         self.owner = owner
         self.left_table = None
         self.right_table = None
@@ -83,8 +84,6 @@ class Join(object):
         if self.condition:
             return self.condition
 
-        condition = ''
-
         if type(self.right_table) is ModelTable and type(self.right_table) is ModelTable:
             # loop through fields to find the field for this model
 
@@ -122,7 +121,7 @@ class Join(object):
 
 class Where(object):
 
-    map = {
+    comparison_map = {
         'eq': '=',
         'gt': '>',
         'gte': '>=',
@@ -148,7 +147,7 @@ class Where(object):
         return ''
 
     def get_condition_operator(self, operator):
-        return Where.map.get(operator, None)
+        return Where.comparison_map.get(operator, None)
 
     def get_condition_value(self, operator, value):
         if operator == 'contains':
@@ -322,7 +321,6 @@ class Query(object):
         """
 
         self.joins = []
-
         """
         A list of ``Join`` instances this query is joining on
         """
@@ -388,7 +386,8 @@ class Query(object):
 
         return self
 
-    def join(self, right_table=None, fields=None, condition=None, join_type='JOIN', schema=None, left_table=None, extract_fields=True, prefix_fields=True, field_prefix=None):
+    def join(self, right_table=None, fields=None, condition=None, join_type='JOIN',
+             schema=None, left_table=None, extract_fields=True, prefix_fields=True, field_prefix=None):
         """
         Joins a table to another table based on a condition and adds fields from the joined table
         to the returned fields.
@@ -450,7 +449,17 @@ class Query(object):
         @return: self
         @rtype: self
         """
-        return self.join(right_table=right_table, fields=fields, condition=condition, join_type=join_type, schema=schema, left_table=left_table, extract_fields=extract_fields, prefix_fields=prefix_fields, field_prefix=field_prefix)
+        return self.join(
+            right_table=right_table,
+            fields=fields,
+            condition=condition,
+            join_type=join_type,
+            schema=schema,
+            left_table=left_table,
+            extract_fields=extract_fields,
+            prefix_fields=prefix_fields,
+            field_prefix=field_prefix
+        )
 
     def where(self, q=None, where_type='AND', **kwargs):
         """
@@ -468,7 +477,9 @@ class Query(object):
             self._where.wheres.add(q, where_type)
         if len(kwargs):
             for key, value in kwargs.items():
-                q = Q(**{key:value})
+                q = Q(**{
+                    key: value
+                })
                 self._where.wheres.add(q, where_type)
         return self
 
