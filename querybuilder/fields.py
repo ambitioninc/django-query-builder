@@ -621,20 +621,34 @@ class DatePartField(Field):
         self.auto_alias = '{0}__{1}'.format(self.field, self.name)
 
     def get_select_sql(self):
+        """
+        Extract the date part from the date field
+        @return: The EXTRACT sql portion for this field
+        @rtype: str
+        """
         lookup_field = self.field
         if self.table:
             lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
         return 'EXTRACT({0} FROM {1})'.format(self.name, lookup_field)
 
     def before_add(self):
+        """
+        Generate auto fields for this date part if auto is True.
+        """
         if self.auto:
             self.ignore = True
             self.generate_auto_fields()
 
     def generate_auto_fields(self):
+        """
+        Generates any auto fields needed to properly group this date part.
+        Ex: a Day field will create Year, Month, Day fields and group by Year, Month, Day
+        """
+        # ignore the original date field
         self.ignore = True
         datetime_str = None
 
+        # create an alias for the unix timestamp extraction
         epoch_alias = '{0}__{1}'.format(self.field, 'epoch')
 
         if self.name == 'all':
@@ -675,6 +689,15 @@ class DatePartField(Field):
             self.table.owner.order_by(epoch_alias)
 
     def add_to_table(self, field, alias, add_group=False):
+        """
+        Adds this field to the field's table and optionally group by it
+        @param field: The field to add to the table
+        @type field: str or Field
+        @param alias: The alias for the field
+        @type alias: str
+        @param add_group: Whether or not the table should group by this field
+        @type: bool
+        """
         self.table.add_field({
             alias: field
         })
@@ -683,6 +706,9 @@ class DatePartField(Field):
 
 
 class AllTime(DatePartField):
+    """
+    Date group will be over the whole time range
+    """
     group_name = 'all'
 
     def __init__(self, lookup, auto=False, desc=False, include_datetime=False):
@@ -691,6 +717,9 @@ class AllTime(DatePartField):
 
 
 class NoneTime(DatePartField):
+    """
+    No date grouping is used
+    """
     group_name = 'none'
 
     def __init__(self, lookup, auto=False, desc=False, include_datetime=False):
@@ -699,34 +728,58 @@ class NoneTime(DatePartField):
 
 
 class Year(DatePartField):
+    """
+    Extract the year from the datetime
+    """
     group_name = 'year'
 
 
 class Month(DatePartField):
+    """
+    Extract the month from the datetime
+    """
     group_name = 'month'
 
 
 class Day(DatePartField):
+    """
+    Extract the day from the datetime
+    """
     group_name = 'day'
 
 
 class Hour(DatePartField):
+    """
+    Extract the hour from the datetime
+    """
     group_name = 'hour'
 
 
 class Minute(DatePartField):
+    """
+    Extract the minute from the datetime
+    """
     group_name = 'minute'
 
 
 class Second(DatePartField):
+    """
+    Extract the second from the datetime
+    """
     group_name = 'second'
 
 
 class Week(DatePartField):
+    """
+    Extract the week from the datetime
+    """
     group_name = 'week'
 
 
 class Epoch(DatePartField):
+    """
+    Extract the epoch from the datetime
+    """
     group_name = 'epoch'
 
     def __init__(self, field, table=None, alias=None, auto=None, desc=None,
@@ -736,6 +789,9 @@ class Epoch(DatePartField):
 
 
 class GroupEpoch(Epoch):
+    """
+    Epoch used for a date grouping
+    """
 
     def get_select_sql(self):
         lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
@@ -747,6 +803,9 @@ class GroupEpoch(Epoch):
 
 
 class AllEpoch(Epoch):
+    """
+    Epoch used for all grouping
+    """
 
     def get_select_sql(self):
         lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
