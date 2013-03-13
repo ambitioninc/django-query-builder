@@ -42,6 +42,18 @@ class TableFactory(object):
 class Table(object):
     """
     Abstract table class that all table types extend.
+
+    Properties:
+
+        name: str
+            The name that identifies this table if there is no alias
+
+        alias: str
+            The optional alias used to identify this table
+
+        auto_alias: str
+            An alias that is set automatically by the Query if needed for inner query
+            namespacing
     """
     __metaclass__ = abc.ABCMeta
 
