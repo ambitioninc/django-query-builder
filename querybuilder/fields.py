@@ -2,8 +2,20 @@ import abc
 
 
 class FieldFactory(object):
+    """
+    Creates the correct field class based on the type of the passed field
+    """
 
     def __new__(cls, field, *args, **kwargs):
+        """
+        Determines which type of field class to instantiate based on the field argument
+        @param field: The field used in determining which type of Field object to return.
+            This can be a string of the field name, a dict of {'alias': field},
+            or a ``Field``
+        @type table: str or dict or Field
+        @return: The Field instance if a valid type was determined, otherwise None
+        @rtype: Field or None
+        """
         field_type = type(field)
         if field_type is dict:
             kwargs.update(alias=field.keys()[0])
