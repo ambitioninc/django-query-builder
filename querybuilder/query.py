@@ -640,6 +640,12 @@ class Query(object):
         return sql
 
     def get_field_names(self):
+        """
+        Builds a list of the field names for all tables and joined tables by calling
+        ``get_field_names()`` on each table
+        @return: list of field names
+        @rtype: list of str
+        """
         field_names = []
         for table in self.tables:
             field_names += table.get_field_names()
@@ -648,6 +654,12 @@ class Query(object):
         return field_names
 
     def get_field_identifiers(self):
+        """
+        Builds a list of the field identifiers for all tables and joined tables by calling
+        ``get_field_identifiers()`` on each table
+        @return: list of field identifiers
+        @rtype: list of str
+        """
         field_identifiers = []
         for table in self.tables:
             field_identifiers += table.get_field_identifiers()
