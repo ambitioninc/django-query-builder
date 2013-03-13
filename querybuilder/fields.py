@@ -575,9 +575,40 @@ class NthValueField(AggregateField):
 
 
 class DatePartField(Field):
+    """
+    Base class for all date part fields
+
+    Proeprties:
+
+        group_name: str
+            The name of the date part
+    """
     group_name = None
 
-    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, auto=None, desc=None, include_datetime=False):
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, auto=False, desc=False, include_datetime=False):
+        """
+        @param field: A string of a field name
+        @type field: str
+        @param table: A Table instance used to disambiguate the field. This is optional in
+            simple queries
+        @type table: Table
+        @param alias: An alias to be used for this field
+        @type alias: str
+        @param cast: A data type name this field should be cast to. Ex: 'float'
+        @type cast: str
+        @param distinct: Indicates if a DISTINCT flag should be added during sql generation
+        @type cast: bool
+        @param auto: Set to True for this date field to auto generate the necessary other date parts and
+            apply the appropriate groupings. Defaults to False
+        @type auto: bool
+        @param desc: If this is set to True, the results will be sorted by the datetime field in
+            descending order. Defaults to False
+        @type desc: bool
+        @param include_datetime: If set to True, datetime objects will be returned in addition to the
+            unix timestamp. Defaults to False.
+        @type include_datetime: bool
+        """
+        self.cast = 'INT'
         super(DatePartField, self).__init__(field, table, alias, cast, distinct)
 
         self.name = self.group_name
@@ -588,8 +619,10 @@ class DatePartField(Field):
         self.auto_alias = '{0}__{1}'.format(self.field, self.name)
 
     def get_select_sql(self):
-        lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
-        return 'CAST(extract({0} from {1}) as INT)'.format(self.name, lookup_field)
+        lookup_field = self.field
+        if self.table:
+            lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
+        return 'EXTRACT({0} FROM {1})'.format(self.name, lookup_field)
 
     def before_add(self):
         if self.auto:
