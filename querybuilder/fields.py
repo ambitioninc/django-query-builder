@@ -201,6 +201,12 @@ class SimpleField(Field):
 class AggregateField(Field):
     """
     The base class for aggregate functions and window functions.
+
+    Properties:
+
+        function_name: str
+            The aggregate function name. This is used to automatically generate the sql
+            for simple aggregate functions.
     """
     function_name = None
 
@@ -280,33 +286,52 @@ class AggregateField(Field):
 
 
 class CountField(AggregateField):
+    """
+    Count aggregation
+    """
     function_name = 'Count'
-
-    # def get_select_sql(self):
-    #     sql = super(CountField, self).get_select_sql()
-    #     return 'CAST({0} AS FLOAT)'.format(sql)
 
 
 class AvgField(AggregateField):
+    """
+    Average aggregation
+    """
     function_name = 'Avg'
 
 
 class MaxField(AggregateField):
+    """
+    Maximum aggregation
+    """
     function_name = 'Max'
 
 
 class MinField(AggregateField):
+    """
+    Minimum aggregation
+    """
     function_name = 'Min'
 
 
 class StdDevField(AggregateField):
+    """
+    Standard deviation aggregation
+    """
     function_name = 'StdDev'
 
 
 class NumStdDevField(AggregateField):
+    """
+    Number of standard deviations from the average aggregation
+    """
     function_name = 'num_stddev'
 
     def get_select_sql(self):
+        """
+        To calculate the number of standard deviations calculate the difference
+        of the field and the average and divide the difference by the standard
+        deviation
+        """
         return '(({0} - (AVG({0}){1})) / (STDDEV({0}){1}))'.format(
             self.get_field_identifier(),
             self.get_over(),
@@ -314,14 +339,23 @@ class NumStdDevField(AggregateField):
 
 
 class SumField(AggregateField):
+    """
+    Summation aggregation
+    """
     function_name = 'Sum'
 
 
 class VarianceField(AggregateField):
+    """
+    Variance window function
+    """
     function_name = 'Variance'
 
 
 class RowNumberField(AggregateField):
+    """
+    Row number window function
+    """
     function_name = 'row_number'
 
     def get_field_identifier(self):
@@ -329,6 +363,9 @@ class RowNumberField(AggregateField):
 
 
 class RankField(AggregateField):
+    """
+    Rank window function
+    """
     function_name = 'rank'
 
     def get_field_identifier(self):
@@ -336,6 +373,9 @@ class RankField(AggregateField):
 
 
 class DenseRankField(AggregateField):
+    """
+    Dense rank window function
+    """
     function_name = 'dense_rank'
 
     def get_field_identifier(self):
@@ -343,6 +383,9 @@ class DenseRankField(AggregateField):
 
 
 class PercentRankField(AggregateField):
+    """
+    Percent rank window function
+    """
     function_name = 'percent_rank'
 
     def get_field_identifier(self):
@@ -350,6 +393,9 @@ class PercentRankField(AggregateField):
 
 
 class CumeDistField(AggregateField):
+    """
+    Cume dist window function
+    """
     function_name = 'cume_dist'
 
     def get_field_identifier(self):
@@ -357,40 +403,104 @@ class CumeDistField(AggregateField):
 
 
 class NTileField(AggregateField):
+    """
+    NTile window function
+    """
     function_name = 'ntile'
 
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, over=None, num_buckets=1):
+        """
+        Sets the num_buckets for ntile
+        @param field: A string of a field name
+        @type field: str
+        @param table: A Table instance used to disambiguate the field. This is optional in
+            simple queries
+        @type table: Table
+        @param alias: An alias to be used for this field
+        @type alias: str
+        @param cast: A data type name this field should be cast to. Ex: 'float'
+        @type cast: str
+        @param distinct: Indicates if a DISTINCT flag should be added during sql generation
+        @type cast: bool
+        @param over: The QueryWindow to perform the aggregate function over
+        @type over: QueryWindow
+        @param num_buckets: Number of buckets to use for ntile
+        @type num_buckets: int
+        """
         super(NTileField, self).__init__(field, table, alias, cast, distinct, over)
         self.num_buckets = num_buckets
 
     def get_field_identifier(self):
+        """
+        Returns the number of buckets
+        @return: the number of buckets used for the ntile function
+        @rtype: int
+        """
         return self.num_buckets
 
 
 class LeadLagField(AggregateField):
+    """
+    Base class for lag and lead window functions
+    """
 
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, over=None, offset=1, default=None):
+        """
+        Sets the offset and default value for the lag/lead calculation
+        @param field: A string of a field name
+        @type field: str
+        @param table: A Table instance used to disambiguate the field. This is optional in
+            simple queries
+        @type table: Table
+        @param alias: An alias to be used for this field
+        @type alias: str
+        @param cast: A data type name this field should be cast to. Ex: 'float'
+        @type cast: str
+        @param distinct: Indicates if a DISTINCT flag should be added during sql generation
+        @type cast: bool
+        @param over: The QueryWindow to perform the aggregate function over
+        @type over: QueryWindow
+        @param offset: The offset number of rows which to calculate the lag/lead
+        @type offset: int
+        @param default: The default value to use if the offset doesn't find a field
+        @type default: number or str or object
+        """
         super(LeadLagField, self).__init__(field, table, alias, cast, distinct, over)
         self.offset = offset
         self.default = default
 
     def get_field_identifier(self):
+        """
+        Return the lag/lead function with the offset and default value
+        """
         if self.default is None:
             return '{0}, {1}'.format(self.field.get_select_sql(), self.offset)
         return "{0}, {1}, '{2}'".format(self.field.get_select_sql(), self.offset, self.default)
 
 
 class LagField(LeadLagField):
+    """
+    Lag window function
+    """
     function_name = 'lag'
 
 
 class LeadField(LeadLagField):
+    """
+    Lead window function
+    """
     function_name = 'lead'
 
 
 class LeadLagDifferenceField(LeadLagField):
+    """
+    Base class for lag difference and lead difference window functions
+    """
 
     def get_select_sql(self):
+        """
+        Calculate the difference between this record's value and the lag/lead record's value
+        """
         return '(({0}) - ({1}({2}){3}))'.format(
             self.field.get_select_sql(),
             self.name.upper(),
@@ -398,36 +508,69 @@ class LeadLagDifferenceField(LeadLagField):
             self.get_over(),
         )
 
-    def get_field_identifier(self):
-        if self.default is None:
-            return '{0}, {1}'.format(self.field.get_select_sql(), self.offset)
-        return "{0}, {1}, '{2}'".format(self.field.get_select_sql(), self.offset, self.default)
-
 
 class LagDifferenceField(LeadLagDifferenceField):
+    """
+    Lag difference window function
+    """
     function_name = 'lag'
 
 
 class LeadDifferenceField(LeadLagDifferenceField):
+    """
+    Lead difference window function
+    """
     function_name = 'lead'
 
 
 class FirstValueField(AggregateField):
+    """
+    First value window function
+    """
     function_name = 'first_value'
 
 
 class LastValueField(AggregateField):
+    """
+    Last value window function
+    """
     function_name = 'last_value'
 
 
 class NthValueField(AggregateField):
+    """
+    Nth value window function
+    """
     function_name = 'nth_value'
 
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, over=None, n=1):
+        """
+        Sets the Nth value
+        @param field: A string of a field name
+        @type field: str
+        @param table: A Table instance used to disambiguate the field. This is optional in
+            simple queries
+        @type table: Table
+        @param alias: An alias to be used for this field
+        @type alias: str
+        @param cast: A data type name this field should be cast to. Ex: 'float'
+        @type cast: str
+        @param distinct: Indicates if a DISTINCT flag should be added during sql generation
+        @type cast: bool
+        @param over: The QueryWindow to perform the aggregate function over
+        @type over: QueryWindow
+        @param n: the n value to use for the Nth value function
+        @type n: int
+        """
         super(NthValueField, self).__init__(field, table, alias, cast, distinct, over)
         self.n = n
 
     def get_field_identifier(self):
+        """
+        Returns the field's sql and the n value
+        @return: the field's sql and the n value
+        @rtype: str
+        """
         return '{0}, {1}'.format(self.field.get_select_sql(), self.n)
 
 
