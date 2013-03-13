@@ -175,16 +175,53 @@ class Field(object):
 
 
 class SimpleField(Field):
+    """
+    A field that is created with just the string name of the field
+    """
 
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None):
+        """
+        Sets the name of the field to the passed in field value
+        @param field: A string of a field name
+        @type field: str
+        @param table: A Table instance used to disambiguate the field. This is optional in
+            simple queries
+        @type table: Table
+        @param alias: An alias to be used for this field
+        @type alias: str
+        @param cast: A data type name this field should be cast to. Ex: 'float'
+        @type cast: str
+        @param distinct: Indicates if a DISTINCT flag should be added during sql generation
+        @type cast: bool
+        """
         super(SimpleField, self).__init__(field, table, alias, cast, distinct)
         self.name = field
 
 
 class AggregateField(Field):
+    """
+    The base class for aggregate functions and window functions.
+    """
     function_name = None
 
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, over=None):
+        """
+        Sets the field to a field instance because aggregate functions are treated as fields
+        that perform an operation on a db column
+        @param field: A string of a field name
+        @type field: str
+        @param table: A Table instance used to disambiguate the field. This is optional in
+            simple queries
+        @type table: Table
+        @param alias: An alias to be used for this field
+        @type alias: str
+        @param cast: A data type name this field should be cast to. Ex: 'float'
+        @type cast: str
+        @param distinct: Indicates if a DISTINCT flag should be added during sql generation
+        @type cast: bool
+        @param over: The QueryWindow to perform the aggregate function over
+        @type over: QueryWindow
+        """
         super(AggregateField, self).__init__(field, table, alias, cast, distinct)
         self.field = FieldFactory(field)
 
@@ -203,6 +240,12 @@ class AggregateField(Field):
             self.auto_alias = self.name.lower()
 
     def get_select_sql(self):
+        """
+        Gets the SELECT field portion for the field without the alias. If the field
+        has a table, it will be included here like AggregateFunction(table.field)
+        @return: Gets the SELECT field portion for the field without the alias
+        @rtype: str
+        """
         return '{0}({1}){2}'.format(
             self.name.upper(),
             self.get_field_identifier(),
@@ -210,14 +253,27 @@ class AggregateField(Field):
         )
 
     def get_field_identifier(self):
+        """
+        Gets the identifier of the field used in the aggregate function
+        @return: the identifier of the field used in the aggregate function
+        @rtype: str
+        """
         return self.field.get_identifier()
 
     def get_over(self):
+        """
+        Gets the over clause to be used in the window function sql
+        @returns: the over clause to be used in the window function sql
+        @rtype: str
+        """
         if self.over:
             return ' {0}'.format(self.over.get_sql())
         return ''
 
     def set_table(self, table):
+        """
+        Setter for the table of this field. Also sets the inner field's table.
+        """
         super(AggregateField, self).set_table(table)
         if self.field and self.field.table is None:
             self.field.table = self.table
