@@ -226,12 +226,31 @@ class Table(object):
         return [field.get_name() for field in self.fields]
 
     def get_field_identifiers(self):
+        """
+        Loop through this tables fields and calls the get_identifier
+        method on each of them to build a list of field identifiers
+        @return: A list of field identifiers found in this table
+        @rtype: list of str
+        """
         return [field.get_identifier() for field in self.fields]
 
     def get_field_prefix(self):
+        """
+        Gets the prefix to be used in front of each field. If no prefix is
+        set, then the identifier for this table is returned
+        @return: The field prefix for this table
+        @rtype: str
+        """
         return self.field_prefix or self.get_identifier()
 
     def find_field(self, field=None, alias=None):
+        """
+        Finds a field by name or alias.
+        @param field: string of the field name or alias, dict of {'alias': field}, or a Field instance
+        @type field: str or dict or Field
+        @return: The field if it is found, otherwise None
+        @rtype: Field or None
+        """
         if alias:
             field = alias
         field = FieldFactory(field, table=self, alias=alias)
