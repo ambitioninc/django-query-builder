@@ -669,39 +669,56 @@ class Query(object):
 
     def build_select_fields(self):
         """
-        @return: str
+        Generates the sql for the SELECT portion of the query
+        @return: the SELECT portion of the query
+        @rtype: str
         """
         field_sql = []
+
+        # get the field sql for each table
         for table in self.tables:
             field_sql += table.get_field_sql()
+
+        # get the field sql for each join table
         for join_item in self.joins:
             field_sql += join_item.right_table.get_field_sql()
+
+        # combine all field sql separated by a comma
         sql = 'SELECT {0} '.format(', '.join(field_sql))
         return sql
 
     def build_from_table(self):
         """
-        @return: str
+        Generates the sql for the FROM portion of the query
+        @return: the FROM portion of the query
+        @rtype: str
         """
         table_parts = []
+
+        # get the table sql for each table
         for table in self.tables:
             sql = table.get_sql()
             if len(sql):
                 table_parts.append(table.get_sql())
 
+        # combine all table sql separated by a comma
         sql = 'FROM {0} '.format(', '.join(table_parts))
 
         return sql
 
     def build_joins(self):
         """
-        @return: str
+        Generates the sql for the JOIN portion of the query
+        @return: the JOIN portion of the query
+        @rtype: str
         """
         join_parts = []
 
+        # get the sql for each join object
         for join_item in self.joins:
             join_parts.append(join_item.get_sql())
 
+        # if there are any joins, combine them
         if len(join_parts):
             combined_joins = ' '.join(join_parts)
             return '{0} '.format(combined_joins)
@@ -709,16 +726,23 @@ class Query(object):
 
     def build_where(self):
         """
-        @return: str
+        Generates the sql for the WHERE portion of the query
+        @return: the WHERE portion of the query
+        @rtype: str
         """
         return self._where.get_sql()
 
     def build_groups(self):
         """
-        @return: str
+        Generates the sql for the GROUP BY portion of the query
+        @return: the GROUP BY portion of the query
+        @rtype: str
         """
+        # check if there are any groupings
         if len(self.groups):
             groups = []
+
+            # get the group sql for each grouping
             for group in self.groups:
                 groups.append(group.get_name())
             return 'GROUP BY {0} '.format(', '.join(groups))
@@ -726,10 +750,18 @@ class Query(object):
 
     def build_order_by(self, use_alias=True):
         """
-        @return: str
+        Generates the sql for the ORDER BY portion of the query
+        @param use_alias: If True, the alias for the field will be used in the order by.
+            This is an option before query windows do not use the alias. Defaults to True.
+        @type use_alias: bool
+        @return: the ORDER BY portion of the query
+        @rtype: str
         """
+        # check if there are any sorters
         if len(self.sorters):
             sorters = []
+
+            # get the sql for each sorter
             for sorter in self.sorters:
                 sorters.append(sorter.get_name(use_alias=use_alias))
             return 'ORDER BY {0} '.format(', '.join(sorters))
@@ -737,7 +769,9 @@ class Query(object):
 
     def build_limit(self):
         """
-        @return: str
+        Generates the sql for the LIMIT and OFFSET portions of the query
+        @return: the LIMIT and/or OFFSET portions of the query
+        @rtype: str
         """
         if self._limit:
             return self._limit.get_sql()
