@@ -41,7 +41,7 @@ class Join(object):
             to True.
         @type extract_fields: bool
         @param prefix_fields: If True, then the joined table will have each of its field names
-            prefixed with the field_prefix. If not field_prefix is specified, a name will be
+            prefixed with the field_prefix. If no field_prefix is specified, a name will be
             generated based on the join field name. This is usually used with nesting results
             in order to create models in python or javascript. Defaults to True.
         @type prefix_fields: bool
