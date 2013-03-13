@@ -12,6 +12,7 @@ def get_comparison_str(item1, item2):
 
 
 class TestSelect(TestCase):
+
     def test_select_all_from_string(self):
         query = Query().from_table(
             table='test_table'
@@ -260,7 +261,6 @@ class TestJoins(TestCase):
         expected_query = 'SELECT other_table.field_one AS other_table__field_one, other_table.field_two AS other_table__field_two FROM test_project_account JOIN other_table ON other_table.test_id = test_project_account.id'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
-
     # TODO: the foreign key join should do an extra query and
     # merge the results in python afterwards
     def test_join_model_foreign_key(self):
@@ -385,6 +385,7 @@ class TestJoins(TestCase):
 
 
 class TestWheres(TestCase):
+
     fixtures = [
         'test_project/test_data.json'
     ]
@@ -398,6 +399,29 @@ class TestWheres(TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s)'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_where_named_arg(self):
+        query = Query().from_table(
+            table='test_table'
+        ).where(
+            one='two'
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s)'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_where_many_named_arg(self):
+        query = Query().from_table(
+            table='test_table'
+        ).where(
+            one='two',
+            three='four'
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table WHERE (three = %(A0)s AND one = %(A1)s)'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_not_eq(self):
@@ -1306,7 +1330,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year FROM test_project_order'
+        expected_query = 'SELECT CAST(EXTRACT(year FROM test_project_order.time) AS INT) AS time__year FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_year_auto(self):
@@ -1317,7 +1341,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(epoch from date_trunc(\'year\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__epoch ORDER BY time__epoch ASC'
+        expected_query = 'SELECT CAST(EXTRACT(year FROM test_project_order.time) AS INT) AS time__year, CAST(EXTRACT(epoch FROM date_trunc(\'year\', test_project_order.time)) AS INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__epoch ORDER BY time__epoch ASC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_year_auto_desc(self):
@@ -1328,7 +1352,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(epoch from date_trunc(\'year\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__epoch ORDER BY time__epoch DESC'
+        expected_query = 'SELECT CAST(EXTRACT(year FROM test_project_order.time) AS INT) AS time__year, CAST(EXTRACT(epoch FROM date_trunc(\'year\', test_project_order.time)) AS INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__epoch ORDER BY time__epoch DESC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_month_auto(self):
@@ -1339,7 +1363,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(epoch from date_trunc(\'month\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__epoch ORDER BY time__epoch ASC'
+        expected_query = 'SELECT CAST(EXTRACT(year FROM test_project_order.time) AS INT) AS time__year, CAST(EXTRACT(month FROM test_project_order.time) AS INT) AS time__month, CAST(EXTRACT(epoch FROM date_trunc(\'month\', test_project_order.time)) AS INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__epoch ORDER BY time__epoch ASC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_hour_auto(self):
@@ -1350,7 +1374,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(day from test_project_order.time) as INT) AS time__day, CAST(extract(hour from test_project_order.time) as INT) AS time__hour, CAST(extract(epoch from date_trunc(\'hour\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__day, time__hour, time__epoch ORDER BY time__epoch ASC'
+        expected_query = 'SELECT CAST(EXTRACT(year FROM test_project_order.time) AS INT) AS time__year, CAST(EXTRACT(month FROM test_project_order.time) AS INT) AS time__month, CAST(EXTRACT(day FROM test_project_order.time) AS INT) AS time__day, CAST(EXTRACT(hour FROM test_project_order.time) AS INT) AS time__hour, CAST(EXTRACT(epoch FROM date_trunc(\'hour\', test_project_order.time)) AS INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__day, time__hour, time__epoch ORDER BY time__epoch ASC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_minute_auto(self):
@@ -1361,7 +1385,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(day from test_project_order.time) as INT) AS time__day, CAST(extract(hour from test_project_order.time) as INT) AS time__hour, CAST(extract(minute from test_project_order.time) as INT) AS time__minute, CAST(extract(epoch from date_trunc(\'minute\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__day, time__hour, time__minute, time__epoch ORDER BY time__epoch ASC'
+        expected_query = 'SELECT CAST(EXTRACT(year FROM test_project_order.time) AS INT) AS time__year, CAST(EXTRACT(month FROM test_project_order.time) AS INT) AS time__month, CAST(EXTRACT(day FROM test_project_order.time) AS INT) AS time__day, CAST(EXTRACT(hour FROM test_project_order.time) AS INT) AS time__hour, CAST(EXTRACT(minute FROM test_project_order.time) AS INT) AS time__minute, CAST(EXTRACT(epoch FROM date_trunc(\'minute\', test_project_order.time)) AS INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__day, time__hour, time__minute, time__epoch ORDER BY time__epoch ASC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_second_auto(self):
@@ -1372,7 +1396,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(year from test_project_order.time) as INT) AS time__year, CAST(extract(month from test_project_order.time) as INT) AS time__month, CAST(extract(day from test_project_order.time) as INT) AS time__day, CAST(extract(hour from test_project_order.time) as INT) AS time__hour, CAST(extract(minute from test_project_order.time) as INT) AS time__minute, CAST(extract(second from test_project_order.time) as INT) AS time__second, CAST(extract(epoch from date_trunc(\'second\', test_project_order.time)) as INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__day, time__hour, time__minute, time__second, time__epoch ORDER BY time__epoch ASC'
+        expected_query = 'SELECT CAST(EXTRACT(year FROM test_project_order.time) AS INT) AS time__year, CAST(EXTRACT(month FROM test_project_order.time) AS INT) AS time__month, CAST(EXTRACT(day FROM test_project_order.time) AS INT) AS time__day, CAST(EXTRACT(hour FROM test_project_order.time) AS INT) AS time__hour, CAST(EXTRACT(minute FROM test_project_order.time) AS INT) AS time__minute, CAST(EXTRACT(second FROM test_project_order.time) AS INT) AS time__second, CAST(EXTRACT(epoch FROM date_trunc(\'second\', test_project_order.time)) AS INT) AS time__epoch FROM test_project_order GROUP BY time__year, time__month, time__day, time__hour, time__minute, time__second, time__epoch ORDER BY time__epoch ASC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_group_none(self):
@@ -1383,7 +1407,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(epoch from test_project_order.time) as INT) AS time__epoch FROM test_project_order GROUP BY time__epoch ORDER BY time__epoch ASC'
+        expected_query = 'SELECT CAST(EXTRACT(epoch FROM test_project_order.time) AS INT) AS time__epoch FROM test_project_order GROUP BY time__epoch ORDER BY time__epoch ASC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_group_all(self):
@@ -1394,7 +1418,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(extract(epoch from MIN(test_project_order.time)) as INT) AS time__epoch FROM test_project_order'
+        expected_query = 'SELECT CAST(EXTRACT(epoch FROM MIN(test_project_order.time)) AS INT) AS time__epoch FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
@@ -1624,6 +1648,92 @@ class TestModels(TestCase):
         self.assertEqual(logger.count(), 0, 'Queries were executed when none should')
 
 
+class TestAggregateMethods(TestCase):
+
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_count(self):
+        query = Query().from_table(
+            User
+        )
+        received = query.count()
+        expected = len(User.objects.all())
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
+
+    def test_max(self):
+        query = Query().from_table(
+            User
+        )
+        received = query.max('id')
+        expected = User.objects.all().order_by('-id')[0].id
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
+
+    def test_min(self):
+        query = Query().from_table(
+            User
+        )
+        received = query.min('id')
+        expected = User.objects.all().order_by('id')[0].id
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
+
+    def test_sum(self):
+        query = Query().from_table(
+            Order
+        )
+        received = query.sum('margin')
+        expected = sum([order.margin for order in Order.objects.all()])
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
+
+    def test_average(self):
+        query = Query().from_table(
+            Order
+        )
+        received = query.avg('margin')
+        items = [order.margin for order in Order.objects.all()]
+        average = 0
+        if len(items):
+            average = sum(items) / len(items)
+        expected = average
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
+
+
 class TestLogger(TestCase):
     fixtures = [
         'test_project/test_data.json'
@@ -1737,6 +1847,53 @@ class TestMiscQuery(TestCase):
         expected = 'test_project_order'
         self.assertEqual(result, expected, get_comparison_str(result, expected))
 
+    def test_wrap(self):
+        query = Query().from_table(
+            Account
+        ).wrap().wrap()
+        query_str = query.get_sql()
+        expected_query = 'SELECT T0.* FROM (SELECT T0T0.* FROM (SELECT test_project_account.* FROM test_project_account) AS T0T0) AS T0'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_select_sql(self):
+        sql = 'SELECT id FROM test_project_account ORDER BY id LIMIT 1'
+        rows = Query().select(sql=sql)
+        received = rows[0]['id']
+        expected = User.objects.all().order_by('id')[0].id
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
+
+    def test_select_sql_args(self):
+        sql = 'SELECT id FROM test_project_account WHERE id = %(my_id)s'
+        sql_args = {
+            'my_id': 2
+        }
+        rows = Query().select(sql=sql, sql_args=sql_args)
+        received = rows[0]['id']
+        expected = User.objects.all().filter(id=2)[0].id
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
+
+    def test_explain(self):
+        sql = 'SELECT id FROM test_project_account WHERE id = %(my_id)s'
+        sql_args = {
+            'my_id': 2
+        }
+        rows = Query().explain(sql=sql, sql_args=sql_args)
+        self.assertTrue(len(rows) > 0, 'Explain did not return anything')
+
 
 class TestMiscTable(TestCase):
     fixtures = [
@@ -1787,3 +1944,37 @@ class TestMiscTable(TestCase):
         result = field.name
         expected = 'first_name'
         self.assertEqual(result, expected, get_comparison_str(result, expected))
+
+
+class TestMiscField(TestCase):
+
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_cast(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                CountField(
+                    'id',
+                    alias='count',
+                    cast='float'
+                )
+            ]
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT CAST(COUNT(test_project_account.id) AS FLOAT) AS count FROM test_project_account'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+        received = query.select()[0]['count']
+        expected = float(len(User.objects.all()))
+        self.assertEqual(
+            received,
+            expected,
+            'Expected {0} but received {1}'.format(
+                expected,
+                received
+            )
+        )
