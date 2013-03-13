@@ -512,6 +512,11 @@ class Query(object):
 
     def limit(self, limit=None, offset=None):
         """
+        Sets a limit and/or offset to the query to limit the number of rows returned.
+        @param limit: The number of rows to return
+        @type limit: int
+        @param offset: The offset from the start of the record set where rows should start being returned
+        @type offset: int
         @return: self
         """
         self._limit = Limit(
