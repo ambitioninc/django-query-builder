@@ -12,6 +12,7 @@ def get_comparison_str(item1, item2):
 
 
 class TestSelect(TestCase):
+
     def test_select_all_from_string(self):
         query = Query().from_table(
             table='test_table'
@@ -384,6 +385,7 @@ class TestJoins(TestCase):
 
 
 class TestWheres(TestCase):
+
     fixtures = [
         'test_project/test_data.json'
     ]
@@ -397,6 +399,29 @@ class TestWheres(TestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s)'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_where_named_arg(self):
+        query = Query().from_table(
+            table='test_table'
+        ).where(
+            one='two'
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s)'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_where_many_named_arg(self):
+        query = Query().from_table(
+            table='test_table'
+        ).where(
+            one='two',
+            three='four'
+        )
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table WHERE (three = %(A0)s AND one = %(A1)s)'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_not_eq(self):

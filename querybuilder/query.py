@@ -450,7 +450,7 @@ class Query(object):
 
     def where(self, q=None, where_type='AND', **kwargs):
         """
-        Adds a Q object to the query's ``Where`` instance.
+        Adds a where condition as a Q object to the query's ``Where`` instance.
         @param q: A django ``Q`` instance. This will be added to the query's ``Where`` object. If no
             Q object is passed, the kwargs will be examined for params to be added to Q objects
         @type q: Q
