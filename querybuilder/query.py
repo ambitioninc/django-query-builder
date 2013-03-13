@@ -595,6 +595,10 @@ class Query(object):
         return self.sql
 
     def format_sql(self):
+        """
+        Builds the sql in a format that is easy for humans to read and debug
+        """
+        # TODO: finish adding the other parts of the sql generation
         sql = ''
         select_segment = self.build_select_fields()
         select_segment = select_segment.replace('SELECT ', '', 1)
