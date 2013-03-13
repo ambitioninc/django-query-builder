@@ -927,15 +927,35 @@ class Query(object):
         return rows
 
     def sql_insert(self):
+        """
+        Inserts records into the db
+        # TODO: implement this
+        """
         pass
 
     def sql_update(self):
+        """
+        Updates records in the db
+        # TODO: implement this
+        """
         pass
 
     def sql_delete(self):
+        """
+        Deletes records from the db
+        # TODO: implement this
+        """
         pass
 
     def count(self, field='*'):
+        """
+        Returns a COUNT of the query by wrapping the query and performing a COUNT
+        aggregate of the specified field
+        @param field: the field to pass to the COUNT aggregate. Defaults to '*'
+        @type field: str
+        @return: The number of rows that the query will return
+        @rtype: int
+        """
         q = Query().from_table(self, fields=[
             CountField(field)
         ])
@@ -943,6 +963,14 @@ class Query(object):
         return rows[0].values()[0]
 
     def max(self, field):
+        """
+        Returns the maximum value of a field in the result set of the query
+        by wrapping the query and performing a MAX aggregate of the specified field
+        @param field: the field to pass to the MAX aggregate
+        @type field: str
+        @return: The maximum value of the specified field
+        @rtype: int
+        """
         q = Query().from_table(self, fields=[
             MaxField(field)
         ])
@@ -950,6 +978,14 @@ class Query(object):
         return rows[0].values()[0]
 
     def min(self, field):
+        """
+        Returns the minimum value of a field in the result set of the query
+        by wrapping the query and performing a MIN aggregate of the specified field
+        @param field: the field to pass to the MIN aggregate
+        @type field: str
+        @return: The minimum value of the specified field
+        @rtype: int
+        """
         q = Query().from_table(self, fields=[
             MinField(field)
         ])
@@ -957,6 +993,14 @@ class Query(object):
         return rows[0].values()[0]
 
     def sum(self, field):
+        """
+        Returns the sum of the field in the result set of the query
+        by wrapping the query and performing a SUM aggregate of the specified field
+        @param field: the field to pass to the SUM aggregate
+        @type field: str
+        @return: The sum of the specified field
+        @rtype: int
+        """
         q = Query().from_table(self, fields=[
             SumField(field)
         ])
@@ -964,6 +1008,14 @@ class Query(object):
         return rows[0].values()[0]
 
     def avg(self, field):
+        """
+        Returns the average of the field in the result set of the query
+        by wrapping the query and performing an AVG aggregate of the specified field
+        @param field: the field to pass to the AVG aggregate
+        @type field: str
+        @return: The average of the specified field
+        @rtype: int
+        """
         q = Query().from_table(self, fields=[
             AvgField(field)
         ])
@@ -972,7 +1024,9 @@ class Query(object):
 
     def _fetch_all_as_dict(self, cursor):
         """
-        @return: list
+        Iterates over the result set and converts each row to a dictionary
+        @return: A list of dictionaries where each row is a dictionary
+        @rtype: list of dict
         """
         desc = cursor.description
         return [
