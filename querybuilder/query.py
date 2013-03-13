@@ -221,10 +221,20 @@ class Where(object):
 
 class Group(object):
     """
-
+    Adds a group by clause to the query by adding a ``Group`` instance to the query's
+    groups list
     """
 
     def __init__(self, field=None, table=None):
+        """
+        @param field: This can be a string of a field name, a dict of {'alias': field}, or
+            a ``Field`` instance
+        @type field: str or dict or Field
+        @param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
+            a ``Table`` instance. A table only needs to be supplied in more complex queries where
+            the field name is ambiguous.
+        @type table: str or dict or Table
+        """
         self.field = FieldFactory(field)
         self.table = TableFactory(table)
         if self.table and self.field.table is None:
@@ -233,17 +243,31 @@ class Group(object):
     def get_name(self):
         """
         Gets the name to reference the grouped field
-        :return: :rtype: str
+        @return: the name to reference the grouped field
+        @rtype: str
         """
         return self.field.get_identifier()
 
 
 class Sorter(object):
     """
-
+    Used internally by the Query class to set ORDER BY clauses on the query.
     """
 
     def __init__(self, field=None, table=None, desc=False):
+        """
+        Initializes the instance variables
+        @param field: This can be a string of a field name, a dict of {'alias': field}, or
+            a ``Field`` instance
+        @type field: str or dict or Field
+        @param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
+            a ``Table`` instance. A table only needs to be supplied in more complex queries where
+            the field name is ambiguous.
+        @type table: str or dict or Table
+        @param desc: Set to True to sort by this field in DESC order or False to sort by this field
+            in ASC order. Defaults to False.
+        @type desc: bool
+        """
         self.desc = desc
         self.field = FieldFactory(field)
         self.table = TableFactory(table)
@@ -264,7 +288,8 @@ class Sorter(object):
     def get_name(self, use_alias=True):
         """
         Gets the name to reference the sorted field
-        :return: :rtype: str
+        @return: the name to reference the sorted field
+        @rtype: str
         """
         if self.desc:
             direction = 'DESC'
@@ -283,7 +308,7 @@ class Limit(object):
 
     def __init__(self, limit=None, offset=None):
         """
-        Initialized the instance variables
+        Initializes the instance variables
         @param limit: the number of rows to return
         @type limit: int
         @param offset: the number of rows to start returning rows from
