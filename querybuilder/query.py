@@ -489,6 +489,18 @@ class Query(object):
 
     def order_by(self, field=None, table=None, desc=False):
         """
+        Adds an order by clause to the query by adding a ``Sorter`` instance to the query's
+        sorters list
+        @param field: This can be a string of a field name, a dict of {'alias': field}, or
+            a ``Field`` instance
+        @type field: str or dict or Field
+        @param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
+            a ``Table`` instance. A table only needs to be supplied in more complex queries where
+            the field name is ambiguous.
+        @type table: str or dict or Table
+        @param desc: Set to True to sort by this field in DESC order or False to sort by this field
+            in ASC order. Defaults to False.
+        @type desc: bool
         @return: self
         """
         self.sorters.append(Sorter(
