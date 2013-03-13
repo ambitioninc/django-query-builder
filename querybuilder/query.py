@@ -558,16 +558,27 @@ class Query(object):
 
     def get_sql(self, debug=False, use_cache=True):
         """
+        Generates the sql for this query and returns the sql as a string.
+        @param debug: If True, the sql will be returned in a format that is easier to read and debug.
+            Defaults to False
+        @type debug: bool
+        @param use_cache: If True, the query will returned the cached sql if it exists rather
+            then generating the sql again. If False, the sql will be generated again. Defaults to True.
+        @type use_cache: bool
         @return: self
         """
+        # TODO: enable caching
         # if self.sql and use_cache and not debug:
         #     return self.sql
 
+        # auto alias any naming collisions
         self.check_name_collisions()
 
+        # if debugging, return the debug formatted sql
         if debug:
             return self.format_sql()
 
+        # build each part of the query
         sql = ''
         # sql += self.build_withs()
         sql += self.build_select_fields()
@@ -578,6 +589,7 @@ class Query(object):
         sql += self.build_order_by()
         sql += self.build_limit()
 
+        # remove any whitespace from the beginning and end of the sql
         self.sql = sql.strip()
 
         return self.sql
