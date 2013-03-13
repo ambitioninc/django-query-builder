@@ -469,6 +469,15 @@ class Query(object):
 
     def group_by(self, field=None, table=None):
         """
+        Adds a group by clause to the query by adding a ``Group`` instance to the query's
+        groups list
+        @param field: This can be a string of a field name, a dict of {'alias': field}, or
+            a ``Field`` instance
+        @type field: str or dict or Field
+        @param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
+            a ``Table`` instance. A table only needs to be supplied in more complex queries where
+            the field name is ambiguous.
+        @type table: str or dict or Table
         @return: self
         """
         self.groups.append(Group(
