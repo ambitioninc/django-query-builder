@@ -526,6 +526,11 @@ class Query(object):
         return self
 
     def check_name_collisions(self):
+        """
+        Checks if there are any tables referenced by the same identifier and updated the
+        auto_alias accordingly. This is called when generating the sql for a query
+        and should only be called internally.
+        """
         table_index = 0
         table_names = {}
         for table in self.tables:
