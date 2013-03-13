@@ -278,14 +278,26 @@ class Sorter(object):
 
 class Limit(object):
     """
-
+    Used internally by the Query class to set a limit and/or offset on the query.
     """
 
     def __init__(self, limit=None, offset=None):
+        """
+        Initialized the instance variables
+        @param limit: the number of rows to return
+        @type limit: int
+        @param offset: the number of rows to start returning rows from
+        @type limit: int
+        """
         self.limit = limit
         self.offset = offset
 
     def get_sql(self):
+        """
+        Generates the sql used for the limit clause of a Query
+        @return: the sql for the limit clause of a Query
+        @rtype: str
+        """
         sql = ''
         if self.limit > 0:
             sql += 'LIMIT {0} '.format(self.limit)
