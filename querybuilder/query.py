@@ -356,6 +356,7 @@ class Query(object):
         """
         Initializes this instance by calling ``self.init_defaults``
         @return: self
+        @rtype: self
         """
         self.init_defaults()
 
@@ -373,6 +374,7 @@ class Query(object):
         @param schema: This is not implemented, but it will be a string of the db schema name
         @type schema: str
         @return: self
+        @rtype: self
         """
         # self.mark_dirty()
 
@@ -422,6 +424,7 @@ class Query(object):
             the join field name.
         @type field_prefix: str
         @return: self
+        @rtype: self
         """
         # self.mark_dirty()
         # TODO: fix bug when joining from simple table to model table with no condition
@@ -445,6 +448,7 @@ class Query(object):
         """
         Wrapper for ``self.join`` with a default join of 'LEFT JOIN'
         @return: self
+        @rtype: self
         """
         return self.join(right_table=right_table, fields=fields, condition=condition, join_type=join_type, schema=schema, left_table=left_table, extract_fields=extract_fields, prefix_fields=prefix_fields, field_prefix=field_prefix)
 
@@ -457,6 +461,7 @@ class Query(object):
         @param where_type: The connection type of the where condition ('AND', 'OR')
         @param where_type: str
         @return: self
+        @rtype: self
         """
         # self.mark_dirty()
         if q is not None:
@@ -479,6 +484,7 @@ class Query(object):
             the field name is ambiguous.
         @type table: str or dict or Table
         @return: self
+        @rtype: self
         """
         self.groups.append(Group(
             field=field,
@@ -502,6 +508,7 @@ class Query(object):
             in ASC order. Defaults to False.
         @type desc: bool
         @return: self
+        @rtype: self
         """
         self.sorters.append(Sorter(
             field=field,
@@ -518,6 +525,7 @@ class Query(object):
         @param offset: The offset from the start of the record set where rows should start being returned
         @type offset: int
         @return: self
+        @rtype: self
         """
         self._limit = Limit(
             limit=limit,
@@ -565,7 +573,8 @@ class Query(object):
         @param use_cache: If True, the query will returned the cached sql if it exists rather
             then generating the sql again. If False, the sql will be generated again. Defaults to True.
         @type use_cache: bool
-        @return: self
+        @return: The generated sql for this query
+        @rtype: str
         """
         # TODO: enable caching
         # if self.sql and use_cache and not debug:
@@ -597,6 +606,8 @@ class Query(object):
     def format_sql(self):
         """
         Builds the sql in a format that is easy for humans to read and debug
+        @return: The formatted sql for this query
+        @rtype: str
         """
         # TODO: finish adding the other parts of the sql generation
         sql = ''
