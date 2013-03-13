@@ -32,9 +32,47 @@ class FieldFactory(object):
 
 
 class Field(object):
+    """
+    Abstract field class that all field types extend.
+
+    Properties:
+
+        name: str
+            The name that identifies this table if there is no alias
+
+        alias: str
+            The optional alias used to identify this table
+
+        auto_alias: str
+            An alias that is set automatically by the Query if needed for inner query
+            namespacing
+
+        ignore: bool
+            If set to True before the field is added to a table, this field will be
+            ignored and not actually added to the table list. Typically used for fields
+            that will create other fields like '*' or auto date fields.
+
+        auto: bool
+            This is a flag that is read when adding fields which could indicate some
+            other fields need to be automatically created.
+    """
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None):
+        """
+        @param field: A string of a field name
+        @type field: str
+        @param table: A Table instance used to disambiguate the field. This is optional in
+            simple queries
+        @type table: Table
+        @param alias: An alias to be used for this field
+        @type alias: str
+        @param cast: A data type name this field should be cast to. Ex: 'float'
+        @type cast: str
+        @param distinct: Indicates if a DISTINCT flag should be added during sql generation
+        @type cast: bool
+        """
+        # TODO: implement distinct
         self.field = field
         self.name = None
         self.table = table
@@ -49,7 +87,8 @@ class Field(object):
         """
         Gets the SELECT sql part for a field
         Ex: field_name AS alias
-        :return: :rtype: str
+        @return: the sql for this field used in the SELECT portion of the query
+        @rtype: str
         """
         alias = self.get_alias()
         if alias:
@@ -62,12 +101,24 @@ class Field(object):
         return self.get_identifier()
 
     def get_name(self):
+        """
+        Gets the name for the field and returns it. This identifies the field if there
+        is not an alias set.
+        @return: The name for the field
+        @rtype: str
+        """
         alias = self.get_alias()
         if alias:
             return alias
         return self.name
 
     def get_alias(self):
+        """
+        Gets the alias for the field or the auto_alias if one is set.
+        If there isn't any kind of alias, None is returned.
+        @return: The field alias, auto_alias, or None
+        @rtype: str or None
+        """
         alias = None
         if self.alias:
             alias = self.alias
@@ -88,7 +139,8 @@ class Field(object):
         Gets the name for the field of how it should
         be referenced within a query. It will be
         prefixed with the table name or table alias
-        :return: :rtype: str
+        @return: the name to reference the field within a query
+        @rtype: str
         """
         alias = self.get_alias()
         if alias:
@@ -96,14 +148,29 @@ class Field(object):
         return self.get_select_sql()
 
     def get_select_sql(self):
+        """
+        Gets the SELECT field portion for the field without the alias. If the field
+        has a table, it will be included here like table.field
+        @return: Gets the SELECT field portion for the field without the alias
+        @rtype: str
+        """
         if self.table:
             return '{0}.{1}'.format(self.table.get_identifier(), self.name)
         return '{0}'.format(self.name)
 
     def before_add(self):
+        """
+        Template method to be implemented by subclasses. This is called
+        before the field is actually added to a table
+        """
         pass
 
     def set_table(self, table):
+        """
+        Setter for the table. This is meant to be extended by any subclass that might need
+        to do additional processing with the table it belongs to. Ex: aggregate functions
+        which reference multiple fields can set their inner fields' table.
+        """
         self.table = table
 
 
