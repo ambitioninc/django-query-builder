@@ -120,6 +120,27 @@ class Join(object):
 
 
 class Where(object):
+    """
+    Represents the WHERE clause of a Query. The filter data is contained inside of django
+    Q objects and methods are provided to interface with them.
+
+    Properties:
+
+        arg_index: int
+            The numeric index that is automatically assigned to query parameters
+
+        arg_prefix: str
+            A prefix for the arg names used to namespace inner queries. This is set
+            by the Query object
+
+        args: dict
+            A dictionary mapping the arg keys to the actual values. This is the data
+            that is passed into cursor.execute
+
+        wheres: Q
+            A django Q object that can contain many nested Q objects that are used to
+            determine all of the where conditions and nested where conditions
+    """
 
     comparison_map = {
         'eq': '=',
@@ -133,23 +154,48 @@ class Where(object):
     }
 
     def __init__(self):
+        """
+        Initializes default variables
+        """
         self.arg_index = 0
         self.arg_prefix = ''
         self.args = {}
         self.wheres = Q()
 
     def get_sql(self):
+        """
+        Builds and returns the WHERE portion of the sql
+        return: the WHERE portion of the sql
+        @rtype: str
+        """
+        # reset arg index and args
         self.arg_index = 0
         self.args = {}
+
+        # build the WHERE sql portion if needed
         if len(self.wheres):
             where = self.build_where_part(self.wheres)
             return 'WHERE {0} '.format(where)
         return ''
 
     def get_condition_operator(self, operator):
+        """
+        Gets the comparison operator from the Where class's comparison_map
+        @return: the comparison operator from the Where class's comparison_map
+        @rtype: str
+        """
         return Where.comparison_map.get(operator, None)
 
     def get_condition_value(self, operator, value):
+        """
+        Gets the condition value based on the operator and value
+        @param operator: the condition operator name
+        @type operator: str
+        @param value: the value to be formatted based on the condition operator
+        @type value: object
+        @return: the comparison operator from the Where class's comparison_map
+        @rtype: str
+        """
         if operator == 'contains':
             value = '%{0}%'.format(value)
         elif operator == 'startswith':
@@ -157,19 +203,32 @@ class Where(object):
         return value
 
     def build_where_part(self, wheres):
+        """
+        Recursive method that builds the where parts. Any Q objects that have children will
+        also be built with ``self.build_where_part()``
+        """
         where_parts = []
+
+        # loop through each child of the Q condition
         for where in wheres.children:
+
+            # if this child is another Q object, recursively build the where part
             if type(where) is Q:
                 where_parts.append(self.build_where_part(where))
             elif type(where) is tuple:
+                # build the condition for this where part
+                # get the field name and value
                 field_name = where[0]
                 value = where[1]
 
+                # set the default operator
                 operator_str = 'eq'
                 operator = '='
 
+                # break apart the field name on double underscores
                 field_parts = field_name.split('__')
                 if len(field_parts) > 1:
+                    # get the operator based on the last element split from the double underscores
                     operator_str = field_parts[-1]
                     operator = self.get_condition_operator(operator_str)
                     if operator is None:
@@ -180,9 +239,13 @@ class Where(object):
 
                 # check if we are comparing to null
                 if value is None:
+                    # change the operator syntax to IS
                     operator = 'IS'
 
+                # set up the condition string format
                 condition = '{0} {1} ?'.format(field_name, operator)
+
+                # apply the NOT if this condition is negated
                 if wheres.negated:
                     condition = 'NOT({0})'.format(condition)
 
@@ -198,21 +261,36 @@ class Where(object):
                         # split on commas
                         value = value.split(',')
 
+                    # assign each query param to a named arg
                     named_args = []
                     for value_item in value:
                         named_arg = self.set_arg(value_item)
                         named_args.append('%({0})s'.format(named_arg))
+                    # replace the ? in the query with the arg placeholder
                     condition = condition.replace('?', '({0})'.format(','.join(named_args)), 1)
                 else:
+                    # get the value based on the operator
                     value = self.get_condition_value(operator_str, value)
                     named_arg = self.set_arg(value)
+                    # replace the ? in the query with the arg placeholder
                     condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
 
+                # add the condition to the where sql
                 where_parts.append(condition)
+
+        # join all where parts together
         joined_parts = ' {0} '.format(wheres.connector).join(where_parts)
+
+        # wrap the where parts in parentheses
         return '({0})'.format(joined_parts)
 
     def set_arg(self, value):
+        """
+        Set the query param in self.args based on the prefix and arg index
+        and auto increment the arg_index
+        @return: the string placeholder for the arg
+        @rtype: str
+        """
         named_arg = '{0}A{1}'.format(self.arg_prefix, self.arg_index)
         self.args[named_arg] = value
         self.arg_index += 1
@@ -221,8 +299,7 @@ class Where(object):
 
 class Group(object):
     """
-    Adds a group by clause to the query by adding a ``Group`` instance to the query's
-    groups list
+    Represents a group by clause used in a Query
     """
 
     def __init__(self, field=None, table=None):
