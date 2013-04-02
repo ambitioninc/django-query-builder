@@ -14,6 +14,7 @@ def get_comparison_str(item1, item2):
 class TestSelect(TestCase):
 
     def test_select_all_from_string(self):
+
         query = Query().from_table(
             table='test_table'
         )
@@ -216,6 +217,9 @@ class TestSelect(TestCase):
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_account.field_one, test_project_account.field_two, T1.field_three, T1.field_four FROM test_project_account, test_project_account AS T1'
         self.assertEqual(query_str, expected_query, '\n{0}\n!=\n{1}'.format(query_str, expected_query))
+
+
+# TODO: add tests for selecting fields like {'alias': 'agg() + agg()'}
 
 
 class TestJoins(TestCase):

@@ -332,7 +332,7 @@ class NumStdDevField(AggregateField):
         of the field and the average and divide the difference by the standard
         deviation
         """
-        return '(({0} - (AVG({0}){1})) / (STDDEV({0}){1}))'.format(
+        return '(CASE WHEN (STDDEV({0}){1}) <> 0 THEN (({0} - (AVG({0}){1})) / (STDDEV({0}){1})) ELSE 0 END)'.format(
             self.get_field_identifier(),
             self.get_over(),
         )
