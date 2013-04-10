@@ -3,7 +3,7 @@ from setuptools import find_packages
 
 setup(
     name="django-query-builder",
-    version="0.2.6",
+    version="0.2.7",
     packages=find_packages(),
     url="https://github.com/wesokes/django-query-builder",
     description="Django query builder",
