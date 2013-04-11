@@ -1,13 +1,15 @@
 from distutils.core import setup
-from setuptools import find_packages
 
 setup(
     name="django-query-builder",
-    version="0.2.7",
-    packages=find_packages(),
+    version="0.2.8",
+    packages=[
+        'querybuilder'
+    ],
     url="https://github.com/wesokes/django-query-builder",
     description="Django query builder",
     install_requires=[
         "django>=1.4",
+        "pytz==2012h"
     ]
 )
