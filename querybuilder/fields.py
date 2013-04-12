@@ -198,19 +198,31 @@ class SimpleField(Field):
         self.name = field
 
 
-class NestedField(Field):
+class MultiField(Field):
     """
     A field that contains one or more nested fields
     """
 
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None):
-        super(NestedField, self).__init__(field, table, alias, cast, distinct)
+        super(MultiField, self).__init__(field, table, alias, cast, distinct)
         self.field = FieldFactory(field)
         if self.table:
             self.field.set_table(self.table)
 
+    def set_table(self, table):
+        """
+        Setter for the table of this field. Also sets the inner field's table.
+        """
+        super(MultiField, self).set_table(table)
+        if self.field and self.field.table is None:
+            self.field.set_table(self.table)
 
-class AggregateField(NestedField):
+
+class ExpressionField(Field):
+    pass
+
+
+class AggregateField(MultiField):
     """
     The base class for aggregate functions and window functions.
 
@@ -285,14 +297,6 @@ class AggregateField(NestedField):
         if self.over:
             return ' {0}'.format(self.over.get_sql())
         return ''
-
-    def set_table(self, table):
-        """
-        Setter for the table of this field. Also sets the inner field's table.
-        """
-        super(AggregateField, self).set_table(table)
-        if self.field and self.field.table is None:
-            self.field.set_table(self.table)
 
 
 class CountField(AggregateField):
@@ -584,7 +588,7 @@ class NthValueField(AggregateField):
         return '{0}, {1}'.format(self.field.get_select_sql(), self.n)
 
 
-class DatePartField(Field):
+class DatePartField(MultiField):
     """
     Base class for all date part fields
 
@@ -640,14 +644,6 @@ class DatePartField(Field):
         # if self.table:
         #     lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
         return 'EXTRACT({0} FROM {1})'.format(self.name, self.field.get_select_sql())
-
-    def set_table(self, table):
-        """
-        Setter for the table of this field. Also sets the inner field's table.
-        """
-        super(DatePartField, self).set_table(table)
-        if self.field and self.field.table is None:
-            self.field.set_table(self.table)
 
     def before_add(self):
         """
