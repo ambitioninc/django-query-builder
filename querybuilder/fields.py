@@ -230,6 +230,8 @@ class AggregateField(Field):
         """
         super(AggregateField, self).__init__(field, table, alias, cast, distinct)
         self.field = FieldFactory(field)
+        if self.table:
+            self.field.set_table(self.table)
 
         self.name = self.function_name
         self.over = over
@@ -282,7 +284,7 @@ class AggregateField(Field):
         """
         super(AggregateField, self).set_table(table)
         if self.field and self.field.table is None:
-            self.field.table = self.table
+            self.field.set_table(self.table)
 
 
 class CountField(AggregateField):
@@ -609,7 +611,7 @@ class DatePartField(Field):
         @type include_datetime: bool
         """
         super(DatePartField, self).__init__(field, table, alias, cast, distinct)
-
+        self.field = FieldFactory(field)
         self.name = self.group_name
         self.auto = auto
         self.desc = desc
@@ -618,7 +620,7 @@ class DatePartField(Field):
         if self.cast is None:
             self.cast = 'INT'
 
-        self.auto_alias = '{0}__{1}'.format(self.field, self.name)
+        self.auto_alias = '{0}__{1}'.format(self.field.get_name(), self.name)
 
     def get_select_sql(self):
         """
@@ -626,10 +628,18 @@ class DatePartField(Field):
         @return: The EXTRACT sql portion for this field
         @rtype: str
         """
-        lookup_field = self.field
-        if self.table:
-            lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
-        return 'EXTRACT({0} FROM {1})'.format(self.name, lookup_field)
+        # lookup_field = self.field
+        # if self.table:
+        #     lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
+        return 'EXTRACT({0} FROM {1})'.format(self.name, self.field.get_select_sql())
+
+    def set_table(self, table):
+        """
+        Setter for the table of this field. Also sets the inner field's table.
+        """
+        super(DatePartField, self).set_table(table)
+        if self.field and self.field.table is None:
+            self.field.set_table(self.table)
 
     def before_add(self):
         """
@@ -649,7 +659,7 @@ class DatePartField(Field):
         datetime_str = None
 
         # create an alias for the unix timestamp extraction
-        epoch_alias = '{0}__{1}'.format(self.field, 'epoch')
+        epoch_alias = '{0}__{1}'.format(self.field.get_name(), 'epoch')
 
         if self.name == 'all':
             datetime_str = self.field
@@ -665,7 +675,7 @@ class DatePartField(Field):
                 group_names = week_group_names
 
             for group_name in group_names:
-                field_alias = '{0}__{1}'.format(self.field, group_name)
+                field_alias = '{0}__{1}'.format(self.field.get_name(), group_name)
                 auto_field = group_map[group_name](self.field, table=self.table)
                 self.add_to_table(auto_field, field_alias, add_group=True)
 
@@ -711,8 +721,9 @@ class AllTime(DatePartField):
     """
     group_name = 'all'
 
-    def __init__(self, lookup, auto=False, desc=False, include_datetime=False):
-        super(AllTime, self).__init__(lookup, auto, desc, include_datetime)
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, auto=False, desc=False,
+                 include_datetime=False):
+        super(AllTime, self).__init__(field, table, alias, cast, distinct, auto, desc, include_datetime)
         self.auto = True
 
 
@@ -722,8 +733,9 @@ class NoneTime(DatePartField):
     """
     group_name = 'none'
 
-    def __init__(self, lookup, auto=False, desc=False, include_datetime=False):
-        super(NoneTime, self).__init__(lookup, auto, desc, include_datetime)
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, auto=False, desc=False,
+                 include_datetime=False):
+        super(NoneTime, self).__init__(field, table, alias, cast, distinct, auto, desc, include_datetime)
         self.auto = True
 
 
@@ -782,10 +794,10 @@ class Epoch(DatePartField):
     """
     group_name = 'epoch'
 
-    def __init__(self, field, table=None, alias=None, auto=None, desc=None,
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, auto=False, desc=False,
                  include_datetime=False, date_group_name=None):
-        super(Epoch, self).__init__(field, table, alias, auto, desc, include_datetime)
         self.date_group_name = date_group_name
+        super(Epoch, self).__init__(field, table, alias, cast, distinct, auto, desc, include_datetime)
 
 
 class GroupEpoch(Epoch):
@@ -794,11 +806,10 @@ class GroupEpoch(Epoch):
     """
 
     def get_select_sql(self):
-        lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
         return 'EXTRACT({0} FROM date_trunc(\'{1}\', {2}))'.format(
             self.name,
             self.date_group_name,
-            lookup_field
+            self.field.get_identifier()
         )
 
 
@@ -811,7 +822,7 @@ class AllEpoch(Epoch):
         lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
         return 'EXTRACT({0} FROM MIN({1}))'.format(
             self.name,
-            lookup_field
+            self.field.get_sql()
         )
 
 

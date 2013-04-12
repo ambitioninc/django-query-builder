@@ -1,8 +1,9 @@
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
-from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField, RowNumberField, LagField, DenseRankField, PercentRankField, CumeDistField, NTileField, LeadField, FirstValueField, LastValueField, NthValueField, NumStdDevField
+from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField, RowNumberField, LagField, DenseRankField, PercentRankField, CumeDistField, NTileField, LeadField, FirstValueField, LastValueField, NthValueField, NumStdDevField, GroupEpoch
 from querybuilder.logger import Logger, LogManager
+from querybuilder.tables import TableFactory
 from test_project.models import Account, Order, User
 from querybuilder.query import Query, QueryWindow
 
@@ -14,6 +15,8 @@ def get_comparison_str(item1, item2):
 class TestSelect(TestCase):
 
     def test_select_all_from_string(self):
+        field = GroupEpoch('test', date_group_name='test2')
+        print field.get_sql()
 
         query = Query().from_table(
             table='test_table'
@@ -258,6 +261,7 @@ class TestJoins(TestCase):
                 'field_one',
                 'field_two'
             ],
+            prefix_fields=True,
             condition='other_table.test_id = test_project_account.id'
         )
 
@@ -324,8 +328,7 @@ class TestJoins(TestCase):
                 'three': 'one'
             }, {
                 'four': 'two'
-            }],
-            prefix_fields=False,
+            }]
         )
 
         query_str = query.get_sql()
@@ -343,7 +346,6 @@ class TestJoins(TestCase):
             fields=[
                 '*'
             ],
-            prefix_fields=False,
             extract_fields=False
         )
 
@@ -361,8 +363,7 @@ class TestJoins(TestCase):
             Order,
             fields=[
                 '*'
-            ],
-            prefix_fields=False
+            ]
         )
 
         query_str = query.get_sql()
@@ -381,6 +382,7 @@ class TestJoins(TestCase):
                 'id',
                 'margin',
             ],
+            prefix_fields=True
         )
 
         query_str = query.get_sql()
@@ -1193,7 +1195,7 @@ class TestWindowFunctions(TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, ((test_project_order.margin - (AVG(test_project_order.margin) OVER ())) / (STDDEV(test_project_order.margin) OVER ())) AS margin_num_stddev FROM test_project_order ORDER BY margin_num_stddev DESC'
+        expected_query = 'SELECT test_project_order.*, (CASE WHEN (STDDEV(test_project_order.margin) OVER ()) <> 0 THEN ((test_project_order.margin - (AVG(test_project_order.margin) OVER ())) / (STDDEV(test_project_order.margin) OVER ())) ELSE 0 END) AS margin_num_stddev FROM test_project_order ORDER BY margin_num_stddev DESC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
