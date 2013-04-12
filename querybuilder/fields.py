@@ -204,6 +204,7 @@ class MultiField(Field):
     """
 
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None):
+        # TODO: implement handling of more than one nested field
         super(MultiField, self).__init__(field, table, alias, cast, distinct)
         self.field = FieldFactory(field)
         if self.table:
@@ -599,7 +600,8 @@ class DatePartField(MultiField):
     """
     group_name = None
 
-    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, auto=False, desc=False, include_datetime=False):
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, auto=False, desc=False,
+                 include_datetime=False):
         """
         @param field: A string of a field name
         @type field: str
@@ -822,7 +824,6 @@ class AllEpoch(Epoch):
     """
 
     def get_select_sql(self):
-        lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
         return 'EXTRACT({0} FROM MIN({1}))'.format(
             self.name,
             self.field.get_sql()
