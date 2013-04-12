@@ -1,0 +1,5 @@
+test:
+  override:
+  - find querybuilder | grep -v /migrations | grep .py$ | xargs ./venv/bin/pyflakes
+  - find querybuilder | grep -v /migrations | grep .py$ | xargs ./venv/bin/pep8 --max-line-length=120
+  - ./venv/bin/python manage.py test
