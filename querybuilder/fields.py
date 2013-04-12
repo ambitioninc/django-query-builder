@@ -198,7 +198,19 @@ class SimpleField(Field):
         self.name = field
 
 
-class AggregateField(Field):
+class NestedField(Field):
+    """
+    A field that contains one or more nested fields
+    """
+
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None):
+        super(NestedField, self).__init__(field, table, alias, cast, distinct)
+        self.field = FieldFactory(field)
+        if self.table:
+            self.field.set_table(self.table)
+
+
+class AggregateField(NestedField):
     """
     The base class for aggregate functions and window functions.
 
@@ -229,10 +241,6 @@ class AggregateField(Field):
         @type over: QueryWindow
         """
         super(AggregateField, self).__init__(field, table, alias, cast, distinct)
-        self.field = FieldFactory(field)
-        if self.table:
-            self.field.set_table(self.table)
-
         self.name = self.function_name
         self.over = over
 
