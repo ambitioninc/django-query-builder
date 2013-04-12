@@ -1574,7 +1574,8 @@ class TestModels(TestCase):
             right_table=Order,
             fields=[
                 '*'
-            ]
+            ],
+            prefix_fields=True
         )
         rows = query.select(True)
 
@@ -1595,7 +1596,8 @@ class TestModels(TestCase):
             right_table=Account,
             fields=[
                 '*'
-            ]
+            ],
+            prefix_fields=True
         )
         rows = query.select(True)
 
@@ -1616,7 +1618,8 @@ class TestModels(TestCase):
             right_table=User,
             fields=[
                 '*'
-            ]
+            ],
+            prefix_fields=True
         )
 
         rows = query.select(True)
@@ -1638,7 +1641,8 @@ class TestModels(TestCase):
             right_table=Account,
             fields=[
                 '*'
-            ]
+            ],
+            prefix_fields=True
         )
 
         rows = query.select(True)
