@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name="django-query-builder",
-    version="0.2.8",
+    version="0.2.9",
     packages=[
         'querybuilder'
     ],
