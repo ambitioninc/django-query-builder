@@ -14,7 +14,6 @@ def get_comparison_str(item1, item2):
 class TestSelect(TestCase):
 
     def test_select_all_from_string(self):
-
         query = Query().from_table(
             table='test_table'
         )
@@ -258,6 +257,7 @@ class TestJoins(TestCase):
                 'field_one',
                 'field_two'
             ],
+            prefix_fields=True,
             condition='other_table.test_id = test_project_account.id'
         )
 
@@ -324,8 +324,7 @@ class TestJoins(TestCase):
                 'three': 'one'
             }, {
                 'four': 'two'
-            }],
-            prefix_fields=False,
+            }]
         )
 
         query_str = query.get_sql()
@@ -343,7 +342,6 @@ class TestJoins(TestCase):
             fields=[
                 '*'
             ],
-            prefix_fields=False,
             extract_fields=False
         )
 
@@ -361,8 +359,7 @@ class TestJoins(TestCase):
             Order,
             fields=[
                 '*'
-            ],
-            prefix_fields=False
+            ]
         )
 
         query_str = query.get_sql()
@@ -381,6 +378,7 @@ class TestJoins(TestCase):
                 'id',
                 'margin',
             ],
+            prefix_fields=True
         )
 
         query_str = query.get_sql()
@@ -1193,7 +1191,7 @@ class TestWindowFunctions(TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, ((test_project_order.margin - (AVG(test_project_order.margin) OVER ())) / (STDDEV(test_project_order.margin) OVER ())) AS margin_num_stddev FROM test_project_order ORDER BY margin_num_stddev DESC'
+        expected_query = 'SELECT test_project_order.*, (CASE WHEN (STDDEV(test_project_order.margin) OVER ()) <> 0 THEN ((test_project_order.margin - (AVG(test_project_order.margin) OVER ())) / (STDDEV(test_project_order.margin) OVER ())) ELSE 0 END) AS margin_num_stddev FROM test_project_order ORDER BY margin_num_stddev DESC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
@@ -1572,7 +1570,8 @@ class TestModels(TestCase):
             right_table=Order,
             fields=[
                 '*'
-            ]
+            ],
+            prefix_fields=True
         )
         rows = query.select(True)
 
@@ -1593,7 +1592,8 @@ class TestModels(TestCase):
             right_table=Account,
             fields=[
                 '*'
-            ]
+            ],
+            prefix_fields=True
         )
         rows = query.select(True)
 
@@ -1614,7 +1614,8 @@ class TestModels(TestCase):
             right_table=User,
             fields=[
                 '*'
-            ]
+            ],
+            prefix_fields=True
         )
 
         rows = query.select(True)
@@ -1636,7 +1637,8 @@ class TestModels(TestCase):
             right_table=Account,
             fields=[
                 '*'
-            ]
+            ],
+            prefix_fields=True
         )
 
         rows = query.select(True)

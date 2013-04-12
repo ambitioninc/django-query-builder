@@ -562,7 +562,7 @@ class Query(object):
         return self
 
     def join(self, right_table=None, fields=None, condition=None, join_type='JOIN',
-             schema=None, left_table=None, extract_fields=True, prefix_fields=True, field_prefix=None):
+             schema=None, left_table=None, extract_fields=True, prefix_fields=False, field_prefix=None):
         """
         Joins a table to another table based on a condition and adds fields from the joined table
         to the returned fields.
@@ -619,7 +619,7 @@ class Query(object):
         return self
 
     def join_left(self, right_table=None, fields=None, condition=None, join_type='LEFT JOIN',
-                  schema=None, left_table=None, extract_fields=True, prefix_fields=True,
+                  schema=None, left_table=None, extract_fields=True, prefix_fields=False,
                   field_prefix=None):
         """
         Wrapper for ``self.join`` with a default join of 'LEFT JOIN'
