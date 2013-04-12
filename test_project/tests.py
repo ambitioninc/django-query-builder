@@ -1,9 +1,8 @@
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
-from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField, RowNumberField, LagField, DenseRankField, PercentRankField, CumeDistField, NTileField, LeadField, FirstValueField, LastValueField, NthValueField, NumStdDevField, GroupEpoch
+from querybuilder.fields import Year, Month, Hour, Minute, Second, NoneTime, AllTime, CountField, AvgField, VarianceField, SumField, StdDevField, MinField, MaxField, RankField, RowNumberField, LagField, DenseRankField, PercentRankField, CumeDistField, NTileField, LeadField, FirstValueField, LastValueField, NthValueField, NumStdDevField
 from querybuilder.logger import Logger, LogManager
-from querybuilder.tables import TableFactory
 from test_project.models import Account, Order, User
 from querybuilder.query import Query, QueryWindow
 
@@ -15,9 +14,6 @@ def get_comparison_str(item1, item2):
 class TestSelect(TestCase):
 
     def test_select_all_from_string(self):
-        field = GroupEpoch('test', date_group_name='test2')
-        print field.get_sql()
-
         query = Query().from_table(
             table='test_table'
         )
