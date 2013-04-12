@@ -623,7 +623,6 @@ class DatePartField(MultiField):
         @type include_datetime: bool
         """
         super(DatePartField, self).__init__(field, table, alias, cast, distinct)
-        self.field = FieldFactory(field)
         self.name = self.group_name
         self.auto = auto
         self.desc = desc
