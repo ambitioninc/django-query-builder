@@ -563,7 +563,7 @@ class Query(object):
 
     def join(self, right_table=None, fields=None, condition=None, join_type='JOIN',
              schema=None, left_table=None, extract_fields=True, prefix_fields=False, field_prefix=None,
-             allow_duplicates=True):
+             allow_duplicates=False):
         """
         Joins a table to another table based on a condition and adds fields from the joined table
         to the returned fields.
@@ -607,17 +607,14 @@ class Query(object):
 
         # if there is no left table, assume the query's first table
         # TODO: add test for auto left table to replace old auto left table
-        if left_table is None and len(self.tables):
-            left_table = self.tables[0]
+        # if left_table is None and len(self.tables):
+        #     left_table = self.tables[0]
 
-        # check if this table is already joined upon
-        # TODO: add test for this
-        if allow_duplicates is False:
-            for join_item in self.joins:
-                if join_item.right_table == right_table and join_item.left_table == left_table:
-                    return self
+        # left_table = TableFactory(left_table)
+        # right_table = TableFactory(right_table)
 
-        self.joins.append(Join(
+        # create the join item
+        new_join_item = Join(
             left_table=left_table,
             right_table=right_table,
             fields=fields,
@@ -628,13 +625,22 @@ class Query(object):
             extract_fields=extract_fields,
             prefix_fields=prefix_fields,
             field_prefix=field_prefix,
-        ))
+        )
+
+        # check if this table is already joined upon
+        # TODO: add test for this
+        if allow_duplicates is False:
+            for join_item in self.joins:
+                if join_item.right_table.get_identifier() == new_join_item.right_table.get_identifier() and join_item.left_table.get_identifier() == new_join_item.left_table.get_identifier():
+                    return self
+
+        self.joins.append(new_join_item)
 
         return self
 
     def join_left(self, right_table=None, fields=None, condition=None, join_type='LEFT JOIN',
                   schema=None, left_table=None, extract_fields=True, prefix_fields=False,
-                  field_prefix=None, allow_duplicates=True):
+                  field_prefix=None, allow_duplicates=False):
         """
         Wrapper for ``self.join`` with a default join of 'LEFT JOIN'
         @param right_table: The table being joined with. This can be a string of the table
@@ -706,7 +712,7 @@ class Query(object):
                 self._where.wheres.add(q, where_type)
         return self
 
-    def group_by(self, field=None, table=None):
+    def group_by(self, field=None, table=None, allow_duplicates=False):
         """
         Adds a group by clause to the query by adding a ``Group`` instance to the query's
         groups list
@@ -720,10 +726,18 @@ class Query(object):
         @return: self
         @rtype: self
         """
-        self.groups.append(Group(
+
+        new_group_item = Group(
             field=field,
             table=table,
-        ))
+        )
+
+        if allow_duplicates is False:
+            for group_item in self.groups:
+                if group_item.field.get_identifier() == new_group_item.field.get_identifier() and group_item.table.get_identifier() == new_group_item.table.get_identifier():
+                    return self
+
+        self.groups.append(new_group_item)
 
         return self
 
@@ -1039,8 +1053,14 @@ class Query(object):
         @return: The wrapped query
         @rtype: self
         """
+        field_names = self.get_field_names()
         query = Query().from_table(deepcopy(self))
         self.__dict__.update(query.__dict__)
+
+        # set explicit field names
+        self.tables[0].set_fields(field_names)
+        field_names = self.get_field_names()
+
         return self
 
     def get_args(self):
