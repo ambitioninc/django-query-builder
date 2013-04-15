@@ -183,6 +183,23 @@ class Table(object):
         if field.ignore is False:
             self.fields.append(field)
 
+    def remove_field(self, field):
+        """
+        Removes a field from this table
+        @param field: This can be a string of a field name, a dict of {'alias': field}, or
+            a ``Field`` instance
+        @type field: str or dict or Field
+        """
+        new_field = FieldFactory(
+            field,
+        )
+        new_field.set_table(self)
+        new_field_identifier = new_field.get_identifier()
+        for field in self.fields:
+            if field.get_identifier() == new_field_identifier:
+                self.fields.remove(field)
+                return
+
     def before_add_field(self, field):
         """
         This is a template method meant to be extended by subclasses. It is called
