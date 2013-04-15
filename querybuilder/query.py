@@ -734,7 +734,7 @@ class Query(object):
 
         if allow_duplicates is False:
             for group_item in self.groups:
-                if group_item.field.get_identifier() == new_group_item.field.get_identifier() and group_item.table.get_identifier() == new_group_item.table.get_identifier():
+                if group_item.field.get_identifier() == new_group_item.field.get_identifier():
                     return self
 
         self.groups.append(new_group_item)
