@@ -562,7 +562,8 @@ class Query(object):
         return self
 
     def join(self, right_table=None, fields=None, condition=None, join_type='JOIN',
-             schema=None, left_table=None, extract_fields=True, prefix_fields=False, field_prefix=None):
+             schema=None, left_table=None, extract_fields=True, prefix_fields=False, field_prefix=None,
+             allow_duplicates=False):
         """
         Joins a table to another table based on a condition and adds fields from the joined table
         to the returned fields.
@@ -603,7 +604,17 @@ class Query(object):
         # self.mark_dirty()
         # TODO: fix bug when joining from simple table to model table with no condition
         # it assumes left_table.model
-        self.joins.append(Join(
+
+        # if there is no left table, assume the query's first table
+        # TODO: add test for auto left table to replace old auto left table
+        # if left_table is None and len(self.tables):
+        #     left_table = self.tables[0]
+
+        # left_table = TableFactory(left_table)
+        # right_table = TableFactory(right_table)
+
+        # create the join item
+        new_join_item = Join(
             left_table=left_table,
             right_table=right_table,
             fields=fields,
@@ -614,13 +625,22 @@ class Query(object):
             extract_fields=extract_fields,
             prefix_fields=prefix_fields,
             field_prefix=field_prefix,
-        ))
+        )
+
+        # check if this table is already joined upon
+        # TODO: add test for this
+        if allow_duplicates is False:
+            for join_item in self.joins:
+                if join_item.right_table.get_identifier() == new_join_item.right_table.get_identifier() and join_item.left_table.get_identifier() == new_join_item.left_table.get_identifier():
+                    return self
+
+        self.joins.append(new_join_item)
 
         return self
 
     def join_left(self, right_table=None, fields=None, condition=None, join_type='LEFT JOIN',
                   schema=None, left_table=None, extract_fields=True, prefix_fields=False,
-                  field_prefix=None):
+                  field_prefix=None, allow_duplicates=False):
         """
         Wrapper for ``self.join`` with a default join of 'LEFT JOIN'
         @param right_table: The table being joined with. This can be a string of the table
@@ -666,7 +686,8 @@ class Query(object):
             left_table=left_table,
             extract_fields=extract_fields,
             prefix_fields=prefix_fields,
-            field_prefix=field_prefix
+            field_prefix=field_prefix,
+            allow_duplicates=allow_duplicates
         )
 
     def where(self, q=None, where_type='AND', **kwargs):
@@ -691,7 +712,7 @@ class Query(object):
                 self._where.wheres.add(q, where_type)
         return self
 
-    def group_by(self, field=None, table=None):
+    def group_by(self, field=None, table=None, allow_duplicates=False):
         """
         Adds a group by clause to the query by adding a ``Group`` instance to the query's
         groups list
@@ -705,10 +726,18 @@ class Query(object):
         @return: self
         @rtype: self
         """
-        self.groups.append(Group(
+
+        new_group_item = Group(
             field=field,
             table=table,
-        ))
+        )
+
+        if allow_duplicates is False:
+            for group_item in self.groups:
+                if group_item.field.get_identifier() == new_group_item.field.get_identifier():
+                    return self
+
+        self.groups.append(new_group_item)
 
         return self
 
@@ -830,22 +859,27 @@ class Query(object):
         """
         # TODO: finish adding the other parts of the sql generation
         sql = ''
+
+        # build SELECT
         select_segment = self.build_select_fields()
         select_segment = select_segment.replace('SELECT ', '', 1)
         fields = [field.strip() for field in select_segment.split(',')]
         sql += 'SELECT\n\t{0}\n'.format(',\n\t'.join(fields))
 
+        # build FROM
         from_segment = self.build_from_table()
         from_segment = from_segment.replace('FROM ', '', 1)
         tables = [table.strip() for table in from_segment.split(',')]
         sql += 'FROM\n\t{0}\n'.format(',\n\t'.join(tables))
 
+        # build ORDER BY
         order_by_segment = self.build_order_by()
         if len(order_by_segment):
             order_by_segment = order_by_segment.replace('ORDER BY ', '', 1)
             sorters = [sorter.strip() for sorter in order_by_segment.split(',')]
             sql += 'ORDER BY\n\t{0}\n'.format(',\n\t'.join(sorters))
 
+        # build LIMIT
         limit_segment = self.build_limit()
         if len(limit_segment):
             if 'LIMIT' in limit_segment:
@@ -1019,8 +1053,14 @@ class Query(object):
         @return: The wrapped query
         @rtype: self
         """
+        field_names = self.get_field_names()
         query = Query().from_table(deepcopy(self))
         self.__dict__.update(query.__dict__)
+
+        # set explicit field names
+        self.tables[0].set_fields(field_names)
+        field_names = self.get_field_names()
+
         return self
 
     def get_args(self):

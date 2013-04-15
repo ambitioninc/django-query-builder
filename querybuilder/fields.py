@@ -824,6 +824,7 @@ class AllEpoch(Epoch):
     """
 
     def get_select_sql(self):
+        return 0
         return 'EXTRACT({0} FROM MIN({1}))'.format(
             self.name,
             self.field.get_sql()

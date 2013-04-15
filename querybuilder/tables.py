@@ -177,11 +177,36 @@ class Table(object):
             field,
         )
         field.set_table(self)
+
+        # make sure field is not already added
+        field_name = field.get_name()
+        for existing_field in self.fields:
+            if existing_field.get_name() == field_name:
+                # print 'field already existed', field_name
+                return
+
         self.before_add_field(field)
         field.before_add()
 
         if field.ignore is False:
             self.fields.append(field)
+
+    def remove_field(self, field):
+        """
+        Removes a field from this table
+        @param field: This can be a string of a field name, a dict of {'alias': field}, or
+            a ``Field`` instance
+        @type field: str or dict or Field
+        """
+        new_field = FieldFactory(
+            field,
+        )
+        new_field.set_table(self)
+        new_field_identifier = new_field.get_identifier()
+        for field in self.fields:
+            if field.get_identifier() == new_field_identifier:
+                self.fields.remove(field)
+                return
 
     def before_add_field(self, field):
         """
