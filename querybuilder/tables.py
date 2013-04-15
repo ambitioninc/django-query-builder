@@ -177,6 +177,14 @@ class Table(object):
             field,
         )
         field.set_table(self)
+
+        # make sure field is not already added
+        field_name = field.get_name()
+        for existing_field in self.fields:
+            if existing_field.get_name() == field_name:
+                print 'field already existed', field_name
+                return
+
         self.before_add_field(field)
         field.before_add()
 
