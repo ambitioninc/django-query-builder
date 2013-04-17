@@ -1856,9 +1856,9 @@ class TestMiscQuery(TestCase):
     def test_wrap(self):
         query = Query().from_table(
             Account
-        ).wrap().wrap()
+        ).wrap().wrap().wrap().wrap()
         query_str = query.get_sql()
-        expected_query = 'WITH T0T0 AS (SELECT test_project_account.* FROM test_project_account), T0 AS (SELECT T0T0.* FROM T0T0) SELECT T0.* FROM T0'
+        expected_query = 'WITH T0T0T0T0 AS (SELECT test_project_account.* FROM test_project_account), T0T0T0 AS (SELECT T0T0T0T0.* FROM T0T0T0T0), T0T0 AS (SELECT T0T0T0.* FROM T0T0T0), T0 AS (SELECT T0T0.* FROM T0T0) SELECT T0.* FROM T0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_sql(self):

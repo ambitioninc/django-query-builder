@@ -802,8 +802,7 @@ class Query(object):
             # prefix inner query args and update self args
             if type(table) is QueryTable:
                 table.query.prefix_args(auto_alias)
-                table.query.table_prefix = table_prefix
-                table.query.check_name_collisions()
+                table.query.table_prefix = auto_alias
 
             table_index += 1
 
