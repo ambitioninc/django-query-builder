@@ -350,8 +350,17 @@ class QueryTable(Table):
         super(QueryTable, self).init_defaults()
         self.query = self.table
 
+
+    def get_sql(self):
+        return self.get_identifier()
+
     def get_from_name(self):
         """
         Return the query sql in the FROM clause of the query when building the table sql
         """
+        print 'get from name on table'
         return '({0})'.format(self.query.get_sql())
+
+    def get_with_sql(self):
+        return '{0} AS ({1})'.format(self.get_identifier(), self.query.get_sql())
+

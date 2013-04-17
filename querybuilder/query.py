@@ -922,9 +922,22 @@ class Query(object):
 
     def build_withs(self):
         withs = []
+        for inner_query in self.get_inner_queries():
+            withs.append(inner_query.get_with_sql())
         if len(withs):
             return 'WITH {0} '.format(', '.join(withs))
         return ''
+
+    def get_inner_queries(self, query=None):
+        inner_queries = []
+        if query is None:
+            query = self
+
+        for table in query.tables:
+            if type(table) is QueryTable:
+                inner_queries.append(table)
+
+        return inner_queries
 
     def build_select_fields(self):
         """
