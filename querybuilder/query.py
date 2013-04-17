@@ -183,6 +183,13 @@ class Join(object):
         return None
 
 
+# TODO: make an expression table and expression field maybe
+class Expression(object):
+
+    def __init__(self, str):
+        self.str = str
+
+
 class Where(object):
     """
     Represents the WHERE clause of a Query. The filter data is contained inside of django
@@ -331,19 +338,26 @@ class Where(object):
                         # split on commas
                         value = value.split(',')
 
-                    # assign each query param to a named arg
-                    named_args = []
-                    for value_item in value:
-                        named_arg = self.set_arg(value_item)
-                        named_args.append('%({0})s'.format(named_arg))
-                    # replace the ? in the query with the arg placeholder
-                    condition = condition.replace('?', '({0})'.format(','.join(named_args)), 1)
+                    if type(value) is Expression:
+                        condition = condition.replace('?', value.str)
+                    else:
+                        # assign each query param to a named arg
+                        named_args = []
+                        for value_item in value:
+                            named_arg = self.set_arg(value_item)
+                            named_args.append('%({0})s'.format(named_arg))
+                        # replace the ? in the query with the arg placeholder
+                        condition = condition.replace('?', '({0})'.format(','.join(named_args)), 1)
                 else:
                     # get the value based on the operator
                     value = self.get_condition_value(operator_str, value)
-                    named_arg = self.set_arg(value)
-                    # replace the ? in the query with the arg placeholder
-                    condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
+
+                    if type(value) is Expression:
+                        condition = condition.replace('?', value.str)
+                    else:
+                        named_arg = self.set_arg(value)
+                        # replace the ? in the query with the arg placeholder
+                        condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
 
                 # add the condition to the where sql
                 where_parts.append(condition)
@@ -943,7 +957,7 @@ class Query(object):
             return ''
 
         withs = []
-        for inner_query in self.get_inner_queries() + self.with_tables:
+        for inner_query in self.with_tables + self.get_inner_queries():
             withs.append(inner_query.get_with_sql())
         if len(withs):
             withs.reverse()
