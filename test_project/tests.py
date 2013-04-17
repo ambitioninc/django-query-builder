@@ -1450,7 +1450,7 @@ class TestInnerQuery(TestCase):
         })
 
         query_str = query.get_sql()
-        expected_query = 'SELECT Q0.* FROM (SELECT test_project_account.* FROM test_project_account) AS Q0'
+        expected_query = 'WITH Q0 AS (SELECT test_project_account.* FROM test_project_account) SELECT Q0.* FROM Q0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_inner_args(self):
