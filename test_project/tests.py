@@ -1480,7 +1480,7 @@ class TestInnerQuery(TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT T0.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) AS T0 WHERE ((NOT(id = %(A0)s)))'
+        expected_query = 'WITH T0 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) SELECT T0.* FROM T0 WHERE ((NOT(id = %(A0)s)))'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_inner_outer_args_many(self):
