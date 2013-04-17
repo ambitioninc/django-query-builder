@@ -837,7 +837,7 @@ class Query(object):
 
         # build each part of the query
         sql = ''
-        # sql += self.build_withs()
+        sql += self.build_withs()
         sql += self.build_select_fields()
         sql += self.build_from_table()
         sql += self.build_joins()
@@ -920,6 +920,12 @@ class Query(object):
             field_identifiers += join_item.right_table.get_field_identifiers()
         return field_identifiers
 
+    def build_withs(self):
+        withs = []
+        if len(withs):
+            return 'WITH {0} '.format(', '.join(withs))
+        return ''
+
     def build_select_fields(self):
         """
         Generates the sql for the SELECT portion of the query
@@ -952,7 +958,7 @@ class Query(object):
         for table in self.tables:
             sql = table.get_sql()
             if len(sql):
-                table_parts.append(table.get_sql())
+                table_parts.append(sql)
 
         # combine all table sql separated by a comma
         sql = 'FROM {0} '.format(', '.join(table_parts))
