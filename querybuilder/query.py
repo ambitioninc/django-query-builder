@@ -522,6 +522,7 @@ class Query(object):
         self.sorters = []
         self._limit = None
         self.table_prefix = ''
+        self.is_inner = False
 
     def __init__(self):
         """
@@ -802,6 +803,7 @@ class Query(object):
             if type(table) is QueryTable:
                 table.query.prefix_args(auto_alias)
                 table.query.table_prefix = table_prefix
+                table.query.check_name_collisions()
 
             table_index += 1
 
@@ -921,10 +923,14 @@ class Query(object):
         return field_identifiers
 
     def build_withs(self):
+        if self.is_inner:
+            return ''
+
         withs = []
         for inner_query in self.get_inner_queries():
             withs.append(inner_query.get_with_sql())
         if len(withs):
+            withs.reverse()
             return 'WITH {0} '.format(', '.join(withs))
         return ''
 
@@ -932,10 +938,10 @@ class Query(object):
         inner_queries = []
         if query is None:
             query = self
-
         for table in query.tables:
             if type(table) is QueryTable:
                 inner_queries.append(table)
+                inner_queries += self.get_inner_queries(table.query)
 
         return inner_queries
 

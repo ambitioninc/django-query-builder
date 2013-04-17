@@ -349,6 +349,7 @@ class QueryTable(Table):
         """
         super(QueryTable, self).init_defaults()
         self.query = self.table
+        self.query.is_inner = True
 
 
     def get_sql(self):
@@ -358,7 +359,6 @@ class QueryTable(Table):
         """
         Return the query sql in the FROM clause of the query when building the table sql
         """
-        print 'get from name on table'
         return '({0})'.format(self.query.get_sql())
 
     def get_with_sql(self):

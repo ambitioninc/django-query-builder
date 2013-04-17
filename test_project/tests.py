@@ -1543,7 +1543,7 @@ class TestInnerQuery(TestCase):
             ~Q(id=0)
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT T0.*, T1.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) AS T0, (SELECT T1T0.*, T1T1.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1T0A0)s AND id < %(T1T0A1)s)) AS T1T0, (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1T1A0)s AND id < %(T1T1A1)s)) AS T1T1 WHERE (id > %(T1A0)s AND id < %(T1A1)s)) AS T1 WHERE ((NOT(id = %(A0)s)))'
+        expected_query = 'WITH T1T1 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1T1A0)s AND id < %(T1T1A1)s)), T1T0 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1T0A0)s AND id < %(T1T0A1)s)), T1 AS (SELECT T1T0.*, T1T1.* FROM T1T0, T1T1 WHERE (id > %(T1A0)s AND id < %(T1A1)s)), T0 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) SELECT T0.*, T1.* FROM T0, T1 WHERE ((NOT(id = %(A0)s)))'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
