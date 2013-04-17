@@ -522,6 +522,7 @@ class Query(object):
         self.sorters = []
         self._limit = None
         self.table_prefix = ''
+        self.is_inner = False
 
     def __init__(self):
         """
@@ -802,6 +803,7 @@ class Query(object):
             if type(table) is QueryTable:
                 table.query.prefix_args(auto_alias)
                 table.query.table_prefix = table_prefix
+                table.query.check_name_collisions()
 
             table_index += 1
 
@@ -837,7 +839,7 @@ class Query(object):
 
         # build each part of the query
         sql = ''
-        # sql += self.build_withs()
+        sql += self.build_withs()
         sql += self.build_select_fields()
         sql += self.build_from_table()
         sql += self.build_joins()
@@ -920,6 +922,29 @@ class Query(object):
             field_identifiers += join_item.right_table.get_field_identifiers()
         return field_identifiers
 
+    def build_withs(self):
+        if self.is_inner:
+            return ''
+
+        withs = []
+        for inner_query in self.get_inner_queries():
+            withs.append(inner_query.get_with_sql())
+        if len(withs):
+            withs.reverse()
+            return 'WITH {0} '.format(', '.join(withs))
+        return ''
+
+    def get_inner_queries(self, query=None):
+        inner_queries = []
+        if query is None:
+            query = self
+        for table in query.tables:
+            if type(table) is QueryTable:
+                inner_queries.append(table)
+                inner_queries += self.get_inner_queries(table.query)
+
+        return inner_queries
+
     def build_select_fields(self):
         """
         Generates the sql for the SELECT portion of the query
@@ -952,7 +977,7 @@ class Query(object):
         for table in self.tables:
             sql = table.get_sql()
             if len(sql):
-                table_parts.append(table.get_sql())
+                table_parts.append(sql)
 
         # combine all table sql separated by a comma
         sql = 'FROM {0} '.format(', '.join(table_parts))
