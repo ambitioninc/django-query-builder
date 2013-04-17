@@ -1420,7 +1420,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(EXTRACT(epoch FROM MIN(test_project_order.time)) AS INT) AS time__epoch FROM test_project_order'
+        expected_query = 'SELECT CAST(0 AS INT) AS time__epoch FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
@@ -1505,7 +1505,7 @@ class TestInnerQuery(TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'WITH T0 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)), T1 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1A0)s AND id < %(T1A1)s)) SELECT T0.*, T1.* FROM T0, T1 WHERE ((NOT(id = %(A0)s)))'
+        expected_query = 'WITH T1 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1A0)s AND id < %(T1A1)s)), T0 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) SELECT T0.*, T1.* FROM T0, T1 WHERE ((NOT(id = %(A0)s)))'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_three_levels(self):
@@ -1858,7 +1858,7 @@ class TestMiscQuery(TestCase):
             Account
         ).wrap().wrap()
         query_str = query.get_sql()
-        expected_query = 'SELECT T0.* FROM (SELECT T0T0.* FROM (SELECT test_project_account.* FROM test_project_account) AS T0T0) AS T0'
+        expected_query = 'WITH T0T0 AS (SELECT test_project_account.* FROM test_project_account), T0 AS (SELECT T0T0.* FROM T0T0) SELECT T0.* FROM T0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_sql(self):
