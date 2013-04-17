@@ -290,6 +290,7 @@ class Where(object):
                 operator = '='
 
                 # break apart the field name on double underscores
+                # TODO: do not convert the first double underscore to a .
                 field_parts = field_name.split('__')
                 if len(field_parts) > 1:
                     # get the operator based on the last element split from the double underscores
@@ -523,6 +524,7 @@ class Query(object):
         self._limit = None
         self.table_prefix = ''
         self.is_inner = False
+        self.with_tables = []
 
     def __init__(self):
         """
@@ -560,6 +562,15 @@ class Query(object):
             **kwargs
         ))
 
+        return self
+
+    def with_query(self, query=None, alias=None):
+        """
+        @return: self
+        @rtype: self
+        """
+        self.with_tables.append(TableFactory(query, alias=alias))
+        print self.with_tables
         return self
 
     def join(self, right_table=None, fields=None, condition=None, join_type='JOIN',
@@ -790,7 +801,7 @@ class Query(object):
         """
         table_index = 0
         table_names = {}
-        for table in self.tables:
+        for table in self.tables + self.with_tables:
             table_prefix = 'T{0}'.format(table_index)
             auto_alias = '{0}{1}'.format(self.table_prefix, table_prefix)
 
@@ -926,7 +937,7 @@ class Query(object):
             return ''
 
         withs = []
-        for inner_query in self.get_inner_queries():
+        for inner_query in self.get_inner_queries() + self.with_tables:
             withs.append(inner_query.get_with_sql())
         if len(withs):
             withs.reverse()
@@ -1095,7 +1106,7 @@ class Query(object):
         @return: all args for this query as a dict
         @rtype: dict
         """
-        for table in self.tables:
+        for table in self.tables + self.with_tables:
             if type(table) is QueryTable:
                 self._where.args.update(table.query.get_args())
 
