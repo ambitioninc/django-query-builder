@@ -302,6 +302,11 @@ class Where(object):
                     else:
                         field_name = '.'.join(field_parts[:-1])
 
+                    # if there is more than one double underscore, make the first one a dot
+                    trimmed_field_parts = field_name.split('.')
+                    if len(trimmed_field_parts) > 2:
+                        field_name = '{0}.{1}'.format(trimmed_field_parts[0], '__'.join(trimmed_field_parts[1:]))
+
                 # check if we are comparing to null
                 if value is None:
                     # change the operator syntax to IS
@@ -564,13 +569,14 @@ class Query(object):
 
         return self
 
+    # TODO: add docs
+    # TODO: add tests for custom with clauses
     def with_query(self, query=None, alias=None):
         """
         @return: self
         @rtype: self
         """
         self.with_tables.append(TableFactory(query, alias=alias))
-        print self.with_tables
         return self
 
     def join(self, right_table=None, fields=None, condition=None, join_type='JOIN',
@@ -1082,14 +1088,17 @@ class Query(object):
                 return table
         return None
 
-    def wrap(self):
+    # TODO: add test for alias
+    # TODO: add option to use explicit names or *
+    # TODO: add test for optional explicit names
+    def wrap(self, alias=None):
         """
         Wraps the query by selecting all fields from itself
         @return: The wrapped query
         @rtype: self
         """
         field_names = self.get_field_names()
-        query = Query().from_table(deepcopy(self))
+        query = Query().from_table(deepcopy(self), alias=alias)
         self.__dict__.update(query.__dict__)
 
         # set explicit field names
