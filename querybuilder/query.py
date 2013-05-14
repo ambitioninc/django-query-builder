@@ -1,9 +1,15 @@
 from copy import deepcopy
 from django.db import connection
-from django.db.models import Q
+from django.db.models import Q, get_model
+from django.db.models.query import QuerySet
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
+
+try:
+    from django.db.models.constants import LOOKUP_SEP
+except ImportError:
+    from django.db.models.sql.constants import LOOKUP_SEP
 
 
 class Join(object):
@@ -207,6 +213,7 @@ class Where(object):
     """
 
     comparison_map = {
+        'exact': '=',
         'eq': '=',
         'gt': '>',
         'gte': '>=',
@@ -1309,3 +1316,92 @@ class QueryWindow(Query):
         """
         select_sql = self.build_groups()
         return select_sql.replace('GROUP BY', 'PARTITION BY', 1)
+
+
+class QueryBuilderQuerySet(QuerySet):
+
+    class Meta:
+        model = None
+
+    def __init__(self, model=None, query=None, using=None):
+        if self.Meta is not None and model is None and hasattr(self.Meta, "model"):
+            model = self.Meta.model
+            if isinstance(model, str):
+                model = get_model(*model.split('.', 1))
+        super(QueryBuilderQuerySet, self).__init__(model, query, using)
+        self._queryset = self.model.objects.get_query_set()
+
+    def __getitem__(self, k):
+        return self.get_model_queryset(
+            self._queryset,
+            k.start,
+            k.stop
+        ).all()[k.start:k.stop]
+
+    def get_model_queryset(self, queryset, offset, limit):
+        raise NotImplementedError
+
+    def get_field_name_from_filter(self, filter):
+        filter_bits = filter.split(LOOKUP_SEP)
+        field_name = filter_bits.pop(0)
+        return field_name
+
+    def call_field_filter_method(self, field, value, type='filter'):
+        field_name = self.get_field_name_from_filter(field)
+        filter_method_name = "{0}__{1}".format(
+            type,
+            field_name
+        )
+        default_filter_method_name = "{0}__".format(
+            type
+        )
+        filter_method = getattr(self, default_filter_method_name)
+        if hasattr(self, filter_method_name) and value is not None:
+            filter_method = getattr(self, filter_method_name)
+        filter_method({field: value}, field, value)
+
+    def filter__(self, filter, field, value):
+        pass
+
+    def filter(self, *args, **kwargs):
+        print "---filter"
+        print kwargs
+        for field, value in kwargs.iteritems():
+            self.call_field_filter_method(field, value, type='filter')
+        return self
+
+    def exclude__(self, filter, field, value):
+        pass
+
+    def exclude(self, *args, **kwargs):
+        for field, value in kwargs.iteritems():
+            self.call_field_filter_method(field, value, type='exclude')
+        return self
+
+    def count(self):
+        raise NotImplementedError
+
+    def order__(self, field, desc=False):
+        pass
+
+    def order_by(self, *field_names):
+        for field in field_names:
+            desc = False
+            if field[0] == '-':
+                field = field[1:]
+                desc = True
+            method_name = "{0}__{1}".format(
+                'order',
+                field
+            )
+            default_method_name = "{0}__".format(
+                'order'
+            )
+            method = getattr(self, default_method_name)
+            if hasattr(self, method_name):
+                method = getattr(self, method_name)
+            method(field, desc)
+        return self
+
+    def distinct(self, *field_names):
+        raise NotImplementedError
