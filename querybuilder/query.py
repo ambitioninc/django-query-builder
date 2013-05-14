@@ -1364,8 +1364,6 @@ class QueryBuilderQuerySet(QuerySet):
         pass
 
     def filter(self, *args, **kwargs):
-        print "---filter"
-        print kwargs
         for field, value in kwargs.iteritems():
             self.call_field_filter_method(field, value, type='filter')
         return self
