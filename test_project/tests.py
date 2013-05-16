@@ -1,3 +1,4 @@
+from pprint import pprint
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
@@ -1440,6 +1441,17 @@ class TestInnerQuery(TestCase):
         query_str = query.get_sql()
         expected_query = 'WITH T0 AS (SELECT test_project_account.* FROM test_project_account) SELECT T0.* FROM T0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+        inner_query = Query().from_table(
+            Account
+        )
+
+        query = Query().with_query(inner_query, 's3').from_table('s3')
+        query_str = query.get_sql()
+        expected_query = 'WITH s3 AS (SELECT test_project_account.* FROM test_project_account) SELECT s3.* FROM s3'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+
 
     def test_inner_alias(self):
         inner_query = Query().from_table(
