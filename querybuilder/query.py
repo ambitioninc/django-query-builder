@@ -189,6 +189,13 @@ class Join(object):
         return None
 
 
+# TODO: make an expression table and expression field maybe
+class Expression(object):
+
+    def __init__(self, str):
+        self.str = str
+
+
 class Where(object):
     """
     Represents the WHERE clause of a Query. The filter data is contained inside of django
@@ -297,6 +304,7 @@ class Where(object):
                 operator = '='
 
                 # break apart the field name on double underscores
+                # TODO: do not convert the first double underscore to a .
                 field_parts = field_name.split('__')
                 if len(field_parts) > 1:
                     # get the operator based on the last element split from the double underscores
@@ -307,6 +315,11 @@ class Where(object):
                         field_name = '.'.join(field_parts)
                     else:
                         field_name = '.'.join(field_parts[:-1])
+
+                    # if there is more than one double underscore, make the first one a dot
+                    trimmed_field_parts = field_name.split('.')
+                    if len(trimmed_field_parts) > 2:
+                        field_name = '{0}.{1}'.format(trimmed_field_parts[0], '__'.join(trimmed_field_parts[1:]))
 
                 # check if we are comparing to null
                 if value is None:
@@ -336,19 +349,26 @@ class Where(object):
                     if len(value) == 0:
                         value = [None]
 
-                    # assign each query param to a named arg
-                    named_args = []
-                    for value_item in value:
-                        named_arg = self.set_arg(value_item)
-                        named_args.append('%({0})s'.format(named_arg))
-                    # replace the ? in the query with the arg placeholder
-                    condition = condition.replace('?', '({0})'.format(','.join(named_args)), 1)
+                    if type(value) is Expression:
+                        condition = condition.replace('?', value.str)
+                    else:
+                        # assign each query param to a named arg
+                        named_args = []
+                        for value_item in value:
+                            named_arg = self.set_arg(value_item)
+                            named_args.append('%({0})s'.format(named_arg))
+                        # replace the ? in the query with the arg placeholder
+                        condition = condition.replace('?', '({0})'.format(','.join(named_args)), 1)
                 else:
                     # get the value based on the operator
                     value = self.get_condition_value(operator_str, value)
-                    named_arg = self.set_arg(value)
-                    # replace the ? in the query with the arg placeholder
-                    condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
+
+                    if type(value) is Expression:
+                        condition = condition.replace('?', value.str)
+                    else:
+                        named_arg = self.set_arg(value)
+                        # replace the ? in the query with the arg placeholder
+                        condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
 
                 # add the condition to the where sql
                 where_parts.append(condition)
@@ -533,6 +553,8 @@ class Query(object):
         self.sorters = []
         self._limit = None
         self.table_prefix = ''
+        self.is_inner = False
+        self.with_tables = []
 
     def __init__(self):
         """
@@ -572,8 +594,19 @@ class Query(object):
 
         return self
 
+    # TODO: add docs
+    # TODO: add tests for custom with clauses
+    def with_query(self, query=None, alias=None):
+        """
+        @return: self
+        @rtype: self
+        """
+        self.with_tables.append(TableFactory(query, alias=alias))
+        return self
+
     def join(self, right_table=None, fields=None, condition=None, join_type='JOIN',
-             schema=None, left_table=None, extract_fields=True, prefix_fields=True, field_prefix=None):
+             schema=None, left_table=None, extract_fields=True, prefix_fields=False, field_prefix=None,
+             allow_duplicates=False):
         """
         Joins a table to another table based on a condition and adds fields from the joined table
         to the returned fields.
@@ -614,7 +647,17 @@ class Query(object):
         # self.mark_dirty()
         # TODO: fix bug when joining from simple table to model table with no condition
         # it assumes left_table.model
-        self.joins.append(Join(
+
+        # if there is no left table, assume the query's first table
+        # TODO: add test for auto left table to replace old auto left table
+        # if left_table is None and len(self.tables):
+        #     left_table = self.tables[0]
+
+        # left_table = TableFactory(left_table)
+        # right_table = TableFactory(right_table)
+
+        # create the join item
+        new_join_item = Join(
             left_table=left_table,
             right_table=right_table,
             fields=fields,
@@ -625,13 +668,22 @@ class Query(object):
             extract_fields=extract_fields,
             prefix_fields=prefix_fields,
             field_prefix=field_prefix,
-        ))
+        )
+
+        # check if this table is already joined upon
+        # TODO: add test for this
+        if allow_duplicates is False:
+            for join_item in self.joins:
+                if join_item.right_table.get_identifier() == new_join_item.right_table.get_identifier() and join_item.left_table.get_identifier() == new_join_item.left_table.get_identifier():
+                    return self
+
+        self.joins.append(new_join_item)
 
         return self
 
     def join_left(self, right_table=None, fields=None, condition=None, join_type='LEFT JOIN',
-                  schema=None, left_table=None, extract_fields=True, prefix_fields=True,
-                  field_prefix=None):
+                  schema=None, left_table=None, extract_fields=True, prefix_fields=False,
+                  field_prefix=None, allow_duplicates=False):
         """
         Wrapper for ``self.join`` with a default join of 'LEFT JOIN'
         @param right_table: The table being joined with. This can be a string of the table
@@ -677,7 +729,8 @@ class Query(object):
             left_table=left_table,
             extract_fields=extract_fields,
             prefix_fields=prefix_fields,
-            field_prefix=field_prefix
+            field_prefix=field_prefix,
+            allow_duplicates=allow_duplicates
         )
 
     def where(self, q=None, where_type='AND', **kwargs):
@@ -702,7 +755,7 @@ class Query(object):
                 self._where.wheres.add(q, where_type)
         return self
 
-    def group_by(self, field=None, table=None):
+    def group_by(self, field=None, table=None, allow_duplicates=False):
         """
         Adds a group by clause to the query by adding a ``Group`` instance to the query's
         groups list
@@ -716,10 +769,18 @@ class Query(object):
         @return: self
         @rtype: self
         """
-        self.groups.append(Group(
+
+        new_group_item = Group(
             field=field,
             table=table,
-        ))
+        )
+
+        if allow_duplicates is False:
+            for group_item in self.groups:
+                if group_item.field.get_identifier() == new_group_item.field.get_identifier():
+                    return self
+
+        self.groups.append(new_group_item)
 
         return self
 
@@ -771,7 +832,7 @@ class Query(object):
         """
         table_index = 0
         table_names = {}
-        for table in self.tables:
+        for table in self.tables + self.with_tables:
             table_prefix = 'T{0}'.format(table_index)
             auto_alias = '{0}{1}'.format(self.table_prefix, table_prefix)
 
@@ -783,7 +844,7 @@ class Query(object):
             # prefix inner query args and update self args
             if type(table) is QueryTable:
                 table.query.prefix_args(auto_alias)
-                table.query.table_prefix = table_prefix
+                table.query.table_prefix = auto_alias
 
             table_index += 1
 
@@ -819,7 +880,7 @@ class Query(object):
 
         # build each part of the query
         sql = ''
-        # sql += self.build_withs()
+        sql += self.build_withs()
         sql += self.build_select_fields()
         sql += self.build_from_table()
         sql += self.build_joins()
@@ -841,22 +902,27 @@ class Query(object):
         """
         # TODO: finish adding the other parts of the sql generation
         sql = ''
+
+        # build SELECT
         select_segment = self.build_select_fields()
         select_segment = select_segment.replace('SELECT ', '', 1)
         fields = [field.strip() for field in select_segment.split(',')]
         sql += 'SELECT\n\t{0}\n'.format(',\n\t'.join(fields))
 
+        # build FROM
         from_segment = self.build_from_table()
         from_segment = from_segment.replace('FROM ', '', 1)
         tables = [table.strip() for table in from_segment.split(',')]
         sql += 'FROM\n\t{0}\n'.format(',\n\t'.join(tables))
 
+        # build ORDER BY
         order_by_segment = self.build_order_by()
         if len(order_by_segment):
             order_by_segment = order_by_segment.replace('ORDER BY ', '', 1)
             sorters = [sorter.strip() for sorter in order_by_segment.split(',')]
             sql += 'ORDER BY\n\t{0}\n'.format(',\n\t'.join(sorters))
 
+        # build LIMIT
         limit_segment = self.build_limit()
         if len(limit_segment):
             if 'LIMIT' in limit_segment:
@@ -897,6 +963,29 @@ class Query(object):
             field_identifiers += join_item.right_table.get_field_identifiers()
         return field_identifiers
 
+    def build_withs(self):
+        if self.is_inner:
+            return ''
+
+        withs = []
+        for inner_query in self.with_tables + self.get_inner_queries():
+            withs.append(inner_query.get_with_sql())
+        if len(withs):
+            withs.reverse()
+            return 'WITH {0} '.format(', '.join(withs))
+        return ''
+
+    def get_inner_queries(self, query=None):
+        inner_queries = []
+        if query is None:
+            query = self
+        for table in query.tables:
+            if type(table) is QueryTable:
+                inner_queries.append(table)
+                inner_queries += self.get_inner_queries(table.query)
+
+        return inner_queries
+
     def build_select_fields(self):
         """
         Generates the sql for the SELECT portion of the query
@@ -929,7 +1018,7 @@ class Query(object):
         for table in self.tables:
             sql = table.get_sql()
             if len(sql):
-                table_parts.append(table.get_sql())
+                table_parts.append(sql)
 
         # combine all table sql separated by a comma
         sql = 'FROM {0} '.format(', '.join(table_parts))
@@ -1024,14 +1113,23 @@ class Query(object):
                 return table
         return None
 
-    def wrap(self):
+    # TODO: add test for alias
+    # TODO: add option to use explicit names or *
+    # TODO: add test for optional explicit names
+    def wrap(self, alias=None):
         """
         Wraps the query by selecting all fields from itself
         @return: The wrapped query
         @rtype: self
         """
-        query = Query().from_table(deepcopy(self))
+        field_names = self.get_field_names()
+        query = Query().from_table(deepcopy(self), alias=alias)
         self.__dict__.update(query.__dict__)
+
+        # set explicit field names
+        self.tables[0].set_fields(field_names)
+        field_names = self.get_field_names()
+
         return self
 
     def get_args(self):
@@ -1042,7 +1140,7 @@ class Query(object):
         @return: all args for this query as a dict
         @rtype: dict
         """
-        for table in self.tables:
+        for table in self.tables + self.with_tables:
             if type(table) is QueryTable:
                 self._where.args.update(table.query.get_args())
 

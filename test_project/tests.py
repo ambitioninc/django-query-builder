@@ -218,6 +218,9 @@ class TestSelect(TestCase):
         self.assertEqual(query_str, expected_query, '\n{0}\n!=\n{1}'.format(query_str, expected_query))
 
 
+# TODO: add tests for selecting fields like {'alias': 'agg() + agg()'}
+
+
 class TestJoins(TestCase):
 
     def test_join_str_to_str(self):
@@ -254,6 +257,7 @@ class TestJoins(TestCase):
                 'field_one',
                 'field_two'
             ],
+            prefix_fields=True,
             condition='other_table.test_id = test_project_account.id'
         )
 
@@ -320,8 +324,7 @@ class TestJoins(TestCase):
                 'three': 'one'
             }, {
                 'four': 'two'
-            }],
-            prefix_fields=False,
+            }]
         )
 
         query_str = query.get_sql()
@@ -339,7 +342,6 @@ class TestJoins(TestCase):
             fields=[
                 '*'
             ],
-            prefix_fields=False,
             extract_fields=False
         )
 
@@ -357,8 +359,7 @@ class TestJoins(TestCase):
             Order,
             fields=[
                 '*'
-            ],
-            prefix_fields=False
+            ]
         )
 
         query_str = query.get_sql()
@@ -377,6 +378,7 @@ class TestJoins(TestCase):
                 'id',
                 'margin',
             ],
+            prefix_fields=True
         )
 
         query_str = query.get_sql()
@@ -1189,7 +1191,7 @@ class TestWindowFunctions(TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT test_project_order.*, ((test_project_order.margin - (AVG(test_project_order.margin) OVER ())) / (STDDEV(test_project_order.margin) OVER ())) AS margin_num_stddev FROM test_project_order ORDER BY margin_num_stddev DESC'
+        expected_query = 'SELECT test_project_order.*, (CASE WHEN (STDDEV(test_project_order.margin) OVER ()) <> 0 THEN ((test_project_order.margin - (AVG(test_project_order.margin) OVER ())) / (STDDEV(test_project_order.margin) OVER ())) ELSE 0 END) AS margin_num_stddev FROM test_project_order ORDER BY margin_num_stddev DESC'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
@@ -1418,7 +1420,7 @@ class TestDates(TestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(EXTRACT(epoch FROM MIN(test_project_order.time)) AS INT) AS time__epoch FROM test_project_order'
+        expected_query = 'SELECT CAST(0 AS INT) AS time__epoch FROM test_project_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
@@ -1436,7 +1438,7 @@ class TestInnerQuery(TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT T0.* FROM (SELECT test_project_account.* FROM test_project_account) AS T0'
+        expected_query = 'WITH T0 AS (SELECT test_project_account.* FROM test_project_account) SELECT T0.* FROM T0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_inner_alias(self):
@@ -1448,7 +1450,7 @@ class TestInnerQuery(TestCase):
         })
 
         query_str = query.get_sql()
-        expected_query = 'SELECT Q0.* FROM (SELECT test_project_account.* FROM test_project_account) AS Q0'
+        expected_query = 'WITH Q0 AS (SELECT test_project_account.* FROM test_project_account) SELECT Q0.* FROM Q0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_inner_args(self):
@@ -1462,7 +1464,7 @@ class TestInnerQuery(TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT T0.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) AS T0'
+        expected_query = 'WITH T0 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) SELECT T0.* FROM T0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_inner_outer_args(self):
@@ -1478,7 +1480,7 @@ class TestInnerQuery(TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT T0.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) AS T0 WHERE ((NOT(id = %(A0)s)))'
+        expected_query = 'WITH T0 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) SELECT T0.* FROM T0 WHERE ((NOT(id = %(A0)s)))'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_inner_outer_args_many(self):
@@ -1503,7 +1505,7 @@ class TestInnerQuery(TestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT T0.*, T1.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) AS T0, (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1A0)s AND id < %(T1A1)s)) AS T1 WHERE ((NOT(id = %(A0)s)))'
+        expected_query = 'WITH T1 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1A0)s AND id < %(T1A1)s)), T0 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) SELECT T0.*, T1.* FROM T0, T1 WHERE ((NOT(id = %(A0)s)))'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_three_levels(self):
@@ -1541,7 +1543,7 @@ class TestInnerQuery(TestCase):
             ~Q(id=0)
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT T0.*, T1.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) AS T0, (SELECT T1T0.*, T1T1.* FROM (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1T0A0)s AND id < %(T1T0A1)s)) AS T1T0, (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1T1A0)s AND id < %(T1T1A1)s)) AS T1T1 WHERE (id > %(T1A0)s AND id < %(T1A1)s)) AS T1 WHERE ((NOT(id = %(A0)s)))'
+        expected_query = 'WITH T1T1 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1T1A0)s AND id < %(T1T1A1)s)), T1T0 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T1T0A0)s AND id < %(T1T0A1)s)), T1 AS (SELECT T1T0.*, T1T1.* FROM T1T0, T1T1 WHERE (id > %(T1A0)s AND id < %(T1A1)s)), T0 AS (SELECT test_project_account.* FROM test_project_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) SELECT T0.*, T1.* FROM T0, T1 WHERE ((NOT(id = %(A0)s)))'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
 
@@ -1568,7 +1570,8 @@ class TestModels(TestCase):
             right_table=Order,
             fields=[
                 '*'
-            ]
+            ],
+            prefix_fields=True
         )
         rows = query.select(True)
 
@@ -1589,7 +1592,8 @@ class TestModels(TestCase):
             right_table=Account,
             fields=[
                 '*'
-            ]
+            ],
+            prefix_fields=True
         )
         rows = query.select(True)
 
@@ -1610,7 +1614,8 @@ class TestModels(TestCase):
             right_table=User,
             fields=[
                 '*'
-            ]
+            ],
+            prefix_fields=True
         )
 
         rows = query.select(True)
@@ -1632,7 +1637,8 @@ class TestModels(TestCase):
             right_table=Account,
             fields=[
                 '*'
-            ]
+            ],
+            prefix_fields=True
         )
 
         rows = query.select(True)
@@ -1850,9 +1856,9 @@ class TestMiscQuery(TestCase):
     def test_wrap(self):
         query = Query().from_table(
             Account
-        ).wrap().wrap()
+        ).wrap().wrap().wrap().wrap()
         query_str = query.get_sql()
-        expected_query = 'SELECT T0.* FROM (SELECT T0T0.* FROM (SELECT test_project_account.* FROM test_project_account) AS T0T0) AS T0'
+        expected_query = 'WITH T0T0T0T0 AS (SELECT test_project_account.* FROM test_project_account), T0T0T0 AS (SELECT T0T0T0T0.* FROM T0T0T0T0), T0T0 AS (SELECT T0T0T0.* FROM T0T0T0), T0 AS (SELECT T0T0.* FROM T0T0) SELECT T0.* FROM T0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_sql(self):

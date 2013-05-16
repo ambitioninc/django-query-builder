@@ -177,11 +177,36 @@ class Table(object):
             field,
         )
         field.set_table(self)
+
+        # make sure field is not already added
+        field_name = field.get_name()
+        for existing_field in self.fields:
+            if existing_field.get_name() == field_name:
+                # print 'field already existed', field_name
+                return
+
         self.before_add_field(field)
         field.before_add()
 
         if field.ignore is False:
             self.fields.append(field)
+
+    def remove_field(self, field):
+        """
+        Removes a field from this table
+        @param field: This can be a string of a field name, a dict of {'alias': field}, or
+            a ``Field`` instance
+        @type field: str or dict or Field
+        """
+        new_field = FieldFactory(
+            field,
+        )
+        new_field.set_table(self)
+        new_field_identifier = new_field.get_identifier()
+        for field in self.fields:
+            if field.get_identifier() == new_field_identifier:
+                self.fields.remove(field)
+                return
 
     def before_add_field(self, field):
         """
@@ -324,9 +349,18 @@ class QueryTable(Table):
         """
         super(QueryTable, self).init_defaults()
         self.query = self.table
+        self.query.is_inner = True
+
+
+    def get_sql(self):
+        return self.get_identifier()
 
     def get_from_name(self):
         """
         Return the query sql in the FROM clause of the query when building the table sql
         """
         return '({0})'.format(self.query.get_sql())
+
+    def get_with_sql(self):
+        return '{0} AS ({1})'.format(self.get_identifier(), self.query.get_sql())
+
