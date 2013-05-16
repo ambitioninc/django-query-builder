@@ -332,6 +332,10 @@ class Where(object):
                         # split on commas
                         value = value.split(',')
 
+                    # Ensure that we have a value in the list
+                    if len(value) == 0:
+                        value = [None]
+
                     # assign each query param to a named arg
                     named_args = []
                     for value_item in value:
