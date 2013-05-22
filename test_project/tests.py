@@ -1996,3 +1996,26 @@ class TestMiscField(TestCase):
                 received
             )
         )
+
+
+class TestDistinct(TestCase):
+
+    fixtures = [
+        'test_project/test_data.json'
+    ]
+
+    def test_distinct(self):
+        query = Query().from_table(
+            table=Account
+        ).distinct()
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT DISTINCT test_project_account.* FROM test_project_account'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+        query.distinct(use_distinct=False)
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.* FROM test_project_account'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+

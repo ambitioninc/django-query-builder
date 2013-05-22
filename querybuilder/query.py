@@ -555,6 +555,7 @@ class Query(object):
         self.table_prefix = ''
         self.is_inner = False
         self.with_tables = []
+        self._distinct = False
 
     def __init__(self):
         """
@@ -824,6 +825,20 @@ class Query(object):
         )
         return self
 
+    def distinct(self, use_distinct=True):
+        """
+        Adds a distinct clause to the query
+        @param distinct: Whether or not to include the distinct clause
+        @type distinct: bool
+        @return: self
+        @rtype: self
+        """
+        self._distinct = use_distinct
+        return self
+
+    def distinct_on(self):
+        raise NotImplementedError
+
     def check_name_collisions(self):
         """
         Checks if there are any tables referenced by the same identifier and updated the
@@ -1003,8 +1018,13 @@ class Query(object):
             field_sql += join_item.right_table.get_field_sql()
 
         # combine all field sql separated by a comma
-        sql = 'SELECT {0} '.format(', '.join(field_sql))
+        sql = 'SELECT {0}{1} '.format(self.get_distinct_sql(), ', '.join(field_sql))
         return sql
+
+    def get_distinct_sql(self):
+        if self._distinct:
+            return 'DISTINCT '
+        return ''
 
     def build_from_table(self):
         """
