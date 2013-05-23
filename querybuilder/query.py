@@ -556,6 +556,9 @@ class Query(object):
         self.is_inner = False
         self.with_tables = []
         self._distinct = False
+        self.field_names = []
+        self.field_names_pk = None
+        self.values = []
 
     def __init__(self):
         """
@@ -594,6 +597,59 @@ class Query(object):
         ))
 
         return self
+
+    def insert_into(self, table=None, field_names=None, values=None, **kwargs):
+        """
+        Bulk inserts a list of values into a table
+        @param table: The table to select fields from. This can be a string of the table
+            name, a dict of {'alias': table}, a ``Table`` instance, a Query instance, or a
+            django Model instance
+        @type table: str or dict or Table or Query or ModelBase
+        @param field_names: A list of ordered field names that relate to the data in the values list
+        @type field_names: list
+        @param values: A list each values list with the values in the same order as the field names
+        @type values: list of list
+        @param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
+        @return: self
+        @rtype: self
+        """
+        table = TableFactory(
+            table=table,
+            **kwargs
+        )
+        self.tables.append(table)
+
+        self.field_names = field_names
+        self.values = values
+
+        return self
+
+    def update_table(self, table=None, field_names=None, values=None, pk=None, **kwargs):
+        """
+        Bulk updates rows in a table
+        @param table: The table to select fields from. This can be a string of the table
+            name, a dict of {'alias': table}, a ``Table`` instance, a Query instance, or a
+            django Model instance
+        @type table: str or dict or Table or Query or ModelBase
+        @param field_names: A list of ordered field names that relate to the data in the values list
+        @type field_names: list
+        @param values: A list each values list with the values in the same order as the field names
+        @type values: list of list
+        @param pk: The name of the primary key in the table and field_names
+        @type pk: int
+        @param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
+        @return: self
+        @rtype: self
+        """
+        table = TableFactory(
+            table=table,
+            **kwargs
+        )
+        self.tables.append(table)
+
+        self.field_names = field_names
+        self.values = values
+        self.field_names_pk = pk
 
     # TODO: add docs
     # TODO: add tests for custom with clauses
@@ -909,6 +965,27 @@ class Query(object):
 
         return self.sql
 
+    def get_insert_sql(self, rows):
+        field_names_sql = '({0})'.format(', '.join(self.get_field_names()))
+        row_values = []
+        sql_args = []
+        for row in rows:
+            placeholders = []
+            for value in row:
+                sql_args.append(value)
+                placeholders.append('%s')
+            row_values.append('({0})'.format(', '.join(placeholders)))
+        row_values_sql = ', '.join(row_values)
+
+        self.sql = 'INSERT INTO {0} {1} VALUES {2}'.format(
+            self.tables[0].get_identifier(),
+            field_names_sql,
+            row_values_sql
+        )
+
+        return self.sql, sql_args
+
+
     def format_sql(self):
         """
         Builds the sql in a format that is easy for humans to read and debug
@@ -977,6 +1054,9 @@ class Query(object):
         for join_item in self.joins:
             field_identifiers += join_item.right_table.get_field_identifiers()
         return field_identifiers
+
+    def build_insert_into(self):
+        pass
 
     def build_withs(self):
         if self.is_inner:
@@ -1274,19 +1354,40 @@ class Query(object):
 
         return rows
 
-    def sql_insert(self):
+    def insert(self, rows):
         """
         Inserts records into the db
         # TODO: implement this
         """
-        pass
+        if len(rows) == 0:
+            return
 
-    def sql_update(self):
+        sql, sql_args = self.get_insert_sql(rows)
+
+        # get the cursor to execute the query
+        cursor = connection.cursor()
+
+        #execute the query
+        cursor.execute(sql, sql_args)
+
+
+    def update(self):
         """
         Updates records in the db
         # TODO: implement this
         """
-        pass
+        update_sql = """
+            UPDATE {0}
+            SET
+                field1 = new_values.field1
+                field2 = new_values.field2
+            FROM (
+                VALUES
+                    (1, 'value1', 'value2'),
+                    (2, 'value1', 'value2')
+            ) AS new_values (id, field1, field2)
+            WHERE {0}.id = new_values.id
+        """.format('table_name')
 
     def sql_delete(self):
         """

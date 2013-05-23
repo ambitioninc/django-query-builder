@@ -1,4 +1,5 @@
 from pprint import pprint
+import re
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
@@ -2018,4 +2019,75 @@ class TestDistinct(TestCase):
         query_str = query.get_sql()
         expected_query = 'SELECT test_project_account.* FROM test_project_account'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+
+class TestInsert(TestCase):
+
+    def setUp(self):
+        self.logger = Logger()
+        self.logger.start_logging()
+
+    def test_insert_single_row(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                'user_id',
+                'first_name',
+                'last_name'
+            ]
+        )
+
+        rows = [
+            [1, 'Test', 'User']
+        ]
+
+        sql, sql_params = query.get_insert_sql(rows)
+
+        self.assertEqual(sql, 'INSERT INTO test_project_account (user_id, first_name, last_name) VALUES (%s, %s, %s)')
+        self.assertEqual(sql_params[0], 1)
+        self.assertEqual(sql_params[1], 'Test')
+        self.assertEqual(sql_params[2], 'User')
+
+        query.insert(rows)
+        sql = self.logger.get_log()[0]['sql']
+        self.assertEqual(sql, "INSERT INTO test_project_account (user_id, first_name, last_name) VALUES (1, 'Test', 'User')")
+
+    def test_insert_multiple_rows(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                'user_id',
+                'first_name',
+                'last_name'
+            ]
+        )
+
+        rows = [
+            [1, 'Test', 'User'],
+            [2, 'Test2', 'User2'],
+        ]
+
+        sql, sql_params = query.get_insert_sql(rows)
+
+        self.assertEqual(sql, 'INSERT INTO test_project_account (user_id, first_name, last_name) VALUES (%s, %s, %s), (%s, %s, %s)')
+        self.assertEqual(sql_params[0], 1)
+        self.assertEqual(sql_params[1], 'Test')
+        self.assertEqual(sql_params[2], 'User')
+        self.assertEqual(sql_params[3], 2)
+        self.assertEqual(sql_params[4], 'Test2')
+        self.assertEqual(sql_params[5], 'User2')
+
+        query.insert(rows)
+        sql = self.logger.get_log()[0]['sql']
+        self.assertEqual(sql, "INSERT INTO test_project_account (user_id, first_name, last_name) VALUES (1, 'Test', 'User'), (2, 'Test2', 'User2')")
+
+
+class TestUpdate(TestCase):
+
+    def test_update_single_row(self):
+        pass
+
+    def test_update_multiple_rows(self):
+        pass
+
 
