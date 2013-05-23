@@ -985,6 +985,49 @@ class Query(object):
 
         return self.sql, sql_args
 
+    def get_update_sql(self, rows):
+        update_sql = """
+            UPDATE {0}
+            SET
+                field1 = new_values.field1
+                field2 = new_values.field2
+            FROM (
+                VALUES
+                    (1, 'value1', 'value2'),
+                    (2, 'value1', 'value2')
+            ) AS new_values (id, field1, field2)
+            WHERE {0}.id = new_values.id
+        """.format('table_name')
+
+        field_names = self.get_field_names()
+        pk = field_names[0]
+        update_field_names = field_names[1:]
+        field_names_sql = '({0})'.format(', '.join(field_names))
+
+        row_values = []
+        sql_args = []
+
+        for row in rows:
+            placeholders = []
+            for value in row:
+                sql_args.append(value)
+                placeholders.append('%s')
+            row_values.append('({0})'.format(', '.join(placeholders)))
+        row_values_sql = ', '.join(row_values)
+
+        # build field list for SET portion
+        set_field_list = ['{0} = new_values.{0}'.format(field_name) for field_name in update_field_names]
+        set_field_list_sql = ', '.join(set_field_list)
+
+        self.sql = 'UPDATE {0} SET {1} FROM (VALUES {2}) AS new_values {3} WHERE {0}.{4} = new_values.{4}'.format(
+            self.tables[0].get_identifier(),
+            set_field_list_sql,
+            row_values_sql,
+            field_names_sql,
+            pk
+        )
+
+        return self.sql, sql_args
 
     def format_sql(self):
         """
@@ -1371,23 +1414,21 @@ class Query(object):
         cursor.execute(sql, sql_args)
 
 
-    def update(self):
+    def update(self, rows):
         """
         Updates records in the db
         # TODO: implement this
         """
-        update_sql = """
-            UPDATE {0}
-            SET
-                field1 = new_values.field1
-                field2 = new_values.field2
-            FROM (
-                VALUES
-                    (1, 'value1', 'value2'),
-                    (2, 'value1', 'value2')
-            ) AS new_values (id, field1, field2)
-            WHERE {0}.id = new_values.id
-        """.format('table_name')
+        if len(rows) == 0:
+            return
+
+        sql, sql_args = self.get_update_sql(rows)
+
+        # get the cursor to execute the query
+        cursor = connection.cursor()
+
+        #execute the query
+        cursor.execute(sql, sql_args)
 
     def sql_delete(self):
         """

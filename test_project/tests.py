@@ -1,5 +1,3 @@
-from pprint import pprint
-import re
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
@@ -2084,10 +2082,65 @@ class TestInsert(TestCase):
 
 class TestUpdate(TestCase):
 
+    def setUp(self):
+        self.logger = Logger()
+        self.logger.start_logging()
+
     def test_update_single_row(self):
-        pass
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                'id',
+                'user_id',
+                'first_name',
+                'last_name'
+            ]
+        )
+
+        rows = [
+            [1, 1, 'Test', 'User']
+        ]
+
+        sql, sql_params = query.get_update_sql(rows)
+
+        self.assertEqual(sql, 'UPDATE test_project_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (%s, %s, %s, %s)) AS new_values (id, user_id, first_name, last_name) WHERE test_project_account.id = new_values.id')
+        self.assertEqual(sql_params[0], 1)
+        self.assertEqual(sql_params[1], 1)
+        self.assertEqual(sql_params[2], 'Test')
+        self.assertEqual(sql_params[3], 'User')
+
+        query.update(rows)
+        sql = self.logger.get_log()[0]['sql']
+        self.assertEqual(sql, "UPDATE test_project_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (1, 1, 'Test', 'User')) AS new_values (id, user_id, first_name, last_name) WHERE test_project_account.id = new_values.id")
 
     def test_update_multiple_rows(self):
-        pass
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                'id',
+                'user_id',
+                'first_name',
+                'last_name'
+            ]
+        )
 
+        rows = [
+            [1, 1, 'Test', 'User'],
+            [2, 2, 'Test2', 'User2']
+        ]
 
+        sql, sql_params = query.get_update_sql(rows)
+
+        self.assertEqual(sql, 'UPDATE test_project_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (%s, %s, %s, %s), (%s, %s, %s, %s)) AS new_values (id, user_id, first_name, last_name) WHERE test_project_account.id = new_values.id')
+        self.assertEqual(sql_params[0], 1)
+        self.assertEqual(sql_params[1], 1)
+        self.assertEqual(sql_params[2], 'Test')
+        self.assertEqual(sql_params[3], 'User')
+        self.assertEqual(sql_params[4], 2)
+        self.assertEqual(sql_params[5], 2)
+        self.assertEqual(sql_params[6], 'Test2')
+        self.assertEqual(sql_params[7], 'User2')
+
+        query.update(rows)
+        sql = self.logger.get_log()[0]['sql']
+        self.assertEqual(sql, "UPDATE test_project_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (1, 1, 'Test', 'User'), (2, 2, 'Test2', 'User2')) AS new_values (id, user_id, first_name, last_name) WHERE test_project_account.id = new_values.id")
