@@ -258,7 +258,7 @@ class AggregateField(MultiField):
         self.over = over
 
         field_name = None
-        if self.field and type(self.field.field) is str or type(self.field.field) is unicode:
+        if self.field and (type(self.field.field) is str or type(self.field.field) is unicode):
             field_name = self.field.field
             if field_name == '*':
                 field_name = 'all'
