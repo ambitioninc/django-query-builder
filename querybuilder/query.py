@@ -1385,6 +1385,13 @@ class Query(object):
                 new_rows = []
                 for row in rows:
                     model = model_class()
+                    # assign all non-model keys first because django 1.5 requires
+                    # that the model has an id set before setting a property that is
+                    # a foreign key
+                    for key, value in row.items():
+                        if key not in model_map:
+                            setattr(model, key, value)
+                    # assign all model instances
                     for key, value in row.items():
                         if key in model_map:
                             child_model = model_map[key]()
