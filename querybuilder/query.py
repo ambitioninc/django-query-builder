@@ -452,7 +452,7 @@ class Sorter(object):
         # if the specified field is a string with '-' at the beginning
         # the '-' needs to be removed and this sorter needs to be
         # set to desc
-        if type(self.field.field) is str and self.field.field[0] == '-':
+        if (type(self.field.field) is str or type(self.field.field) is unicode) and self.field.field[0] == '-':
             self.desc = True
             self.field.field = self.field.field[1:]
             self.field.name = self.field.name[1:]
