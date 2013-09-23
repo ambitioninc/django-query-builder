@@ -26,7 +26,7 @@ class TableFactory(object):
             table = table.values()[0]
             table_type = type(table)
 
-        if table_type is str:
+        if table_type is str or table_type is unicode:
             return SimpleTable(table, **kwargs)
         elif table_type is ModelBase:
             return ModelTable(table, **kwargs)
@@ -236,7 +236,7 @@ class Table(object):
             or ``Field`` instance
         @type fields: str or tuple or list of str or list of Field or Field
         """
-        if type(fields) is str:
+        if type(fields) is str or type(fields) is unicode:
             fields = [fields]
         elif type(fields) is tuple:
             fields = list(fields)
