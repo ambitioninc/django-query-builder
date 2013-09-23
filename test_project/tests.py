@@ -1,3 +1,4 @@
+from pprint import pprint
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
@@ -1790,7 +1791,7 @@ class TestLogger(TestCase):
         self.assertEqual(logger_two.count(), 1, 'Incorrect number of queries')
 
     def test_log_manager(self):
-        self.assertEqual(len(LogManager.loggers), 0, 'Incorrect number of loggers')
+        self.assertEqual(len(LogManager.loggers.items()), 0, 'Incorrect number of loggers')
         logger_one = LogManager.get_logger('one')
         self.assertEqual(len(LogManager.loggers), 1, 'Incorrect number of loggers')
         logger_one = LogManager.get_logger('one')
@@ -2024,6 +2025,11 @@ class TestInsert(TestCase):
     def setUp(self):
         self.logger = Logger()
         self.logger.start_logging()
+
+    def tearDown(self):
+        super(TestInsert, self).tearDown()
+        LogManager.loggers = {}
+
 
     def test_insert_single_row(self):
         query = Query().from_table(

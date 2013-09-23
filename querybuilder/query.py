@@ -452,7 +452,7 @@ class Sorter(object):
         # if the specified field is a string with '-' at the beginning
         # the '-' needs to be removed and this sorter needs to be
         # set to desc
-        if type(self.field.field) is str and self.field.field[0] == '-':
+        if (type(self.field.field) is str or type(self.field.field) is unicode) and str(self.field.field[0]) == '-':
             self.desc = True
             self.field.field = self.field.field[1:]
             self.field.name = self.field.name[1:]
@@ -1385,6 +1385,13 @@ class Query(object):
                 new_rows = []
                 for row in rows:
                     model = model_class()
+                    # assign all non-model keys first because django 1.5 requires
+                    # that the model has an id set before setting a property that is
+                    # a foreign key
+                    for key, value in row.items():
+                        if key not in model_map:
+                            setattr(model, key, value)
+                    # assign all model instances
                     for key, value in row.items():
                         if key in model_map:
                             child_model = model_map[key]()
