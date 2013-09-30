@@ -390,7 +390,7 @@ class TestJoins(TestCase):
 class TestWheres(TestCase):
 
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_where_eq(self):
@@ -665,7 +665,7 @@ class TestWheres(TestCase):
         ), OR)
 
         query_str = query.get_sql()
-        expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s OR three = %(A1)s)'
+        expected_query = 'SELECT test_table.* FROM test_table WHERE ((one = %(A0)s) OR (three = %(A1)s))'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_combined_or(self):
@@ -741,7 +741,7 @@ class TestWheres(TestCase):
         query_str = query.get_sql()
         expected_query = ''.join([
             'SELECT test_table.* FROM test_table WHERE ',
-            '(((one = %(A0)s AND two > %(A1)s AND (NOT(three >= %(A2)s))) OR ((NOT(four < %(A3)s))) ',
+            '(((one = %(A0)s AND two > %(A1)s AND (NOT(three >= %(A2)s))) OR (NOT(four < %(A3)s)) ',
             'OR five <= %(A4)s) AND (six LIKE %(A5)s) AND (NOT(seven LIKE %(A6)s)) AND ',
             '((eight = %(A7)s AND nine = %(A8)s) OR ten = %(A9)s OR (NOT(eleven = %(A10)s))))'
         ])
@@ -750,7 +750,7 @@ class TestWheres(TestCase):
 
 class TestAggregates(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_count_id(self):
@@ -855,7 +855,7 @@ class TestAggregates(TestCase):
 
 class TestQueryWindows(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_query_window(self):
@@ -903,7 +903,7 @@ class TestQueryWindows(TestCase):
 
 class TestWindowFunctions(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_rank_no_over(self):
@@ -1322,7 +1322,7 @@ class TestLimit(TestCase):
 
 class TestDates(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_year(self):
@@ -1427,7 +1427,7 @@ class TestDates(TestCase):
 
 class TestInnerQuery(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_inner(self):
@@ -1561,7 +1561,7 @@ class TestInnerQuery(TestCase):
 
 class TestModels(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_single_model(self):
@@ -1669,7 +1669,7 @@ class TestModels(TestCase):
 class TestAggregateMethods(TestCase):
 
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_count(self):
@@ -1754,7 +1754,7 @@ class TestAggregateMethods(TestCase):
 
 class TestLogger(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_logger(self):
@@ -1814,7 +1814,7 @@ class TestLogger(TestCase):
 
 class TestMiscQuery(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_find_table(self):
@@ -1915,7 +1915,7 @@ class TestMiscQuery(TestCase):
 
 class TestMiscTable(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_find_field(self):
@@ -1967,7 +1967,7 @@ class TestMiscTable(TestCase):
 class TestMiscField(TestCase):
 
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_cast(self):
@@ -2001,7 +2001,7 @@ class TestMiscField(TestCase):
 class TestDistinct(TestCase):
 
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_distinct(self):
