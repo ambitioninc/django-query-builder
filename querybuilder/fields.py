@@ -22,7 +22,7 @@ class FieldFactory(object):
             field = field.values()[0]
             field_type = type(field)
 
-        if field_type is str:
+        if field_type is str or field_type is unicode:
             return SimpleField(field, **kwargs)
         elif isinstance(field, Field):
             for key, value in kwargs.items():
@@ -258,7 +258,7 @@ class AggregateField(MultiField):
         self.over = over
 
         field_name = None
-        if self.field and type(self.field.field) is str:
+        if self.field and (type(self.field.field) is str or type(self.field.field) is unicode):
             field_name = self.field.field
             if field_name == '*':
                 field_name = 'all'

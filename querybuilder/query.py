@@ -1,9 +1,15 @@
 from copy import deepcopy
 from django.db import connection
-from django.db.models import Q
+from django.db.models import Q, get_model
+from django.db.models.query import QuerySet
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
+
+try:
+    from django.db.models.constants import LOOKUP_SEP
+except ImportError:
+    from django.db.models.sql.constants import LOOKUP_SEP
 
 
 class Join(object):
@@ -183,6 +189,13 @@ class Join(object):
         return None
 
 
+# TODO: make an expression table and expression field maybe
+class Expression(object):
+
+    def __init__(self, str):
+        self.str = str
+
+
 class Where(object):
     """
     Represents the WHERE clause of a Query. The filter data is contained inside of django
@@ -207,6 +220,7 @@ class Where(object):
     """
 
     comparison_map = {
+        'exact': '=',
         'eq': '=',
         'gt': '>',
         'gte': '>=',
@@ -290,6 +304,7 @@ class Where(object):
                 operator = '='
 
                 # break apart the field name on double underscores
+                # TODO: do not convert the first double underscore to a .
                 field_parts = field_name.split('__')
                 if len(field_parts) > 1:
                     # get the operator based on the last element split from the double underscores
@@ -300,6 +315,11 @@ class Where(object):
                         field_name = '.'.join(field_parts)
                     else:
                         field_name = '.'.join(field_parts[:-1])
+
+                    # if there is more than one double underscore, make the first one a dot
+                    trimmed_field_parts = field_name.split('.')
+                    if len(trimmed_field_parts) > 2:
+                        field_name = '{0}.{1}'.format(trimmed_field_parts[0], '__'.join(trimmed_field_parts[1:]))
 
                 # check if we are comparing to null
                 if value is None:
@@ -325,19 +345,30 @@ class Where(object):
                         # split on commas
                         value = value.split(',')
 
-                    # assign each query param to a named arg
-                    named_args = []
-                    for value_item in value:
-                        named_arg = self.set_arg(value_item)
-                        named_args.append('%({0})s'.format(named_arg))
-                    # replace the ? in the query with the arg placeholder
-                    condition = condition.replace('?', '({0})'.format(','.join(named_args)), 1)
+                    # Ensure that we have a value in the list
+                    if len(value) == 0:
+                        value = [None]
+
+                    if type(value) is Expression:
+                        condition = condition.replace('?', value.str)
+                    else:
+                        # assign each query param to a named arg
+                        named_args = []
+                        for value_item in value:
+                            named_arg = self.set_arg(value_item)
+                            named_args.append('%({0})s'.format(named_arg))
+                        # replace the ? in the query with the arg placeholder
+                        condition = condition.replace('?', '({0})'.format(','.join(named_args)), 1)
                 else:
                     # get the value based on the operator
                     value = self.get_condition_value(operator_str, value)
-                    named_arg = self.set_arg(value)
-                    # replace the ? in the query with the arg placeholder
-                    condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
+
+                    if type(value) is Expression:
+                        condition = condition.replace('?', value.str)
+                    else:
+                        named_arg = self.set_arg(value)
+                        # replace the ? in the query with the arg placeholder
+                        condition = condition.replace('?', '%({0})s'.format(named_arg), 1)
 
                 # add the condition to the where sql
                 where_parts.append(condition)
@@ -421,7 +452,7 @@ class Sorter(object):
         # if the specified field is a string with '-' at the beginning
         # the '-' needs to be removed and this sorter needs to be
         # set to desc
-        if type(self.field.field) is str and self.field.field[0] == '-':
+        if (type(self.field.field) is str or type(self.field.field) is unicode) and str(self.field.field[0]) == '-':
             self.desc = True
             self.field.field = self.field.field[1:]
             self.field.name = self.field.name[1:]
@@ -523,6 +554,11 @@ class Query(object):
         self._limit = None
         self.table_prefix = ''
         self.is_inner = False
+        self.with_tables = []
+        self._distinct = False
+        self.field_names = []
+        self.field_names_pk = None
+        self.values = []
 
     def __init__(self):
         """
@@ -560,6 +596,69 @@ class Query(object):
             **kwargs
         ))
 
+        return self
+
+    def insert_into(self, table=None, field_names=None, values=None, **kwargs):
+        """
+        Bulk inserts a list of values into a table
+        @param table: The table to select fields from. This can be a string of the table
+            name, a dict of {'alias': table}, a ``Table`` instance, a Query instance, or a
+            django Model instance
+        @type table: str or dict or Table or Query or ModelBase
+        @param field_names: A list of ordered field names that relate to the data in the values list
+        @type field_names: list
+        @param values: A list each values list with the values in the same order as the field names
+        @type values: list of list
+        @param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
+        @return: self
+        @rtype: self
+        """
+        table = TableFactory(
+            table=table,
+            **kwargs
+        )
+        self.tables.append(table)
+
+        self.field_names = field_names
+        self.values = values
+
+        return self
+
+    def update_table(self, table=None, field_names=None, values=None, pk=None, **kwargs):
+        """
+        Bulk updates rows in a table
+        @param table: The table to select fields from. This can be a string of the table
+            name, a dict of {'alias': table}, a ``Table`` instance, a Query instance, or a
+            django Model instance
+        @type table: str or dict or Table or Query or ModelBase
+        @param field_names: A list of ordered field names that relate to the data in the values list
+        @type field_names: list
+        @param values: A list each values list with the values in the same order as the field names
+        @type values: list of list
+        @param pk: The name of the primary key in the table and field_names
+        @type pk: int
+        @param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
+        @return: self
+        @rtype: self
+        """
+        table = TableFactory(
+            table=table,
+            **kwargs
+        )
+        self.tables.append(table)
+
+        self.field_names = field_names
+        self.values = values
+        self.field_names_pk = pk
+
+    # TODO: add docs
+    # TODO: add tests for custom with clauses
+    def with_query(self, query=None, alias=None):
+        """
+        @return: self
+        @rtype: self
+        """
+        self.with_tables.append(TableFactory(query, alias=alias))
         return self
 
     def join(self, right_table=None, fields=None, condition=None, join_type='JOIN',
@@ -782,6 +881,20 @@ class Query(object):
         )
         return self
 
+    def distinct(self, use_distinct=True):
+        """
+        Adds a distinct clause to the query
+        @param distinct: Whether or not to include the distinct clause
+        @type distinct: bool
+        @return: self
+        @rtype: self
+        """
+        self._distinct = use_distinct
+        return self
+
+    def distinct_on(self):
+        raise NotImplementedError
+
     def check_name_collisions(self):
         """
         Checks if there are any tables referenced by the same identifier and updated the
@@ -790,7 +903,7 @@ class Query(object):
         """
         table_index = 0
         table_names = {}
-        for table in self.tables:
+        for table in self.tables + self.with_tables:
             table_prefix = 'T{0}'.format(table_index)
             auto_alias = '{0}{1}'.format(self.table_prefix, table_prefix)
 
@@ -802,8 +915,7 @@ class Query(object):
             # prefix inner query args and update self args
             if type(table) is QueryTable:
                 table.query.prefix_args(auto_alias)
-                table.query.table_prefix = table_prefix
-                table.query.check_name_collisions()
+                table.query.table_prefix = auto_alias
 
             table_index += 1
 
@@ -852,6 +964,70 @@ class Query(object):
         self.sql = sql.strip()
 
         return self.sql
+
+    def get_insert_sql(self, rows):
+        field_names_sql = '({0})'.format(', '.join(self.get_field_names()))
+        row_values = []
+        sql_args = []
+        for row in rows:
+            placeholders = []
+            for value in row:
+                sql_args.append(value)
+                placeholders.append('%s')
+            row_values.append('({0})'.format(', '.join(placeholders)))
+        row_values_sql = ', '.join(row_values)
+
+        self.sql = 'INSERT INTO {0} {1} VALUES {2}'.format(
+            self.tables[0].get_identifier(),
+            field_names_sql,
+            row_values_sql
+        )
+
+        return self.sql, sql_args
+
+    def get_update_sql(self, rows):
+        update_sql = """
+            UPDATE {0}
+            SET
+                field1 = new_values.field1
+                field2 = new_values.field2
+            FROM (
+                VALUES
+                    (1, 'value1', 'value2'),
+                    (2, 'value1', 'value2')
+            ) AS new_values (id, field1, field2)
+            WHERE {0}.id = new_values.id
+        """.format('table_name')
+
+        field_names = self.get_field_names()
+        pk = field_names[0]
+        update_field_names = field_names[1:]
+        field_names_sql = '({0})'.format(', '.join(field_names))
+
+        row_values = []
+        sql_args = []
+
+        for row in rows:
+            placeholders = []
+            for value in row:
+                sql_args.append(value)
+                placeholders.append('%s')
+            row_values.append('({0})'.format(', '.join(placeholders)))
+        row_values_sql = ', '.join(row_values)
+
+        # build field list for SET portion
+        set_field_list = ['{0} = new_values.{0}'.format(field_name) for field_name in update_field_names]
+        set_field_list_sql = ', '.join(set_field_list)
+
+        self.sql = 'UPDATE {0} SET {1} FROM (VALUES {2}) AS new_values {3} WHERE {0}.{4} = new_values.{4}'.format(
+            self.tables[0].get_identifier(),
+            set_field_list_sql,
+            row_values_sql,
+            field_names_sql,
+            pk
+        )
+
+        return self.sql, sql_args
 
     def format_sql(self):
         """
@@ -922,12 +1098,15 @@ class Query(object):
             field_identifiers += join_item.right_table.get_field_identifiers()
         return field_identifiers
 
+    def build_insert_into(self):
+        pass
+
     def build_withs(self):
         if self.is_inner:
             return ''
 
         withs = []
-        for inner_query in self.get_inner_queries():
+        for inner_query in self.with_tables + self.get_inner_queries():
             withs.append(inner_query.get_with_sql())
         if len(withs):
             withs.reverse()
@@ -962,8 +1141,13 @@ class Query(object):
             field_sql += join_item.right_table.get_field_sql()
 
         # combine all field sql separated by a comma
-        sql = 'SELECT {0} '.format(', '.join(field_sql))
+        sql = 'SELECT {0}{1} '.format(self.get_distinct_sql(), ', '.join(field_sql))
         return sql
+
+    def get_distinct_sql(self):
+        if self._distinct:
+            return 'DISTINCT '
+        return ''
 
     def build_from_table(self):
         """
@@ -1072,14 +1256,17 @@ class Query(object):
                 return table
         return None
 
-    def wrap(self):
+    # TODO: add test for alias
+    # TODO: add option to use explicit names or *
+    # TODO: add test for optional explicit names
+    def wrap(self, alias=None):
         """
         Wraps the query by selecting all fields from itself
         @return: The wrapped query
         @rtype: self
         """
         field_names = self.get_field_names()
-        query = Query().from_table(deepcopy(self))
+        query = Query().from_table(deepcopy(self), alias=alias)
         self.__dict__.update(query.__dict__)
 
         # set explicit field names
@@ -1096,7 +1283,7 @@ class Query(object):
         @return: all args for this query as a dict
         @rtype: dict
         """
-        for table in self.tables:
+        for table in self.tables + self.with_tables:
             if type(table) is QueryTable:
                 self._where.args.update(table.query.get_args())
 
@@ -1198,6 +1385,13 @@ class Query(object):
                 new_rows = []
                 for row in rows:
                     model = model_class()
+                    # assign all non-model keys first because django 1.5 requires
+                    # that the model has an id set before setting a property that is
+                    # a foreign key
+                    for key, value in row.items():
+                        if key not in model_map:
+                            setattr(model, key, value)
+                    # assign all model instances
                     for key, value in row.items():
                         if key in model_map:
                             child_model = model_map[key]()
@@ -1210,19 +1404,38 @@ class Query(object):
 
         return rows
 
-    def sql_insert(self):
+    def insert(self, rows):
         """
         Inserts records into the db
         # TODO: implement this
         """
-        pass
+        if len(rows) == 0:
+            return
 
-    def sql_update(self):
+        sql, sql_args = self.get_insert_sql(rows)
+
+        # get the cursor to execute the query
+        cursor = connection.cursor()
+
+        #execute the query
+        cursor.execute(sql, sql_args)
+
+
+    def update(self, rows):
         """
         Updates records in the db
         # TODO: implement this
         """
-        pass
+        if len(rows) == 0:
+            return
+
+        sql, sql_args = self.get_update_sql(rows)
+
+        # get the cursor to execute the query
+        cursor = connection.cursor()
+
+        #execute the query
+        cursor.execute(sql, sql_args)
 
     def sql_delete(self):
         """
@@ -1374,3 +1587,90 @@ class QueryWindow(Query):
         """
         select_sql = self.build_groups()
         return select_sql.replace('GROUP BY', 'PARTITION BY', 1)
+
+
+class QueryBuilderQuerySet(QuerySet):
+
+    class Meta:
+        model = None
+
+    def __init__(self, model=None, query=None, using=None):
+        if self.Meta is not None and model is None and hasattr(self.Meta, "model"):
+            model = self.Meta.model
+            if isinstance(model, str):
+                model = get_model(*model.split('.', 1))
+        super(QueryBuilderQuerySet, self).__init__(model, query, using)
+        self._queryset = self.model.objects.get_query_set()
+
+    def __getitem__(self, k):
+        return self.get_model_queryset(
+            self._queryset,
+            k.start,
+            k.stop
+        ).all()[k.start:k.stop]
+
+    def get_model_queryset(self, queryset, offset, limit):
+        raise NotImplementedError
+
+    def get_field_name_from_filter(self, filter):
+        filter_bits = filter.split(LOOKUP_SEP)
+        field_name = filter_bits.pop(0)
+        return field_name
+
+    def call_field_filter_method(self, field, value, type='filter'):
+        field_name = self.get_field_name_from_filter(field)
+        filter_method_name = "{0}__{1}".format(
+            type,
+            field_name
+        )
+        default_filter_method_name = "{0}__".format(
+            type
+        )
+        filter_method = getattr(self, default_filter_method_name)
+        if hasattr(self, filter_method_name) and value is not None:
+            filter_method = getattr(self, filter_method_name)
+        filter_method({field: value}, field, value)
+
+    def filter__(self, filter, field, value):
+        pass
+
+    def filter(self, *args, **kwargs):
+        for field, value in kwargs.iteritems():
+            self.call_field_filter_method(field, value, type='filter')
+        return self
+
+    def exclude__(self, filter, field, value):
+        pass
+
+    def exclude(self, *args, **kwargs):
+        for field, value in kwargs.iteritems():
+            self.call_field_filter_method(field, value, type='exclude')
+        return self
+
+    def count(self):
+        raise NotImplementedError
+
+    def order__(self, field, desc=False):
+        pass
+
+    def order_by(self, *field_names):
+        for field in field_names:
+            desc = False
+            if field[0] == '-':
+                field = field[1:]
+                desc = True
+            method_name = "{0}__{1}".format(
+                'order',
+                field
+            )
+            default_method_name = "{0}__".format(
+                'order'
+            )
+            method = getattr(self, default_method_name)
+            if hasattr(self, method_name):
+                method = getattr(self, method_name)
+            method(field, desc)
+        return self
+
+    def distinct(self, *field_names):
+        raise NotImplementedError

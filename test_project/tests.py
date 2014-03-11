@@ -1,3 +1,4 @@
+from pprint import pprint
 from django.test import TestCase
 from django.db.models.sql import OR
 from django.db.models import Q
@@ -389,7 +390,7 @@ class TestJoins(TestCase):
 class TestWheres(TestCase):
 
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_where_eq(self):
@@ -664,7 +665,7 @@ class TestWheres(TestCase):
         ), OR)
 
         query_str = query.get_sql()
-        expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s OR three = %(A1)s)'
+        expected_query = 'SELECT test_table.* FROM test_table WHERE ((one = %(A0)s) OR (three = %(A1)s))'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_combined_or(self):
@@ -740,7 +741,7 @@ class TestWheres(TestCase):
         query_str = query.get_sql()
         expected_query = ''.join([
             'SELECT test_table.* FROM test_table WHERE ',
-            '(((one = %(A0)s AND two > %(A1)s AND (NOT(three >= %(A2)s))) OR ((NOT(four < %(A3)s))) ',
+            '(((one = %(A0)s AND two > %(A1)s AND (NOT(three >= %(A2)s))) OR (NOT(four < %(A3)s)) ',
             'OR five <= %(A4)s) AND (six LIKE %(A5)s) AND (NOT(seven LIKE %(A6)s)) AND ',
             '((eight = %(A7)s AND nine = %(A8)s) OR ten = %(A9)s OR (NOT(eleven = %(A10)s))))'
         ])
@@ -749,7 +750,7 @@ class TestWheres(TestCase):
 
 class TestAggregates(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_count_id(self):
@@ -854,7 +855,7 @@ class TestAggregates(TestCase):
 
 class TestQueryWindows(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_query_window(self):
@@ -902,7 +903,7 @@ class TestQueryWindows(TestCase):
 
 class TestWindowFunctions(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_rank_no_over(self):
@@ -1321,7 +1322,7 @@ class TestLimit(TestCase):
 
 class TestDates(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_year(self):
@@ -1426,7 +1427,7 @@ class TestDates(TestCase):
 
 class TestInnerQuery(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_inner(self):
@@ -1440,6 +1441,17 @@ class TestInnerQuery(TestCase):
         query_str = query.get_sql()
         expected_query = 'WITH T0 AS (SELECT test_project_account.* FROM test_project_account) SELECT T0.* FROM T0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+        inner_query = Query().from_table(
+            Account
+        )
+
+        query = Query().with_query(inner_query, 's3').from_table('s3')
+        query_str = query.get_sql()
+        expected_query = 'WITH s3 AS (SELECT test_project_account.* FROM test_project_account) SELECT s3.* FROM s3'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+
 
     def test_inner_alias(self):
         inner_query = Query().from_table(
@@ -1549,7 +1561,7 @@ class TestInnerQuery(TestCase):
 
 class TestModels(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_single_model(self):
@@ -1657,7 +1669,7 @@ class TestModels(TestCase):
 class TestAggregateMethods(TestCase):
 
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_count(self):
@@ -1742,7 +1754,7 @@ class TestAggregateMethods(TestCase):
 
 class TestLogger(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_logger(self):
@@ -1779,7 +1791,7 @@ class TestLogger(TestCase):
         self.assertEqual(logger_two.count(), 1, 'Incorrect number of queries')
 
     def test_log_manager(self):
-        self.assertEqual(len(LogManager.loggers), 0, 'Incorrect number of loggers')
+        self.assertEqual(len(LogManager.loggers.items()), 0, 'Incorrect number of loggers')
         logger_one = LogManager.get_logger('one')
         self.assertEqual(len(LogManager.loggers), 1, 'Incorrect number of loggers')
         logger_one = LogManager.get_logger('one')
@@ -1802,7 +1814,7 @@ class TestLogger(TestCase):
 
 class TestMiscQuery(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_find_table(self):
@@ -1856,9 +1868,9 @@ class TestMiscQuery(TestCase):
     def test_wrap(self):
         query = Query().from_table(
             Account
-        ).wrap().wrap()
+        ).wrap().wrap().wrap().wrap()
         query_str = query.get_sql()
-        expected_query = 'WITH T0T0 AS (SELECT test_project_account.* FROM test_project_account), T0 AS (SELECT T0T0.* FROM T0T0) SELECT T0.* FROM T0'
+        expected_query = 'WITH T0T0T0T0 AS (SELECT test_project_account.* FROM test_project_account), T0T0T0 AS (SELECT T0T0T0T0.* FROM T0T0T0T0), T0T0 AS (SELECT T0T0T0.* FROM T0T0T0), T0 AS (SELECT T0T0.* FROM T0T0) SELECT T0.* FROM T0'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_sql(self):
@@ -1903,7 +1915,7 @@ class TestMiscQuery(TestCase):
 
 class TestMiscTable(TestCase):
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_find_field(self):
@@ -1955,7 +1967,7 @@ class TestMiscTable(TestCase):
 class TestMiscField(TestCase):
 
     fixtures = [
-        'test_project/test_data.json'
+        'test_project/fixtures/test_project/test_data.json'
     ]
 
     def test_cast(self):
@@ -1984,3 +1996,157 @@ class TestMiscField(TestCase):
                 received
             )
         )
+
+
+class TestDistinct(TestCase):
+
+    fixtures = [
+        'test_project/fixtures/test_project/test_data.json'
+    ]
+
+    def test_distinct(self):
+        query = Query().from_table(
+            table=Account
+        ).distinct()
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT DISTINCT test_project_account.* FROM test_project_account'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+        query.distinct(use_distinct=False)
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_project_account.* FROM test_project_account'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+
+class TestInsert(TestCase):
+
+    def setUp(self):
+        self.logger = Logger()
+        self.logger.start_logging()
+
+    def tearDown(self):
+        super(TestInsert, self).tearDown()
+        LogManager.loggers = {}
+
+
+    def test_insert_single_row(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                'user_id',
+                'first_name',
+                'last_name'
+            ]
+        )
+
+        rows = [
+            [1, 'Test', 'User']
+        ]
+
+        sql, sql_params = query.get_insert_sql(rows)
+
+        self.assertEqual(sql, 'INSERT INTO test_project_account (user_id, first_name, last_name) VALUES (%s, %s, %s)')
+        self.assertEqual(sql_params[0], 1)
+        self.assertEqual(sql_params[1], 'Test')
+        self.assertEqual(sql_params[2], 'User')
+
+        query.insert(rows)
+        sql = self.logger.get_log()[0]['sql']
+        self.assertEqual(sql, "INSERT INTO test_project_account (user_id, first_name, last_name) VALUES (1, 'Test', 'User')")
+
+    def test_insert_multiple_rows(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                'user_id',
+                'first_name',
+                'last_name'
+            ]
+        )
+
+        rows = [
+            [1, 'Test', 'User'],
+            [2, 'Test2', 'User2'],
+        ]
+
+        sql, sql_params = query.get_insert_sql(rows)
+
+        self.assertEqual(sql, 'INSERT INTO test_project_account (user_id, first_name, last_name) VALUES (%s, %s, %s), (%s, %s, %s)')
+        self.assertEqual(sql_params[0], 1)
+        self.assertEqual(sql_params[1], 'Test')
+        self.assertEqual(sql_params[2], 'User')
+        self.assertEqual(sql_params[3], 2)
+        self.assertEqual(sql_params[4], 'Test2')
+        self.assertEqual(sql_params[5], 'User2')
+
+        query.insert(rows)
+        sql = self.logger.get_log()[0]['sql']
+        self.assertEqual(sql, "INSERT INTO test_project_account (user_id, first_name, last_name) VALUES (1, 'Test', 'User'), (2, 'Test2', 'User2')")
+
+
+class TestUpdate(TestCase):
+
+    def setUp(self):
+        self.logger = Logger()
+        self.logger.start_logging()
+
+    def test_update_single_row(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                'id',
+                'user_id',
+                'first_name',
+                'last_name'
+            ]
+        )
+
+        rows = [
+            [1, 1, 'Test', 'User']
+        ]
+
+        sql, sql_params = query.get_update_sql(rows)
+
+        self.assertEqual(sql, 'UPDATE test_project_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (%s, %s, %s, %s)) AS new_values (id, user_id, first_name, last_name) WHERE test_project_account.id = new_values.id')
+        self.assertEqual(sql_params[0], 1)
+        self.assertEqual(sql_params[1], 1)
+        self.assertEqual(sql_params[2], 'Test')
+        self.assertEqual(sql_params[3], 'User')
+
+        query.update(rows)
+        sql = self.logger.get_log()[0]['sql']
+        self.assertEqual(sql, "UPDATE test_project_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (1, 1, 'Test', 'User')) AS new_values (id, user_id, first_name, last_name) WHERE test_project_account.id = new_values.id")
+
+    def test_update_multiple_rows(self):
+        query = Query().from_table(
+            table=Account,
+            fields=[
+                'id',
+                'user_id',
+                'first_name',
+                'last_name'
+            ]
+        )
+
+        rows = [
+            [1, 1, 'Test', 'User'],
+            [2, 2, 'Test2', 'User2']
+        ]
+
+        sql, sql_params = query.get_update_sql(rows)
+
+        self.assertEqual(sql, 'UPDATE test_project_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (%s, %s, %s, %s), (%s, %s, %s, %s)) AS new_values (id, user_id, first_name, last_name) WHERE test_project_account.id = new_values.id')
+        self.assertEqual(sql_params[0], 1)
+        self.assertEqual(sql_params[1], 1)
+        self.assertEqual(sql_params[2], 'Test')
+        self.assertEqual(sql_params[3], 'User')
+        self.assertEqual(sql_params[4], 2)
+        self.assertEqual(sql_params[5], 2)
+        self.assertEqual(sql_params[6], 'Test2')
+        self.assertEqual(sql_params[7], 'User2')
+
+        query.update(rows)
+        sql = self.logger.get_log()[0]['sql']
+        self.assertEqual(sql, "UPDATE test_project_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (1, 1, 'Test', 'User'), (2, 2, 'Test2', 'User2')) AS new_values (id, user_id, first_name, last_name) WHERE test_project_account.id = new_values.id")
