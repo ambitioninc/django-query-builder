@@ -6,7 +6,7 @@ setup(
     packages=[
         'querybuilder'
     ],
-    url="https://github.com/wesokes/django-query-builder",
+    url="https://github.com/ambitioninc/django-query-builder",
     description="Django query builder",
     install_requires=[
         "django>=1.4",
