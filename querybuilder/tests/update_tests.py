@@ -70,12 +70,6 @@ class TestUpdate(QueryTestCase):
         sql = self.logger.get_log()[0]['sql']
         self.assertEqual(sql, "UPDATE tests_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (1, 1, 'Test', 'User'), (2, 2, 'Test2', 'User2')) AS new_values (id, user_id, first_name, last_name) WHERE tests_account.id = new_values.id")
 
-    def get_update_sql(self):
-        """
-        Tests the get update sql method
-        """
-        pass
-
     def test_update_null_numbers(self):
         """
         Verifies that null values can be bulk updated
