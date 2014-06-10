@@ -183,14 +183,15 @@ class AggregateTest(QueryTestCase):
         )
 
     def test_average(self):
+        """
+        Tests the avg function
+        """
         query = Query().from_table(
             Order
         )
         received = query.avg('margin')
         items = [order.margin for order in Order.objects.all()]
-        average = 0
-        if len(items):
-            average = sum(items) / len(items)
+        average = sum(items) / len(items)
         expected = average
         self.assertEqual(
             received,

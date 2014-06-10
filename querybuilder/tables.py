@@ -1,5 +1,6 @@
 import abc
 from django.db.models.base import ModelBase
+
 import querybuilder
 from querybuilder.fields import FieldFactory
 
@@ -8,7 +9,6 @@ class TableFactory(object):
     """
     Creates the correct table class based on the type of the passed table
     """
-
     def __new__(cls, table, *args, **kwargs):
         """
         Determines which type of table class to instantiate based on the table argument
@@ -26,7 +26,7 @@ class TableFactory(object):
             table = table.values()[0]
             table_type = type(table)
 
-        if table_type is str or table_type is unicode:
+        if table_type in [str, unicode]:
             return SimpleTable(table, **kwargs)
         elif table_type is ModelBase:
             return ModelTable(table, **kwargs)
@@ -236,7 +236,7 @@ class Table(object):
             or ``Field`` instance
         @type fields: str or tuple or list of str or list of Field or Field
         """
-        if type(fields) is str or type(fields) is unicode:
+        if type(fields) in [str, unicode]:
             fields = [fields]
         elif type(fields) is tuple:
             fields = list(fields)

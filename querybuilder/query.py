@@ -1,7 +1,9 @@
 from copy import deepcopy
+
 from django.db import connection
 from django.db.models import Q, get_model
 from django.db.models.query import QuerySet
+
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
