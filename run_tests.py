@@ -42,6 +42,8 @@ if not settings.configured:
         ),
         ROOT_URLCONF='querybuilder.urls',
         DEBUG=False,
+        TIME_ZONE='UTC',
+        USE_TZ=False,
     )
 
 # Django nose must be imported here since it depends on the settings being configured

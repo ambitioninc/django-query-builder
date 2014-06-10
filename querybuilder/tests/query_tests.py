@@ -23,19 +23,19 @@ class QueryTestCase(TestCase):
 
         # "time": "2012-10-19T12:59:58.154Z"
         order1 = G(
-            Order, account=account1, revenue=200, marin=100, margin_percent=0.5, time=datetime.datetime(2012, 10, 19))
+            Order, account=account1, revenue=200, margin=100, margin_percent=0.5, time=datetime.datetime(2012, 10, 19))
 
         # "time": "2012-10-19T14:25:58.154Z"
         order2 = G(
-            Order, account=account1, revenue=100, marin=25, margin_percent=0.25, time=datetime.datetime(2012, 10, 19))
+            Order, account=account1, revenue=100, margin=25, margin_percent=0.25, time=datetime.datetime(2012, 10, 19))
 
         # "time": "2012-10-19T10:42:58.154Z"
         order3 = G(
-            Order, account=account2, revenue=500, marin=100, margin_percent=0.2, time=datetime.datetime(2012, 10, 19))
+            Order, account=account2, revenue=500, margin=100, margin_percent=0.2, time=datetime.datetime(2012, 10, 19))
 
         # "time": "2012-10-19T9:27:58.154Z"
         order4 = G(
-            Order, account=account2, revenue=1000, marin=600, margin_percent=0.6, time=datetime.datetime(2012, 10, 19))
+            Order, account=account2, revenue=1000, margin=600, margin_percent=0.6, time=datetime.datetime(2012, 10, 19))
 
 
 # TODO: add tests for selecting fields like {'alias': 'agg() + agg()'}
