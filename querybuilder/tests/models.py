@@ -22,7 +22,7 @@ class Order(models.Model):
     Order model
     """
     account = models.ForeignKey(Account)
-    revenue = models.FloatField()
+    revenue = models.FloatField(null=True)
     margin = models.FloatField()
     margin_percent = models.FloatField()
     time = models.DateTimeField()

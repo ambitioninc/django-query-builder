@@ -3,15 +3,11 @@ from copy import deepcopy
 from django.db import connection
 from django.db.models import Q, get_model
 from django.db.models.query import QuerySet
+from django.db.models.constants import LOOKUP_SEP
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
-
-try:
-    from django.db.models.constants import LOOKUP_SEP
-except ImportError:
-    from django.db.models.sql.constants import LOOKUP_SEP
 
 
 class Join(object):
@@ -988,7 +984,7 @@ class Query(object):
         return self.sql, sql_args
 
     def get_update_sql(self, rows):
-        update_sql = """
+        """
             UPDATE {0}
             SET
                 field1 = new_values.field1
@@ -999,8 +995,8 @@ class Query(object):
                     (2, 'value1', 'value2')
             ) AS new_values (id, field1, field2)
             WHERE {0}.id = new_values.id
-        """.format('table_name')
-
+            .format('table_name')
+        """
         field_names = self.get_field_names()
         pk = field_names[0]
         update_field_names = field_names[1:]
