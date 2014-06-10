@@ -49,7 +49,10 @@ class AggregateTest(QueryTestCase):
         expected_query = 'SELECT AVG(tests_order.margin) AS margin_avg FROM tests_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
-    def test_max(self):
+    def test_max_field(self):
+        """
+        Verifies that the MAX function is generated correctly in a query
+        """
         query = Query().from_table(
             table=Order,
             fields=[
@@ -60,7 +63,10 @@ class AggregateTest(QueryTestCase):
         expected_query = 'SELECT MAX(tests_order.margin) AS margin_max FROM tests_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
-    def test_min(self):
+    def test_min_field(self):
+        """
+        Verifies that the MinField generates correct MIN sql
+        """
         query = Query().from_table(
             table=Order,
             fields=[
@@ -82,7 +88,10 @@ class AggregateTest(QueryTestCase):
         expected_query = 'SELECT STDDEV(tests_order.margin) AS margin_stddev FROM tests_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
-    def test_sum(self):
+    def test_sum_field(self):
+        """
+        Tests that the SumField generates correct sql
+        """
         query = Query().from_table(
             table=Order,
             fields=[
@@ -120,6 +129,9 @@ class AggregateTest(QueryTestCase):
         )
 
     def test_max(self):
+        """
+        Tests that the max() function properly gets the max value from the query
+        """
         query = Query().from_table(
             User
         )
@@ -135,6 +147,9 @@ class AggregateTest(QueryTestCase):
         )
 
     def test_min(self):
+        """
+        Tests the min() function
+        """
         query = Query().from_table(
             User
         )
@@ -150,6 +165,9 @@ class AggregateTest(QueryTestCase):
         )
 
     def test_sum(self):
+        """
+        Tests the sum() function on a field
+        """
         query = Query().from_table(
             Order
         )
