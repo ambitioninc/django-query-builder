@@ -985,7 +985,7 @@ class Query(object):
 
     def get_update_sql(self, rows):
         """
-            UPDATE {0}
+            UPDATE table_name
             SET
                 field1 = new_values.field1
                 field2 = new_values.field2
@@ -994,12 +994,21 @@ class Query(object):
                     (1, 'value1', 'value2'),
                     (2, 'value1', 'value2')
             ) AS new_values (id, field1, field2)
-            WHERE {0}.id = new_values.id
-            .format('table_name')
+            WHERE table_name.id = new_values.id
         """
         field_names = self.get_field_names()
         pk = field_names[0]
         update_field_names = field_names[1:]
+
+        num_columns = len(rows[0])
+        if num_columns < 2:
+            raise Exception('At least 2 fields must be passed to get_update_sql')
+
+        all_null_indices = [
+            all(row[index] is None for row in rows)
+            for index in range(1, num_columns)
+        ]
+
         field_names_sql = '({0})'.format(', '.join(field_names))
 
         row_values = []
@@ -1014,7 +1023,11 @@ class Query(object):
         row_values_sql = ', '.join(row_values)
 
         # build field list for SET portion
-        set_field_list = ['{0} = new_values.{0}'.format(field_name) for field_name in update_field_names]
+        set_field_list = [
+            '{0} = NULL'.format(field_name)
+            if all_null_indices[idx] else '{0} = new_values.{0}'.format(field_name)
+            for idx, field_name in enumerate(update_field_names)
+        ]
         set_field_list_sql = ', '.join(set_field_list)
 
         self.sql = 'UPDATE {0} SET {1} FROM (VALUES {2}) AS new_values {3} WHERE {0}.{4} = new_values.{4}'.format(
@@ -1077,9 +1090,9 @@ class Query(object):
         """
         field_names = []
         for table in self.tables:
-            field_names += table.get_field_names()
+            field_names.extend(table.get_field_names())
         for join_item in self.joins:
-            field_names += join_item.right_table.get_field_names()
+            field_names.extend(join_item.right_table.get_field_names())
         return field_names
 
     def get_field_identifiers(self):

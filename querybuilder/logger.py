@@ -41,7 +41,6 @@ class Logger(object):
         self.query_index = None
         self.queries = []
         LogManager.add_logger(self)
-        print LogManager.loggers
 
     def start_logging(self):
         self.query_index = len(connection.queries)
