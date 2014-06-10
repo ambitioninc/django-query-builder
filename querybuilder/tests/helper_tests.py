@@ -70,7 +70,7 @@ class HelperTest(TestCase):
             set_value_for_keypath(
                 {'fruit': {'apple': {'color': 'red'}}},
                 'fruit.apple.color',
-                {'puppies': {'count': 10, 'breed':'boxers'}}
+                {'puppies': {'count': 10, 'breed': 'boxers'}}
             )
         )
         self.assertEqual(
@@ -78,7 +78,7 @@ class HelperTest(TestCase):
             set_value_for_keypath(
                 {'fruit': {'apple': {'color': 'red'}}},
                 'fruit.apple.animals',
-                {'puppies': {'count': 10, 'breed':'boxers'}},
+                {'puppies': {'count': 10, 'breed': 'boxers'}},
                 create_if_needed=True
             )
         )

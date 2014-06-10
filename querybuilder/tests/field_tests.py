@@ -29,14 +29,17 @@ class FieldTest(QueryTestCase):
         field = SimpleField(field='revenue')
         query = Query().from_table(table=Order, fields=[field])
         expected_query = 'SELECT tests_order.revenue FROM tests_order'
+        self.assertEqual(expected_query, query.get_sql())
 
         field.auto_alias = 'my_auto_alias'
         query = Query().from_table(table=Order, fields=[field])
         expected_query = 'SELECT tests_order.revenue AS my_auto_alias FROM tests_order'
+        self.assertEqual(expected_query, query.get_sql())
 
         field.alias = 'my_alias'
         query = Query().from_table(table=Order, fields=[field])
         expected_query = 'SELECT tests_order.revenue AS my_alias FROM tests_order'
+        self.assertEqual(expected_query, query.get_sql())
 
         query = Query().from_table(
             table=Order,
@@ -45,6 +48,7 @@ class FieldTest(QueryTestCase):
             field_prefix='my_field_prefix',
         )
         expected_query = 'SELECT tests_order.revenue AS my_field_prefix__my_alias FROM tests_order'
+        self.assertEqual(expected_query, query.get_sql())
 
         field.alias = None
         field.auto_alias = None
@@ -55,6 +59,7 @@ class FieldTest(QueryTestCase):
             field_prefix='my_field_prefix',
         )
         expected_query = 'SELECT tests_order.revenue AS my_field_prefix__revenue FROM tests_order'
+        self.assertEqual(expected_query, query.get_sql())
 
     def lead_lag_difference_test(self):
         query = Query().from_table(

@@ -1431,7 +1431,6 @@ class Query(object):
         #execute the query
         cursor.execute(sql, sql_args)
 
-
     def update(self, rows):
         """
         Updates records in the db

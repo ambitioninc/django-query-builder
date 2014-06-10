@@ -21,20 +21,13 @@ class QueryTestCase(TestCase):
         account1 = G(Account, id=1, user=user1, first_name='Wes', last_name='Okes')
         account2 = G(Account, id=2, user=user2, first_name='Wesley', last_name='Okes')
 
-        # "time": "2012-10-19T12:59:58.154Z"
-        order1 = G(
+        G(
             Order, account=account1, revenue=200, margin=100, margin_percent=0.5, time=datetime.datetime(2012, 10, 19))
-
-        # "time": "2012-10-19T14:25:58.154Z"
-        order2 = G(
+        G(
             Order, account=account1, revenue=100, margin=25, margin_percent=0.25, time=datetime.datetime(2012, 10, 19))
-
-        # "time": "2012-10-19T10:42:58.154Z"
-        order3 = G(
+        G(
             Order, account=account2, revenue=500, margin=100, margin_percent=0.2, time=datetime.datetime(2012, 10, 19))
-
-        # "time": "2012-10-19T9:27:58.154Z"
-        order4 = G(
+        G(
             Order, account=account2, revenue=1000, margin=600, margin_percent=0.6, time=datetime.datetime(2012, 10, 19))
 
 

@@ -1,8 +1,8 @@
 from django.test import TestCase
+
 from querybuilder.logger import Logger, LogManager
 from querybuilder.query import Query
 from querybuilder.tests.models import Account
-from querybuilder.tests.query_tests import QueryTestCase
 
 
 class LogManagerTest(TestCase):

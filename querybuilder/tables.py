@@ -354,7 +354,6 @@ class QueryTable(Table):
         self.query = self.table
         self.query.is_inner = True
 
-
     def get_sql(self):
         return self.get_identifier()
 
@@ -366,4 +365,3 @@ class QueryTable(Table):
 
     def get_with_sql(self):
         return '{0} AS ({1})'.format(self.get_identifier(), self.query.get_sql())
-
