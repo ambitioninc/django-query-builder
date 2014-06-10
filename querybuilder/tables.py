@@ -182,14 +182,15 @@ class Table(object):
         field_name = field.get_name()
         for existing_field in self.fields:
             if existing_field.get_name() == field_name:
-                # print 'field already existed', field_name
-                return
+                return None
 
         self.before_add_field(field)
         field.before_add()
 
         if field.ignore is False:
             self.fields.append(field)
+
+        return field
 
     def remove_field(self, field):
         """
@@ -206,7 +207,8 @@ class Table(object):
         for field in self.fields:
             if field.get_identifier() == new_field_identifier:
                 self.fields.remove(field)
-                return
+                return field
+        return None
 
     def before_add_field(self, field):
         """
@@ -240,8 +242,9 @@ class Table(object):
             fields = [fields]
         elif type(fields) is tuple:
             fields = list(fields)
-        for field in fields:
-            self.add_field(field)
+
+        field_objects = [self.add_field(field) for field in fields]
+        return field_objects
 
     def get_field_sql(self):
         """

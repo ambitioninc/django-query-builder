@@ -7,6 +7,12 @@ class LogManager(object):
     debug = False
 
     @staticmethod
+    def reset():
+        LogManager.loggers = {}
+        LogManager.debug = False
+        connection.queries[:] = []
+
+    @staticmethod
     def add_logger(logger):
         LogManager.enable_logging()
         LogManager.loggers[logger.name] = logger
@@ -35,19 +41,20 @@ class Logger(object):
         self.query_index = None
         self.queries = []
         LogManager.add_logger(self)
+        print LogManager.loggers
 
     def start_logging(self):
         self.query_index = len(connection.queries)
 
-    def get_log(self):
-        self.update_log()
-        return self.queries
-
     def update_log(self):
         num_queries = len(connection.queries)
         if self.query_index is not None and num_queries > self.query_index and LogManager.debug:
-            self.queries += connection.queries[self.query_index:]
+            self.queries.extend(connection.queries[self.query_index:])
         self.query_index = num_queries
+
+    def get_log(self):
+        self.update_log()
+        return self.queries
 
     def stop_logging(self):
         self.update_log()
