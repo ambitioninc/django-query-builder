@@ -1,5 +1,6 @@
 import abc
 from django.db.models.base import ModelBase
+
 import querybuilder
 from querybuilder.fields import FieldFactory
 
@@ -8,7 +9,6 @@ class TableFactory(object):
     """
     Creates the correct table class based on the type of the passed table
     """
-
     def __new__(cls, table, *args, **kwargs):
         """
         Determines which type of table class to instantiate based on the table argument
@@ -26,7 +26,7 @@ class TableFactory(object):
             table = table.values()[0]
             table_type = type(table)
 
-        if table_type is str or table_type is unicode:
+        if table_type in [str, unicode]:
             return SimpleTable(table, **kwargs)
         elif table_type is ModelBase:
             return ModelTable(table, **kwargs)
@@ -182,14 +182,15 @@ class Table(object):
         field_name = field.get_name()
         for existing_field in self.fields:
             if existing_field.get_name() == field_name:
-                # print 'field already existed', field_name
-                return
+                return None
 
         self.before_add_field(field)
         field.before_add()
 
         if field.ignore is False:
             self.fields.append(field)
+
+        return field
 
     def remove_field(self, field):
         """
@@ -206,7 +207,8 @@ class Table(object):
         for field in self.fields:
             if field.get_identifier() == new_field_identifier:
                 self.fields.remove(field)
-                return
+                return field
+        return None
 
     def before_add_field(self, field):
         """
@@ -236,12 +238,13 @@ class Table(object):
             or ``Field`` instance
         @type fields: str or tuple or list of str or list of Field or Field
         """
-        if type(fields) is str or type(fields) is unicode:
+        if type(fields) in [str, unicode]:
             fields = [fields]
         elif type(fields) is tuple:
             fields = list(fields)
-        for field in fields:
-            self.add_field(field)
+
+        field_objects = [self.add_field(field) for field in fields]
+        return field_objects
 
     def get_field_sql(self):
         """
@@ -351,7 +354,6 @@ class QueryTable(Table):
         self.query = self.table
         self.query.is_inner = True
 
-
     def get_sql(self):
         return self.get_identifier()
 
@@ -363,4 +365,3 @@ class QueryTable(Table):
 
     def get_with_sql(self):
         return '{0} AS ({1})'.format(self.get_identifier(), self.query.get_sql())
-

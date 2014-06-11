@@ -1,6 +1,35 @@
-*.log
-*.pot
+# Compiled python files
 *.pyc
-local_settings.py
+
+# Vim files
+*.swp
+*.swo
+
+# Pycharm
 .idea
-.DS_Store
+
+# Coverage files
+.coverage
+
+# Setuptools distribution folder.
+/dist/
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
+/*.egg
+
+# Virtual environment
+env/
+
+# Js Stuff
+node_modules/
+npm-debug.log
+.grunt/
+.tmp/
+_SpecRunner.html
+html-report/
+
+.yo-rc.json
+
+.coverage
+htmlcov
