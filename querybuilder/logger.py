@@ -1,10 +1,16 @@
-from django.conf import settings
 from django.db import connection
 
 
 class LogManager(object):
 
     loggers = {}
+    debug = False
+
+    @staticmethod
+    def reset():
+        LogManager.loggers = {}
+        LogManager.debug = False
+        connection.queries[:] = []
 
     @staticmethod
     def add_logger(logger):
@@ -19,11 +25,11 @@ class LogManager(object):
 
     @staticmethod
     def enable_logging():
-        settings.DEBUG = True
+        LogManager.debug = True
 
     @staticmethod
     def disable_logging():
-        settings.DEBUG = False
+        LogManager.debug = False
 
 
 class Logger(object):
@@ -39,15 +45,15 @@ class Logger(object):
     def start_logging(self):
         self.query_index = len(connection.queries)
 
+    def update_log(self):
+        num_queries = len(connection.queries)
+        if self.query_index is not None and num_queries > self.query_index and LogManager.debug:
+            self.queries.extend(connection.queries[self.query_index:])
+        self.query_index = num_queries
+
     def get_log(self):
         self.update_log()
         return self.queries
-
-    def update_log(self):
-        num_queries = len(connection.queries)
-        if self.query_index is not None and num_queries > self.query_index:
-            self.queries += connection.queries[self.query_index:]
-            self.query_index = num_queries
 
     def stop_logging(self):
         self.update_log()

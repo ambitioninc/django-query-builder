@@ -511,7 +511,6 @@ class LeadLagDifferenceField(LeadLagField):
     """
     Base class for lag difference and lead difference window functions
     """
-
     def get_select_sql(self):
         """
         Calculate the difference between this record's value and the lag/lead record's value
@@ -641,9 +640,6 @@ class DatePartField(MultiField):
         @return: The EXTRACT sql portion for this field
         @rtype: str
         """
-        # lookup_field = self.field
-        # if self.table:
-        #     lookup_field = '{0}.{1}'.format(self.table.get_identifier(), self.field)
         return 'EXTRACT({0} FROM {1})'.format(self.name, self.field.get_select_sql())
 
     def before_add(self):
@@ -668,20 +664,21 @@ class DatePartField(MultiField):
 
         if self.name == 'all':
             datetime_str = self.field
-            self.add_to_table(AllEpoch(datetime_str, table=self.table), epoch_alias)
+            self.add_to_table(AllEpoch(datetime_str, table=self.table, cast=self.cast), epoch_alias)
             # do not add the date order by for "all" grouping because we want to order by rank
             return
         elif self.name == 'none':
             datetime_str = self.field
-            self.add_to_table(Epoch(datetime_str, table=self.table), epoch_alias, add_group=True)
+            self.add_to_table(Epoch(datetime_str, table=self.table, cast=self.cast), epoch_alias, add_group=True)
         else:
             group_names = default_group_names
             if self.name == 'week':
                 group_names = week_group_names
 
-            for group_name in group_names:
+            group_name_index = group_names.index(self.name) + 1
+            for group_name in group_names[0:group_name_index]:
                 field_alias = '{0}__{1}'.format(self.field.get_name(), group_name)
-                auto_field = group_map[group_name](self.field, table=self.table)
+                auto_field = group_map[group_name](self.field, table=self.table, cast=self.cast)
                 self.add_to_table(auto_field, field_alias, add_group=True)
 
                 # check if this is the last date grouping
@@ -691,12 +688,12 @@ class DatePartField(MultiField):
                         GroupEpoch(
                             datetime_str,
                             date_group_name=group_name,
-                            table=self.table
+                            table=self.table,
+                            cast=self.cast,
                         ),
                         epoch_alias,
                         add_group=True
                     )
-                    break
 
         if self.desc:
             self.table.owner.order_by('-{0}'.format(epoch_alias))
@@ -822,13 +819,8 @@ class AllEpoch(Epoch):
     """
     Epoch used for all grouping
     """
-
     def get_select_sql(self):
         return 0
-        return 'EXTRACT({0} FROM MIN({1}))'.format(
-            self.name,
-            self.field.get_sql()
-        )
 
 
 group_map = {
