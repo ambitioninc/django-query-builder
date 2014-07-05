@@ -1,0 +1,5 @@
+django-query-builder v0.5.7
+===========================
+
+Updates includes Python 3 compatibility, and sphinx docs
+

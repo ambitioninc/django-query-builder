@@ -4,6 +4,7 @@ from django.db import connection
 from django.db.models import Q, get_model
 from django.db.models.query import QuerySet
 from django.db.models.constants import LOOKUP_SEP
+from six import string_types
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath
@@ -20,39 +21,49 @@ class Join(object):
                  prefix_fields=True, field_prefix=None):
         """
         Initializes the default values and assigns any passed params
-        @param right_table: The table being joined with. This can be a string of the table
+
+        :param right_table: The table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance
-        @type right_table: str or dict or Table
-        @param fields: The fields to select from ``table``. Defaults to None. This can be
+        :type right_table: str or dict or :class:`querybuilder.tables.Table`
+
+        :param fields: The fields to select from ``table``. Defaults to None. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
-        @type fields: str or tuple or list or Field
-        @param condition: The join condition specifying the fields being joined. If the two tables being
+        :type fields: str or tuple or list or :class:`querybuilder.fields.Field`
+
+        :param condition: The join condition specifying the fields being joined. If the two tables being
             joined are instances of ``ModelTable`` then the condition should be created automatically.
-        @type condition: str
-        @param join_type: The type of join (JOIN, LEFT JOIN, INNER JOIN, etc). Defaults to 'JOIN'
-        @type join_type: str
-        @param schema: This is not implemented, but it will be a string of the db schema name
-        @type schema: str
-        @param left_table: The left table being joined with. This can be a string of the table
+        :type condition: str
+
+        :param join_type: The type of join (JOIN, LEFT JOIN, INNER JOIN, etc). Defaults to 'JOIN'
+        :type join_type: str
+
+        :param schema: This is not implemented, but it will be a string of the db schema name
+        :type schema: str
+
+        :param left_table: The left table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance. Defaults to the first table
             in the query.
-        @type left_table: str or dict or Table or None
-        @param owner: A reference to the query managing this Join object
-        @type owner: Query
-        @param extract_fields: If True and joining with a ``ModelTable``, then '*'
+        :type left_table: str or dict or :class:`querybuilder.tables.Table` or None
+
+        :param owner: A reference to the query managing this Join object
+        :type owner: :class:`querybuilder.query.Query`
+
+        :param extract_fields: If True and joining with a ``ModelTable``, then '*'
             fields will be converted to individual fields for each column in the table. Defaults
             to True.
-        @type extract_fields: bool
-        @param prefix_fields: If True, then the joined table will have each of its field names
+        :type extract_fields: bool
+
+        :param prefix_fields: If True, then the joined table will have each of its field names
             prefixed with the field_prefix. If no field_prefix is specified, a name will be
             generated based on the join field name. This is usually used with nesting results
             in order to create models in python or javascript. Defaults to True.
-        @type prefix_fields: bool
-        @param field_prefix: The field prefix to be used in front of each field name if prefix_fields
+        :type prefix_fields: bool
+
+        :param field_prefix: The field prefix to be used in front of each field name if prefix_fields
             is set to True. If no field_prefix is set, one will be automatically created based on
             the join field name.
-        @type field_prefix: str
+        :type field_prefix: str
         """
         self.owner = owner
         self.left_table = None
@@ -76,8 +87,9 @@ class Join(object):
     def get_sql(self):
         """
         Generates the JOIN sql for the join tables and join condition
-        @return: the JOIN sql for the join tables and join condition
-        @rtype: str
+        
+        :rtype: str
+        :return: the JOIN sql for the join tables and join condition
         """
         return '{0} {1} ON {2}'.format(self.join_type, self.right_table.get_sql(), self.get_condition())
 
@@ -85,10 +97,11 @@ class Join(object):
         """
         Sets the left table for this join clause. If no table is specified, the first table
         in the query will be used
-        @param left_table: The left table being joined with. This can be a string of the table
+
+        :type left_table: str or dict or :class:`querybuilder.tables.Table` or None
+        :param left_table: The left table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance. Defaults to the first table
             in the query.
-        @type left_table: str or dict or Table or None
         """
         if left_table:
             self.left_table = TableFactory(
@@ -102,8 +115,9 @@ class Join(object):
         """
         Returns the left table if one was specified, otherwise the first
         table in the query is returned
-        @return: the left table if one was specified, otherwise the first table in the query
-        @rtype: Table
+        
+        :rtype: :class:`querybuilder.tables.Table`
+        :return: the left table if one was specified, otherwise the first table in the query
         """
         if self.left_table:
             return self.left_table
@@ -146,8 +160,9 @@ class Join(object):
     def get_condition(self):
         """
         Determines the condition to be used in the condition part of the join sql.
-        @return: The condition for the join clause
-        @rtype: str or None
+        
+        :return: The condition for the join clause
+        :rtype: str or None
         """
         if self.condition:
             return self.condition
@@ -241,8 +256,9 @@ class Where(object):
     def get_sql(self):
         """
         Builds and returns the WHERE portion of the sql
-        return: the WHERE portion of the sql
-        @rtype: str
+
+        :return: the WHERE portion of the sql
+        :rtype: str
         """
         # reset arg index and args
         self.arg_index = 0
@@ -257,20 +273,23 @@ class Where(object):
     def get_condition_operator(self, operator):
         """
         Gets the comparison operator from the Where class's comparison_map
-        @return: the comparison operator from the Where class's comparison_map
-        @rtype: str
+        
+        :return: the comparison operator from the Where class's comparison_map
+        :rtype: str
         """
         return Where.comparison_map.get(operator, None)
 
     def get_condition_value(self, operator, value):
         """
         Gets the condition value based on the operator and value
-        @param operator: the condition operator name
-        @type operator: str
-        @param value: the value to be formatted based on the condition operator
-        @type value: object
-        @return: the comparison operator from the Where class's comparison_map
-        @rtype: str
+
+        :param operator: the condition operator name
+        :type operator: str
+        :param value: the value to be formatted based on the condition operator
+        :type value: object
+        
+        :return: the comparison operator from the Where class's comparison_map
+        :rtype: str
         """
         if operator == 'contains':
             value = '%{0}%'.format(value)
@@ -282,6 +301,9 @@ class Where(object):
         """
         Recursive method that builds the where parts. Any Q objects that have children will
         also be built with ``self.build_where_part()``
+
+        :rtype: str
+        :return: The composed where string
         """
         where_parts = []
 
@@ -381,8 +403,9 @@ class Where(object):
         """
         Set the query param in self.args based on the prefix and arg index
         and auto increment the arg_index
-        @return: the string placeholder for the arg
-        @rtype: str
+        
+        :return: the string placeholder for the arg
+        :rtype: str
         """
         named_arg = '{0}A{1}'.format(self.arg_prefix, self.arg_index)
         self.args[named_arg] = value
@@ -397,13 +420,14 @@ class Group(object):
 
     def __init__(self, field=None, table=None):
         """
-        @param field: This can be a string of a field name, a dict of {'alias': field}, or
+        :param field: This can be a string of a field name, a dict of {'alias': field}, or
             a ``Field`` instance
-        @type field: str or dict or Field
-        @param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
+        :type field: str or dict or :class:`querybuilder.fields.Field`
+
+        :param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
             a ``Table`` instance. A table only needs to be supplied in more complex queries where
             the field name is ambiguous.
-        @type table: str or dict or Table
+        :type table: str or dict or :class:`querybuilder.tables.Table`
         """
         self.field = FieldFactory(field)
         self.table = TableFactory(table)
@@ -413,8 +437,9 @@ class Group(object):
     def get_name(self):
         """
         Gets the name to reference the grouped field
-        @return: the name to reference the grouped field
-        @rtype: str
+        
+        :return: the name to reference the grouped field
+        :rtype: str
         """
         return self.field.get_identifier()
 
@@ -427,16 +452,19 @@ class Sorter(object):
     def __init__(self, field=None, table=None, desc=False):
         """
         Initializes the instance variables
-        @param field: This can be a string of a field name, a dict of {'alias': field}, or
+
+        :type field: str or dict or :class:`querybuilder.fields.Field`
+        :param field: This can be a string of a field name, a dict of {'alias': field}, or
             a ``Field`` instance
-        @type field: str or dict or Field
-        @param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
+
+        :type table: str or dict or :class:`querybuilder.tables.Table`
+        :param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
             a ``Table`` instance. A table only needs to be supplied in more complex queries where
             the field name is ambiguous.
-        @type table: str or dict or Table
-        @param desc: Set to True to sort by this field in DESC order or False to sort by this field
+
+        :param desc: Set to True to sort by this field in DESC order or False to sort by this field
             in ASC order. Defaults to False.
-        @type desc: bool
+        :type desc: bool
         """
         self.desc = desc
         self.field = FieldFactory(field)
@@ -450,7 +478,7 @@ class Sorter(object):
         # if the specified field is a string with '-' at the beginning
         # the '-' needs to be removed and this sorter needs to be
         # set to desc
-        if (type(self.field.field) is str or type(self.field.field) is unicode) and str(self.field.field[0]) == '-':
+        if isinstance(self.field.field, string_types) and str(self.field.field[0]) == '-':
             self.desc = True
             self.field.field = self.field.field[1:]
             self.field.name = self.field.name[1:]
@@ -458,8 +486,9 @@ class Sorter(object):
     def get_name(self, use_alias=True):
         """
         Gets the name to reference the sorted field
-        @return: the name to reference the sorted field
-        @rtype: str
+        
+        :return: the name to reference the sorted field
+        :rtype: str
         """
         if self.desc:
             direction = 'DESC'
@@ -479,10 +508,12 @@ class Limit(object):
     def __init__(self, limit=None, offset=None):
         """
         Initializes the instance variables
-        @param limit: the number of rows to return
-        @type limit: int
-        @param offset: the number of rows to start returning rows from
-        @type limit: int
+
+        :param limit: the number of rows to return
+        :type limit: int
+
+        :param offset: the number of rows to start returning rows from
+        :type limit: int
         """
         self.limit = limit
         self.offset = offset
@@ -490,13 +521,14 @@ class Limit(object):
     def get_sql(self):
         """
         Generates the sql used for the limit clause of a Query
-        @return: the sql for the limit clause of a Query
-        @rtype: str
+        
+        :return: the sql for the limit clause of a Query
+        :rtype: str
         """
         sql = ''
-        if self.limit > 0:
+        if self.limit and self.limit > 0:
             sql += 'LIMIT {0} '.format(self.limit)
-        if self.offset > 0:
+        if self.offset and self.offset > 0:
             sql += 'OFFSET {0} '.format(self.offset)
         return sql
 
@@ -561,8 +593,6 @@ class Query(object):
     def __init__(self):
         """
         Initializes this instance by calling ``self.init_defaults``
-        @return: self
-        @rtype: self
         """
         self.init_defaults()
 
@@ -570,19 +600,25 @@ class Query(object):
         """
         Adds a ``Table`` and any optional fields to the list of tables
         this query is selecting from.
-        @param table: The table to select fields from. This can be a string of the table
+
+        :type table: str or dict or :class:`querybuilder.tables.Table`
+            or :class:`querybuilder.query.Query` or :class:`django.db.models.base.ModelBase`
+        :param table: The table to select fields from. This can be a string of the table
             name, a dict of {'alias': table}, a ``Table`` instance, a Query instance, or a
             django Model instance
-        @type table: str or dict or Table or Query or ModelBase
-        @param fields: The fields to select from ``table``. Defaults to '*'. This can be
+
+        :type fields: str or tuple or list or Field
+        :param fields: The fields to select from ``table``. Defaults to '*'. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
-        @type fields: str or tuple or list or Field
-        @param schema: This is not implemented, but it will be a string of the db schema name
-        @type schema: str
-        @param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
-        @return: self
-        @rtype: self
+
+        :type schema: str
+        :param schema: This is not implemented, but it will be a string of the db schema name
+
+        :param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
+        
+        :return: self
+        :rtype: :class:`querybuilder.query.Query`
         """
         # self.mark_dirty()
 
@@ -599,17 +635,23 @@ class Query(object):
     def insert_into(self, table=None, field_names=None, values=None, **kwargs):
         """
         Bulk inserts a list of values into a table
-        @param table: The table to select fields from. This can be a string of the table
+
+        :type table: str or dict or :class:`querybuilder.tables.Table` 
+            or :class:`querybuilder.query.Query` or :class:`django.db.models.base.ModelBase`
+        :param table: The table to select fields from. This can be a string of the table
             name, a dict of {'alias': table}, a ``Table`` instance, a Query instance, or a
             django Model instance
-        @type table: str or dict or Table or Query or ModelBase
-        @param field_names: A list of ordered field names that relate to the data in the values list
-        @type field_names: list
-        @param values: A list each values list with the values in the same order as the field names
-        @type values: list of list
-        @param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
-        @return: self
-        @rtype: self
+
+        :type field_names: list
+        :param field_names: A list of ordered field names that relate to the data in the values list
+
+        :type values: list of list
+        :param values: A list each values list with the values in the same order as the field names
+
+        :param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
+        
+        :return: self
+        :rtype: :class:`querybuilder.query.Query`
         """
         table = TableFactory(
             table=table,
@@ -625,19 +667,26 @@ class Query(object):
     def update_table(self, table=None, field_names=None, values=None, pk=None, **kwargs):
         """
         Bulk updates rows in a table
-        @param table: The table to select fields from. This can be a string of the table
+
+        :type table: str or dict or :class:`querybuilder.tables.Table`
+            or :class:`querybuilder.query.Query` or :class:`django.db.models.base.ModelBase`
+        :param table: The table to select fields from. This can be a string of the table
             name, a dict of {'alias': table}, a ``Table`` instance, a Query instance, or a
             django Model instance
-        @type table: str or dict or Table or Query or ModelBase
-        @param field_names: A list of ordered field names that relate to the data in the values list
-        @type field_names: list
-        @param values: A list each values list with the values in the same order as the field names
-        @type values: list of list
-        @param pk: The name of the primary key in the table and field_names
-        @type pk: int
-        @param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
-        @return: self
-        @rtype: self
+
+        :type field_names: list
+        :param field_names: A list of ordered field names that relate to the data in the values list
+
+        :type values: list of list
+        :param values: A list each values list with the values in the same order as the field names
+
+        :type pk: int
+        :param pk: The name of the primary key in the table and field_names
+
+        :param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
+        
+        :rtype: :class:`querybuilder.query.Query`
+        :return: self
         """
         table = TableFactory(
             table=table,
@@ -653,8 +702,9 @@ class Query(object):
     # TODO: add tests for custom with clauses
     def with_query(self, query=None, alias=None):
         """
-        @return: self
-        @rtype: self
+        
+        :return: self
+        :rtype: :class:`querybuilder.query.Query`
         """
         self.with_tables.append(TableFactory(query, alias=alias))
         return self
@@ -665,39 +715,49 @@ class Query(object):
         """
         Joins a table to another table based on a condition and adds fields from the joined table
         to the returned fields.
-        @param right_table: The table being joined with. This can be a string of the table
+
+        :type right_table: str or dict or :class:`querybuilder.tables.Table`
+        :param right_table: The table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance
-        @type right_table: str or dict or Table
-        @param fields: The fields to select from ``right_table``. Defaults to `None`. This can be
+
+        :type fields: str or tuple or list or :class:`querybuilder.fields.Field`
+        :param fields: The fields to select from ``right_table``. Defaults to `None`. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
-        @type fields: str or tuple or list or Field
-        @param condition: The join condition specifying the fields being joined. If the two tables being
+
+        :type condition: str
+        :param condition: The join condition specifying the fields being joined. If the two tables being
             joined are instances of ``ModelTable`` then the condition should be created automatically.
-        @type condition: str
-        @param join_type: The type of join (JOIN, LEFT JOIN, INNER JOIN, etc). Defaults to 'JOIN'
-        @type join_type: str
-        @param schema: This is not implemented, but it will be a string of the db schema name
-        @type schema: str
-        @param left_table: The left table being joined with. This can be a string of the table
+
+        :type join_type: str
+        :param join_type: The type of join (JOIN, LEFT JOIN, INNER JOIN, etc). Defaults to 'JOIN'
+
+        :type schema: str
+        :param schema: This is not implemented, but it will be a string of the db schema name
+
+        :type left_table: str or dict or Table
+        :param left_table: The left table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance. Defaults to the first table
             in the query.
-        @type left_table: str or dict or Table
-        @param extract_fields: If True and joining with a ``ModelTable``, then '*'
+
+        :type extract_fields: bool
+        :param extract_fields: If True and joining with a ``ModelTable``, then '*'
             fields will be converted to individual fields for each column in the table. Defaults
             to True.
-        @type extract_fields: bool
-        @param prefix_fields: If True, then the joined table will have each of its field names
+
+        :type prefix_fields: bool
+        :param prefix_fields: If True, then the joined table will have each of its field names
             prefixed with the field_prefix. If not field_prefix is specified, a name will be
             generated based on the join field name. This is usually used with nesting results
             in order to create models in python or javascript. Defaults to True.
-        @type prefix_fields: bool
-        @param field_prefix: The field prefix to be used in front of each field name if prefix_fields
+
+        :type field_prefix: str
+        :param field_prefix: The field prefix to be used in front of each field name if prefix_fields
             is set to True. If no field_prefix is set, one will be automatically created based on
             the join field name.
-        @type field_prefix: str
-        @return: self
-        @rtype: self
+
+        :rtype: :class:`querybuilder.query.Query`
+        :return: self
         """
         # self.mark_dirty()
         # TODO: fix bug when joining from simple table to model table with no condition
@@ -741,39 +801,49 @@ class Query(object):
                   field_prefix=None, allow_duplicates=False):
         """
         Wrapper for ``self.join`` with a default join of 'LEFT JOIN'
-        @param right_table: The table being joined with. This can be a string of the table
+
+        :type right_table: str or dict or :class:`querybuilder.tables.Table`
+        :param right_table: The table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance
-        @type right_table: str or dict or Table
-        @param fields: The fields to select from ``right_table``. Defaults to `None`. This can be
+
+        :type fields: str or tuple or list or :class:`querybuilder.fields.Field`
+        :param fields: The fields to select from ``right_table``. Defaults to `None`. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
-        @type fields: str or tuple or list or Field
-        @param condition: The join condition specifying the fields being joined. If the two tables being
+
+        :type condition: str
+        :param condition: The join condition specifying the fields being joined. If the two tables being
             joined are instances of ``ModelTable`` then the condition should be created automatically.
-        @type condition: str
-        @param join_type: The type of join (JOIN, LEFT JOIN, INNER JOIN, etc). Defaults to 'JOIN'
-        @type join_type: str
-        @param schema: This is not implemented, but it will be a string of the db schema name
-        @type schema: str
-        @param left_table: The left table being joined with. This can be a string of the table
+
+        :type join_type: str
+        :param join_type: The type of join (JOIN, LEFT JOIN, INNER JOIN, etc). Defaults to 'JOIN'
+
+        :type schema: str
+        :param schema: This is not implemented, but it will be a string of the db schema name
+
+        :type left_table: str or dict or Table
+        :param left_table: The left table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance. Defaults to the first table
             in the query.
-        @type left_table: str or dict or Table
-        @param extract_fields: If True and joining with a ``ModelTable``, then '*'
+
+        :type extract_fields: bool
+        :param extract_fields: If True and joining with a ``ModelTable``, then '*'
             fields will be converted to individual fields for each column in the table. Defaults
             to True.
-        @type extract_fields: bool
-        @param prefix_fields: If True, then the joined table will have each of its field names
+
+        :type prefix_fields: bool
+        :param prefix_fields: If True, then the joined table will have each of its field names
             prefixed with the field_prefix. If not field_prefix is specified, a name will be
             generated based on the join field name. This is usually used with nesting results
             in order to create models in python or javascript. Defaults to True.
-        @type prefix_fields: bool
-        @param field_prefix: The field prefix to be used in front of each field name if prefix_fields
+
+        :type field_prefix: str
+        :param field_prefix: The field prefix to be used in front of each field name if prefix_fields
             is set to True. If no field_prefix is set, one will be automatically created based on
             the join field name.
-        @type field_prefix: str
-        @return: self
-        @rtype: self
+
+        :return: self
+        :rtype: :class:`querybuilder.query.Query`
         """
         return self.join(
             right_table=right_table,
@@ -791,13 +861,16 @@ class Query(object):
     def where(self, q=None, where_type='AND', **kwargs):
         """
         Adds a where condition as a Q object to the query's ``Where`` instance.
-        @param q: A django ``Q`` instance. This will be added to the query's ``Where`` object. If no
+
+        :type q: :class:`django.db.models.Q`
+        :param q: A django ``Q`` instance. This will be added to the query's ``Where`` object. If no
             Q object is passed, the kwargs will be examined for params to be added to Q objects
-        @type q: Q
-        @param where_type: The connection type of the where condition ('AND', 'OR')
-        @param where_type: str
-        @return: self
-        @rtype: self
+
+        :param where_type: str
+        :param where_type: The connection type of the where condition ('AND', 'OR')
+
+        :return: self
+        :rtype: :class:`querybuilder.query.Query`
         """
         # self.mark_dirty()
         if q is not None:
@@ -814,17 +887,19 @@ class Query(object):
         """
         Adds a group by clause to the query by adding a ``Group`` instance to the query's
         groups list
-        @param field: This can be a string of a field name, a dict of {'alias': field}, or
+
+        :type field: str or dict or :class:`querybuidler.fields.Field`
+        :param field: This can be a string of a field name, a dict of {'alias': field}, or
             a ``Field`` instance
-        @type field: str or dict or Field
-        @param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
+
+        :type table: str or dict or :class:`querybuilder.table.Table`
+        :param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
             a ``Table`` instance. A table only needs to be supplied in more complex queries where
             the field name is ambiguous.
-        @type table: str or dict or Table
-        @return: self
-        @rtype: self
-        """
 
+        :return: self
+        :rtype: :class:`querybuilder.query.Query`
+        """
         new_group_item = Group(
             field=field,
             table=table,
@@ -843,18 +918,22 @@ class Query(object):
         """
         Adds an order by clause to the query by adding a ``Sorter`` instance to the query's
         sorters list
-        @param field: This can be a string of a field name, a dict of {'alias': field}, or
+
+        :type field: str or dict or :class:`querybuidler.fields.Field`
+        :param field: This can be a string of a field name, a dict of {'alias': field}, or
             a ``Field`` instance
-        @type field: str or dict or Field
-        @param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
+
+        :type table: str or dict or :class:`querybuilder.table.Table`
+        :param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
             a ``Table`` instance. A table only needs to be supplied in more complex queries where
             the field name is ambiguous.
-        @type table: str or dict or Table
-        @param desc: Set to True to sort by this field in DESC order or False to sort by this field
+
+        :type desc: bool
+        :param desc: Set to True to sort by this field in DESC order or False to sort by this field
             in ASC order. Defaults to False.
-        @type desc: bool
-        @return: self
-        @rtype: self
+
+        :rtype: :class:`querybuilder.query.Query`
+        :return: self
         """
         self.sorters.append(Sorter(
             field=field,
@@ -866,12 +945,15 @@ class Query(object):
     def limit(self, limit=None, offset=None):
         """
         Sets a limit and/or offset to the query to limit the number of rows returned.
-        @param limit: The number of rows to return
-        @type limit: int
-        @param offset: The offset from the start of the record set where rows should start being returned
-        @type offset: int
-        @return: self
-        @rtype: self
+
+        :type limit: int
+        :param limit: The number of rows to return
+
+        :type offset: int
+        :param offset: The offset from the start of the record set where rows should start being returned
+
+        :rtype: :class:`querybuilder.query.Query`
+        :return: self
         """
         self._limit = Limit(
             limit=limit,
@@ -882,10 +964,12 @@ class Query(object):
     def distinct(self, use_distinct=True):
         """
         Adds a distinct clause to the query
-        @param distinct: Whether or not to include the distinct clause
-        @type distinct: bool
-        @return: self
-        @rtype: self
+
+        :type use_distinct: bool
+        :param use_distinct: Whether or not to include the distinct clause
+
+        :rtype: :class:`querybuilder.query.Query`
+        :return: self
         """
         self._distinct = use_distinct
         return self
@@ -927,14 +1011,17 @@ class Query(object):
     def get_sql(self, debug=False, use_cache=True):
         """
         Generates the sql for this query and returns the sql as a string.
-        @param debug: If True, the sql will be returned in a format that is easier to read and debug.
+
+        :type debug: bool
+        :param debug: If True, the sql will be returned in a format that is easier to read and debug.
             Defaults to False
-        @type debug: bool
-        @param use_cache: If True, the query will returned the cached sql if it exists rather
+
+        :type use_cache: bool
+        :param use_cache: If True, the query will returned the cached sql if it exists rather
             then generating the sql again. If False, the sql will be generated again. Defaults to True.
-        @type use_cache: bool
-        @return: The generated sql for this query
-        @rtype: str
+
+        :rtype: str
+        :return: The generated sql for this query
         """
         # TODO: enable caching
         # if self.sql and use_cache and not debug:
@@ -985,6 +1072,10 @@ class Query(object):
 
     def get_update_sql(self, rows):
         """
+        Returns SQL UPDATE for rows ``rows``
+
+        .. code-block:: sql
+
             UPDATE table_name
             SET
                 field1 = new_values.field1
@@ -994,7 +1085,8 @@ class Query(object):
                     (1, 'value1', 'value2'),
                     (2, 'value1', 'value2')
             ) AS new_values (id, field1, field2)
-            WHERE table_name.id = new_values.id
+            WHERE table_name.id = new_values.id;
+
         """
         field_names = self.get_field_names()
         pk = field_names[0]
@@ -1043,8 +1135,9 @@ class Query(object):
     def format_sql(self):
         """
         Builds the sql in a format that is easy for humans to read and debug
-        @return: The formatted sql for this query
-        @rtype: str
+        
+        :return: The formatted sql for this query
+        :rtype: str
         """
         # TODO: finish adding the other parts of the sql generation
         sql = ''
@@ -1085,8 +1178,9 @@ class Query(object):
         """
         Builds a list of the field names for all tables and joined tables by calling
         ``get_field_names()`` on each table
-        @return: list of field names
-        @rtype: list of str
+        
+        :return: list of field names
+        :rtype: list of str
         """
         field_names = []
         for table in self.tables:
@@ -1099,8 +1193,9 @@ class Query(object):
         """
         Builds a list of the field identifiers for all tables and joined tables by calling
         ``get_field_identifiers()`` on each table
-        @return: list of field identifiers
-        @rtype: list of str
+        
+        :return: list of field identifiers
+        :rtype: list of str
         """
         field_identifiers = []
         for table in self.tables:
@@ -1138,8 +1233,9 @@ class Query(object):
     def build_select_fields(self):
         """
         Generates the sql for the SELECT portion of the query
-        @return: the SELECT portion of the query
-        @rtype: str
+        
+        :return: the SELECT portion of the query
+        :rtype: str
         """
         field_sql = []
 
@@ -1163,8 +1259,9 @@ class Query(object):
     def build_from_table(self):
         """
         Generates the sql for the FROM portion of the query
-        @return: the FROM portion of the query
-        @rtype: str
+        
+        :return: the FROM portion of the query
+        :rtype: str
         """
         table_parts = []
 
@@ -1182,8 +1279,9 @@ class Query(object):
     def build_joins(self):
         """
         Generates the sql for the JOIN portion of the query
-        @return: the JOIN portion of the query
-        @rtype: str
+        
+        :return: the JOIN portion of the query
+        :rtype: str
         """
         join_parts = []
 
@@ -1200,16 +1298,18 @@ class Query(object):
     def build_where(self):
         """
         Generates the sql for the WHERE portion of the query
-        @return: the WHERE portion of the query
-        @rtype: str
+        
+        :return: the WHERE portion of the query
+        :rtype: str
         """
         return self._where.get_sql()
 
     def build_groups(self):
         """
         Generates the sql for the GROUP BY portion of the query
-        @return: the GROUP BY portion of the query
-        @rtype: str
+        
+        :return: the GROUP BY portion of the query
+        :rtype: str
         """
         # check if there are any groupings
         if len(self.groups):
@@ -1224,11 +1324,13 @@ class Query(object):
     def build_order_by(self, use_alias=True):
         """
         Generates the sql for the ORDER BY portion of the query
-        @param use_alias: If True, the alias for the field will be used in the order by.
+
+        :type use_alias: bool
+        :param use_alias: If True, the alias for the field will be used in the order by.
             This is an option before query windows do not use the alias. Defaults to True.
-        @type use_alias: bool
-        @return: the ORDER BY portion of the query
-        @rtype: str
+
+        :return: the ORDER BY portion of the query
+        :rtype: str
         """
         # check if there are any sorters
         if len(self.sorters):
@@ -1243,8 +1345,9 @@ class Query(object):
     def build_limit(self):
         """
         Generates the sql for the LIMIT and OFFSET portions of the query
-        @return: the LIMIT and/or OFFSET portions of the query
-        @rtype: str
+        
+        :return: the LIMIT and/or OFFSET portions of the query
+        :rtype: str
         """
         if self._limit:
             return self._limit.get_sql()
@@ -1254,10 +1357,12 @@ class Query(object):
         """
         Finds a table by name or alias. The FROM tables and JOIN tables
         are included in the search.
-        @param table: string of the table name or alias or a ModelBase instance
-        @type table: str or ModelBase
-        @return: The table if it is found, otherwise None
-        @rtype: Table or None
+
+        :type table: str or :class:`ModelBase <django:django.db.models.base.ModelBase>`
+        :param table: string of the table name or alias or a ModelBase instance
+
+        :return: The table if it is found, otherwise None
+        :rtype: Table or None
         """
         table = TableFactory(table)
         identifier = table.get_identifier()
@@ -1273,8 +1378,9 @@ class Query(object):
     def wrap(self, alias=None):
         """
         Wraps the query by selecting all fields from itself
-        @return: The wrapped query
-        @rtype: self
+        
+        :rtype: :class:`querybuilder.query.Query`
+        :return: The wrapped query
         """
         field_names = self.get_field_names()
         query = Query().from_table(deepcopy(self), alias=alias)
@@ -1291,8 +1397,9 @@ class Query(object):
         Gets the args for the query which will be escaped when being executed by the
         db. All inner queries are inspected and their args are combined with this
         query's args.
-        @return: all args for this query as a dict
-        @rtype: dict
+        
+        :return: all args for this query as a dict
+        :rtype: dict
         """
         for table in self.tables + self.with_tables:
             if type(table) is QueryTable:
@@ -1303,14 +1410,17 @@ class Query(object):
     def explain(self, sql=None, sql_args=None):
         """
         Runs EXPLAIN on this query
-        @param sql: The sql to run EXPLAIN on. If None is specified, the query will
+
+        :type sql: str or None
+        :param sql: The sql to run EXPLAIN on. If None is specified, the query will
             use ``self.get_sql()``
-        @type sql: str or None
-        @param sql_args: A dictionary of the arguments to be escaped in the query. If None and
+
+        :type sql_args: dict or None
+        :param sql_args: A dictionary of the arguments to be escaped in the query. If None and
             sql is None, the query will use ``self.get_args()``
-        @type sql_args: dict or None
-        @return: list of each line of output from the EXPLAIN statement
-        @rtype: list of str
+
+        :rtype: list of str
+        :return: list of each line of output from the EXPLAIN statement
         """
         cursor = connection.cursor()
         if sql is None:
@@ -1327,24 +1437,30 @@ class Query(object):
         """
         Executes the SELECT statement and returns the rows as a list of dictionaries or a list of
         model instances
-        @param return_models: Set to True to return a list of models instead of a list of dictionaries.
+
+        :type return_models: bool
+        :param return_models: Set to True to return a list of models instead of a list of dictionaries.
             Defaults to False
-        @type return_models: bool
-        @param nest: Set to True to treat all double underscores in keynames as nested data. This will
+
+        :type nest: bool
+        :param nest: Set to True to treat all double underscores in keynames as nested data. This will
             convert all keys with double underscores to dictionaries keyed off of the left side of
             the underscores. Ex: {"id": 1", "account__id": 1, "account__name": "Name"} becomes
             {"id": 1, "account": {"id": 1, "name": "Name"}}
-        @type nest: bool
-        @param bypass_safe_limit: Ignores the safe_limit option even if the safe_limit is enabled
-        @type bypass_safe_limit: bool
-        @param sql: The sql to execute in the SELECT statement. If one is not specified, then the
+
+        :type bypass_safe_limit: bool
+        :param bypass_safe_limit: Ignores the safe_limit option even if the safe_limit is enabled
+
+        :type sql: str or None
+        :param sql: The sql to execute in the SELECT statement. If one is not specified, then the
             query will use ``self.get_sql()``
-        @type sql: str or None
-        @param sql_args: The sql args to be used in the SELECT statement. If none are specified, then
+
+        :type sql_args: str or None
+        :param sql_args: The sql args to be used in the SELECT statement. If none are specified, then
             the query wil use ``self.get_args()``
-        @type sql_args: str or None
-        @return: list of dictionaries of the rows
-        @rtype: list of dict
+
+        :rtype: list of dict
+        :return: list of dictionaries of the rows
         """
         # Check if we need to set a safe limit
         if bypass_safe_limit is False:
@@ -1385,7 +1501,8 @@ class Query(object):
 
             # convert keys with double underscores to dictionaries
             for row in rows:
-                for key, value in row.items():
+                _row = row.copy()
+                for key, value in _row.items():
                     set_value_for_keypath(row, key, value, True, '__')
                     if '__' in key:
                         row.pop(key)
@@ -1458,82 +1575,89 @@ class Query(object):
         """
         Returns a COUNT of the query by wrapping the query and performing a COUNT
         aggregate of the specified field
-        @param field: the field to pass to the COUNT aggregate. Defaults to '*'
-        @type field: str
-        @return: The number of rows that the query will return
-        @rtype: int
+
+        :param field: the field to pass to the COUNT aggregate. Defaults to '*'
+        :type field: str
+        
+        :return: The number of rows that the query will return
+        :rtype: int
         """
         q = Query().from_table(self, fields=[
             CountField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
-        return rows[0].values()[0]
+        return list(rows[0].values())[0]
 
     def max(self, field):
         """
         Returns the maximum value of a field in the result set of the query
         by wrapping the query and performing a MAX aggregate of the specified field
-        @param field: the field to pass to the MAX aggregate
-        @type field: str
-        @return: The maximum value of the specified field
-        @rtype: int
+        :param field: the field to pass to the MAX aggregate
+        :type field: str
+        
+        :return: The maximum value of the specified field
+        :rtype: int
         """
         q = Query().from_table(self, fields=[
             MaxField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
-        return rows[0].values()[0]
+        return list(rows[0].values())[0]
 
     def min(self, field):
         """
         Returns the minimum value of a field in the result set of the query
         by wrapping the query and performing a MIN aggregate of the specified field
-        @param field: the field to pass to the MIN aggregate
-        @type field: str
-        @return: The minimum value of the specified field
-        @rtype: int
+        :param field: the field to pass to the MIN aggregate
+        :type field: str
+        
+        :return: The minimum value of the specified field
+        :rtype: int
         """
         q = Query().from_table(self, fields=[
             MinField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
-        return rows[0].values()[0]
+        return list(rows[0].values())[0]
 
     def sum(self, field):
         """
         Returns the sum of the field in the result set of the query
         by wrapping the query and performing a SUM aggregate of the specified field
-        @param field: the field to pass to the SUM aggregate
-        @type field: str
-        @return: The sum of the specified field
-        @rtype: int
+        :param field: the field to pass to the SUM aggregate
+        :type field: str
+        
+        :return: The sum of the specified field
+        :rtype: int
         """
         q = Query().from_table(self, fields=[
             SumField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
-        return rows[0].values()[0]
+        return list(rows[0].values())[0]
 
     def avg(self, field):
         """
         Returns the average of the field in the result set of the query
         by wrapping the query and performing an AVG aggregate of the specified field
-        @param field: the field to pass to the AVG aggregate
-        @type field: str
-        @return: The average of the specified field
-        @rtype: int
+        :param field: the field to pass to the AVG aggregate
+        :type field: str
+        
+        :return: The average of the specified field
+        :rtype: int
         """
         q = Query().from_table(self, fields=[
             AvgField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
-        return rows[0].values()[0]
+        return list(rows[0].values())[0]
 
     def _fetch_all_as_dict(self, cursor):
         """
         Iterates over the result set and converts each row to a dictionary
-        @return: A list of dictionaries where each row is a dictionary
-        @rtype: list of dict
+        
+        :return: A list of dictionaries where each row is a dictionary
+        :rtype: list of dict
         """
         desc = cursor.description
         return [
@@ -1553,29 +1677,35 @@ class QueryWindow(Query):
         """
         Equivalent to ``order_by``, but named accordingly to the syntax of
         a window function
-        @param field: This can be a string of a field name, a dict of {'alias': field}, or
+
+        :type field: str or dict or Field
+        :param field: This can be a string of a field name, a dict of {'alias': field}, or
             a ``Field`` instance
-        @type field: str or dict or Field
-        @param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
+
+        :type table: str or dict or Table
+        :param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
             a ``Table`` instance. A table only needs to be supplied in more complex queries where
             the field name is ambiguous.
-        @type table: str or dict or Table
-        @return: self
-        @rtype: self
+
+        :rtype: :class:`querybuilder.query.QueryWindow`
+        :return: self
         """
         return self.group_by(field, table)
 
     def get_sql(self, debug=False, use_cache=True):
         """
         Generates the sql for this query window and returns the sql as a string.
-        @param debug: If True, the sql will be returned in a format that is easier to read and debug.
+
+        :type debug: bool
+        :param debug: If True, the sql will be returned in a format that is easier to read and debug.
             Defaults to False
-        @type debug: bool
-        @param use_cache: If True, the query will returned the cached sql if it exists rather
+
+        :type use_cache: bool
+        :param use_cache: If True, the query will returned the cached sql if it exists rather
             then generating the sql again. If False, the sql will be generated again. Defaults to True.
-        @type use_cache: bool
-        @return: The generated sql for this query window
-        @rtype: str
+
+        :rtype: str
+        :return: The generated sql for this query window
         """
         # TODO: implement caching and debug
         sql = ''
@@ -1592,8 +1722,9 @@ class QueryWindow(Query):
         """
         Equivalent to ``self.build_groups()`` except for the GROUP BY
         clause being named PARTITION BY
-        @return: The sql to be used in the PARTITION BY clause
-        @rtype: str
+        
+        :return: The sql to be used in the PARTITION BY clause
+        :rtype: str
         """
         select_sql = self.build_groups()
         return select_sql.replace('GROUP BY', 'PARTITION BY', 1)
