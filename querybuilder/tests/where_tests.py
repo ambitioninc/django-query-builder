@@ -40,7 +40,7 @@ class WhereTest(QueryTestCase):
         query_str = query.get_sql()
         expected_queries = [
             'SELECT test_table.* FROM test_table WHERE (three = %(A0)s AND one = %(A1)s)',
-            'SELECT test_table.* FROM test_table WHERE (one = %(A1)s AND three = %(A0)s)'
+            'SELECT test_table.* FROM test_table WHERE (one = %(A0)s AND three = %(A1)s)'
         ]
         self.assertIn(query_str, expected_queries)
 
