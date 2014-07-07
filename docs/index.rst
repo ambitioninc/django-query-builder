@@ -18,22 +18,3 @@ for the developer to build the query dynamically. Users lacking experience
 writing "raw" sql should avoid using querybuilder and stick with django's
 querysets. The querybuilder's query construction closely mirrors writing sql,
 where django querysets simplify the sql generation process for simple queries.
-
-Requirements
-------------
-* Python 2.7+
-* Django 1.4+
-
-Installation
-------------
-To install the latest release, type::
-
-    pip install django-query-builder
-
-To install the latest code directly from source, type::
-
-    pip install git+git://github.com/ambitioninc/django-query-builder.git
-
-Contributing
-------------
-Please see :doc:`Contributing <contributing>`

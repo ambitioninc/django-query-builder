@@ -5,6 +5,7 @@ Table of Contents
    :maxdepth: 2
 
    index
+   installation
    usage_examples
 
    ref/query
@@ -12,4 +13,4 @@ Table of Contents
    ref/tables
 
    contributing
-   release_notes/index
+   release_notes
