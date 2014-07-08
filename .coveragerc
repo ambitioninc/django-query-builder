@@ -1,0 +1,16 @@
+[run]
+branch = True
+omit =
+    querybuilder/migrations/*
+    querybuilder/tests/*
+    querybuilder/version.py
+source = querybuilder
+[report]
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise NotImplementedError
+fail_under = 87
+show_missing = True
