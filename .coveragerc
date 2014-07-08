@@ -9,7 +9,8 @@ source = querybuilder
 exclude_lines =
     # Have to re-enable the standard pragma
     pragma: no cover
+
     # Don't complain if tests don't hit defensive assertion code:
     raise NotImplementedError
-fail_under = 100
-show_missing = 1
+fail_under = 88
+show_missing = True
