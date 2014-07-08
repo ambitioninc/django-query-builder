@@ -14,4 +14,4 @@ before_script:
   - psql -c 'CREATE DATABASE querybuilder;' -U postgres
 script:
   - coverage run setup.py test
-  - coverage report --fail-under=88
+  - coverage report --fail-under=87
