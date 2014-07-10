@@ -38,8 +38,11 @@ class WhereTest(QueryTestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT test_table.* FROM test_table WHERE (three = %(A0)s AND one = %(A1)s)'
-        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+        expected_queries = [
+            'SELECT test_table.* FROM test_table WHERE (three = %(A0)s AND one = %(A1)s)',
+            'SELECT test_table.* FROM test_table WHERE (one = %(A0)s AND three = %(A1)s)'
+        ]
+        self.assertIn(query_str, expected_queries)
 
     def test_where_not_eq(self):
         query = Query().from_table(

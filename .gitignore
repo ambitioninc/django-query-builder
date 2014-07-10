@@ -5,31 +5,30 @@
 *.swp
 *.swo
 
-# Pycharm
-.idea
-
 # Coverage files
 .coverage
+htmlcov/
 
 # Setuptools distribution folder.
 /dist/
+/build/
 
 # Python egg metadata, regenerated from source files by setuptools.
 /*.egg-info
 /*.egg
 
-# Virtual environment
+# Virtualenv
 env/
+venv/
 
-# Js Stuff
-node_modules/
-npm-debug.log
-.grunt/
-.tmp/
-_SpecRunner.html
-html-report/
+# OSX
+.DS_Store
 
-.yo-rc.json
+# Pycharm
+.idea/
 
-.coverage
-htmlcov
+# Documentation artifacts
+docs/_build/
+
+# IPython Notebook
+.ipynb_checkpoints/
