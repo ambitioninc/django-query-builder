@@ -123,7 +123,13 @@ class WindowFunctionTest(QueryTestCase):
             'row_number'
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.*, ROW_NUMBER() OVER (ORDER BY margin DESC) AS row_number FROM tests_order ORDER BY row_number ASC'
+        expected_query = (
+            'SELECT tests_order.*, '
+            'ROW_NUMBER() OVER (ORDER BY margin DESC) AS row_number '
+            'FROM tests_order '
+            'ORDER BY row_number '
+            'ASC'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_rank(self):
@@ -143,7 +149,13 @@ class WindowFunctionTest(QueryTestCase):
             '-rank'
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.id, RANK() OVER (PARTITION BY account_id ORDER BY id ASC) AS rank FROM tests_order ORDER BY rank DESC'
+        expected_query = (
+            'SELECT tests_order.id, '
+            'RANK() OVER (PARTITION BY account_id ORDER BY id ASC) AS rank '
+            'FROM tests_order '
+            'ORDER BY rank '
+            'DESC'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_dense_rank(self):
@@ -161,7 +173,13 @@ class WindowFunctionTest(QueryTestCase):
             'dense_rank'
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.*, DENSE_RANK() OVER (ORDER BY margin DESC) AS dense_rank FROM tests_order ORDER BY dense_rank ASC'
+        expected_query = (
+            'SELECT tests_order.*, '
+            'DENSE_RANK() OVER (ORDER BY margin DESC) AS dense_rank '
+            'FROM tests_order '
+            'ORDER BY dense_rank '
+            'ASC'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_rank_percent(self):
@@ -179,7 +197,13 @@ class WindowFunctionTest(QueryTestCase):
             'percent_rank'
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.*, PERCENT_RANK() OVER (ORDER BY margin DESC) AS percent_rank FROM tests_order ORDER BY percent_rank ASC'
+        expected_query = (
+            'SELECT tests_order.*, '
+            'PERCENT_RANK() OVER (ORDER BY margin DESC) AS percent_rank '
+            'FROM tests_order '
+            'ORDER BY percent_rank '
+            'ASC'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_cume_dist(self):
@@ -197,7 +221,13 @@ class WindowFunctionTest(QueryTestCase):
             'cume_dist'
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.*, CUME_DIST() OVER (ORDER BY margin DESC) AS cume_dist FROM tests_order ORDER BY cume_dist ASC'
+        expected_query = (
+            'SELECT tests_order.*, '
+            'CUME_DIST() OVER (ORDER BY margin DESC) AS cume_dist '
+            'FROM tests_order '
+            'ORDER BY cume_dist '
+            'ASC'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_ntile(self):
@@ -216,7 +246,13 @@ class WindowFunctionTest(QueryTestCase):
             'ntile'
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.*, NTILE(2) OVER (ORDER BY margin DESC) AS ntile FROM tests_order ORDER BY ntile ASC'
+        expected_query = (
+            'SELECT tests_order.*, '
+            'NTILE(2) OVER (ORDER BY margin DESC) AS ntile '
+            'FROM tests_order '
+            'ORDER BY ntile '
+            'ASC'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_lag(self):
@@ -233,7 +269,11 @@ class WindowFunctionTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.*, LAG(tests_order.margin, 1) OVER (ORDER BY margin DESC) AS margin_lag FROM tests_order'
+        expected_query = (
+            'SELECT tests_order.*, '
+            'LAG(tests_order.margin, 1) OVER (ORDER BY margin DESC) AS margin_lag '
+            'FROM tests_order'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_lag_default(self):
@@ -251,7 +291,11 @@ class WindowFunctionTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.*, LAG(tests_order.margin, 1, \'0\') OVER (ORDER BY margin DESC) AS margin_lag FROM tests_order'
+        expected_query = (
+            'SELECT tests_order.*, '
+            'LAG(tests_order.margin, 1, \'0\') OVER (ORDER BY margin DESC) AS margin_lag '
+            'FROM tests_order'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_lead(self):
@@ -268,7 +312,11 @@ class WindowFunctionTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.*, LEAD(tests_order.margin, 1) OVER (ORDER BY margin DESC) AS margin_lead FROM tests_order'
+        expected_query = (
+            'SELECT tests_order.*, '
+            'LEAD(tests_order.margin, 1) OVER (ORDER BY margin DESC) AS margin_lead '
+            'FROM tests_order'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_first_value(self):
@@ -285,7 +333,11 @@ class WindowFunctionTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.*, FIRST_VALUE(tests_order.margin) OVER (ORDER BY margin DESC) AS margin_first_value FROM tests_order'
+        expected_query = (
+            'SELECT tests_order.*, '
+            'FIRST_VALUE(tests_order.margin) OVER (ORDER BY margin DESC) AS margin_first_value '
+            'FROM tests_order'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_last_value(self):
@@ -302,7 +354,11 @@ class WindowFunctionTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.*, LAST_VALUE(tests_order.margin) OVER (ORDER BY margin ASC) AS margin_last_value FROM tests_order'
+        expected_query = (
+            'SELECT tests_order.*, '
+            'LAST_VALUE(tests_order.margin) OVER (ORDER BY margin ASC) AS margin_last_value '
+            'FROM tests_order'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_nth_value(self):
@@ -320,7 +376,11 @@ class WindowFunctionTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.*, NTH_VALUE(tests_order.margin, 2) OVER (ORDER BY margin DESC) AS margin_nth_value FROM tests_order'
+        expected_query = (
+            'SELECT tests_order.*, '
+            'NTH_VALUE(tests_order.margin, 2) OVER (ORDER BY margin DESC) AS margin_nth_value '
+            'FROM tests_order'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_num_stddev(self):
@@ -338,5 +398,16 @@ class WindowFunctionTest(QueryTestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_order.*, (CASE WHEN (STDDEV(tests_order.margin) OVER ()) <> 0 THEN ((tests_order.margin - (AVG(tests_order.margin) OVER ())) / (STDDEV(tests_order.margin) OVER ())) ELSE 0 END) AS margin_num_stddev FROM tests_order ORDER BY margin_num_stddev DESC'
+        expected_query = (
+            'SELECT tests_order.*, '
+            '(CASE WHEN (STDDEV(tests_order.margin) OVER ()) <> 0 '
+            'THEN ((tests_order.margin - ('
+            'AVG(tests_order.margin) OVER ())) / (STDDEV(tests_order.margin) OVER ())) '
+            'ELSE 0 '
+            'END) '
+            'AS margin_num_stddev '
+            'FROM tests_order '
+            'ORDER BY margin_num_stddev '
+            'DESC'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))

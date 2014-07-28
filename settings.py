@@ -30,6 +30,10 @@ def configure_settings():
         settings.configure(
             DATABASES={
                 'default': db_config,
+                'mock-second-database': {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'TEST_MIRROR': 'default',
+                },
             },
             INSTALLED_APPS=(
                 'django.contrib.auth',
