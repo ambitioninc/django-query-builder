@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from django.db import connection
+from django.db import connection as default_django_connection
 from django.db.models import Q, get_model
 from django.db.models.query import QuerySet
 from django.db.models.constants import LOOKUP_SEP
@@ -590,10 +590,27 @@ class Query(object):
         self.field_names_pk = None
         self.values = []
 
-    def __init__(self):
+    def __init__(self, connection=None):
         """
         Initializes this instance by calling ``self.init_defaults``
+
+        :type connection: :class:`DatabaseWrapper <django:django.db.backends.BaseDatabaseWrapper>`
+        :parameter connection: A Django database connection. This can be used to connect to
+            databases other than your default database.
+
+        .. code-block:: python
+
+            from django.db import connections
+            from querybuilder.query import Query
+
+            Query(connections.all()[0]).from_table('auth_user').count()
+            # 15L
+            Query(connections.all()[1]).from_table('auth_user').count()
+            # 223L
+
         """
+        self.connection = connection or default_django_connection
+
         self.init_defaults()
 
     def from_table(self, table=None, fields='*', schema=None, **kwargs):
@@ -1424,7 +1441,7 @@ class Query(object):
         :rtype: list of str
         :return: list of each line of output from the EXPLAIN statement
         """
-        cursor = connection.cursor()
+        cursor = self.connection.cursor()
         if sql is None:
             sql = self.get_sql()
             sql_args = self.get_args()
@@ -1479,7 +1496,7 @@ class Query(object):
             sql_args = self.get_args()
 
         # get the cursor to execute the query
-        cursor = connection.cursor()
+        cursor = self.connection.cursor()
 
         # execute the query
         cursor.execute(sql, sql_args)
@@ -1545,7 +1562,7 @@ class Query(object):
         sql, sql_args = self.get_insert_sql(rows)
 
         # get the cursor to execute the query
-        cursor = connection.cursor()
+        cursor = self.connection.cursor()
 
         # execute the query
         cursor.execute(sql, sql_args)
@@ -1561,7 +1578,7 @@ class Query(object):
         sql, sql_args = self.get_update_sql(rows)
 
         # get the cursor to execute the query
-        cursor = connection.cursor()
+        cursor = self.connection.cursor()
 
         # execute the query
         cursor.execute(sql, sql_args)

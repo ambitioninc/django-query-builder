@@ -2,7 +2,6 @@
 branch = True
 omit =
     querybuilder/migrations/*
-    querybuilder/tests/*
     querybuilder/version.py
 source = querybuilder
 [report]
@@ -12,5 +11,5 @@ exclude_lines =
 
     # Don't complain if tests don't hit defensive assertion code:
     raise NotImplementedError
-fail_under = 87
+fail_under = 92
 show_missing = True
