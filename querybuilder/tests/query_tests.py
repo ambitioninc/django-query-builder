@@ -1,6 +1,7 @@
 import datetime
 
 from django.db import connections
+from django.db.backends.util import CursorDebugWrapper, CursorWrapper
 from django.test import TestCase
 from django_dynamic_fixture import G
 import six
@@ -15,14 +16,6 @@ def get_comparison_str(item1, item2):
 
 
 class QueryConstructorTests(TestCase):
-
-    def setUp(self):
-        super(QueryConstructorTests, self).setUp()
-
-        # Copy the default connection
-        default_db_settings = connections.databases['default'].copy()
-        connections['alternate'] = default_db_settings
-
     def test_init_with_connection(self):
         """
         Test passing in a connection object works
@@ -39,6 +32,22 @@ class QueryConstructorTests(TestCase):
         self.assertIn(
             type(Query().from_table('auth_user').count()), six.integer_types
         )
+
+    def test_get_cursor_default(self):
+        """
+        Test Query().get_cursor()
+        """
+        query = Query()
+        self.assertIsInstance(query.get_cursor(), CursorDebugWrapper)
+
+    def test_get_cursor_alt(self):
+        """
+        Test Query().get_cursor()
+        """
+        import ipdb
+        ipdb.set_trace()
+        query = Query(connections.all()[1])
+        self.assertIn(type(query.get_cursor()), [CursorDebugWrapper, CursorWrapper])
 
 
 class QueryTestCase(TestCase):

@@ -613,6 +613,15 @@ class Query(object):
 
         self.init_defaults()
 
+    def get_cursor(self):
+        """
+        Get a cursor for the Query's connection
+
+        :rtype: :class:`CursorDebugWrapper <django:django.db.backends.util.CursorDebugWrapper>`
+        :returns: A database cursor
+        """
+        return self.connection.cursor()
+
     def from_table(self, table=None, fields='*', schema=None, **kwargs):
         """
         Adds a ``Table`` and any optional fields to the list of tables
@@ -1441,7 +1450,7 @@ class Query(object):
         :rtype: list of str
         :return: list of each line of output from the EXPLAIN statement
         """
-        cursor = self.connection.cursor()
+        cursor = self.get_cursor()
         if sql is None:
             sql = self.get_sql()
             sql_args = self.get_args()
@@ -1496,7 +1505,7 @@ class Query(object):
             sql_args = self.get_args()
 
         # get the cursor to execute the query
-        cursor = self.connection.cursor()
+        cursor = self.get_cursor()
 
         # execute the query
         cursor.execute(sql, sql_args)
@@ -1562,7 +1571,7 @@ class Query(object):
         sql, sql_args = self.get_insert_sql(rows)
 
         # get the cursor to execute the query
-        cursor = self.connection.cursor()
+        cursor = self.get_cursor()
 
         # execute the query
         cursor.execute(sql, sql_args)
@@ -1578,7 +1587,7 @@ class Query(object):
         sql, sql_args = self.get_update_sql(rows)
 
         # get the cursor to execute the query
-        cursor = self.connection.cursor()
+        cursor = self.get_cursor()
 
         # execute the query
         cursor.execute(sql, sql_args)
