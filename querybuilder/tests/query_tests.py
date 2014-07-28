@@ -33,21 +33,17 @@ class QueryConstructorTests(TestCase):
             type(Query().from_table('auth_user').count()), six.integer_types
         )
 
-    def test_get_cursor_default(self):
-        """
-        Test Query().get_cursor()
-        """
-        query = Query()
-        self.assertIsInstance(query.get_cursor(), CursorDebugWrapper)
+    def test_get_cursor_for_connection(self):
 
-    def test_get_cursor_alt(self):
-        """
-        Test Query().get_cursor()
-        """
-        import ipdb
-        ipdb.set_trace()
-        query = Query(connections.all()[1])
-        self.assertIn(type(query.get_cursor()), [CursorDebugWrapper, CursorWrapper])
+        query = Query(connections.all()[0])
+        self.assertEqual(query.get_cursor().db, connections.all()[0])
+
+        query2 = Query(connections.all()[1])
+        self.assertEqual(query2.get_cursor().db, connections.all()[1])
+
+        # uses default if no connection is specified
+        query3 = Query()
+        self.assertEqual(query3.get_cursor().db, connections.all()[0])
 
 
 class QueryTestCase(TestCase):
