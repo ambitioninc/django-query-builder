@@ -3,6 +3,7 @@ import datetime
 from django.db import connections
 from django.test import TestCase
 from django_dynamic_fixture import G
+import six
 
 from querybuilder.fields import CountField
 from querybuilder.query import Query
@@ -27,16 +28,16 @@ class QueryConstructorTests(TestCase):
         Test passing in a connection object works
         """
         for connection in connections.all():
-            self.assertIsInstance(
-                Query(connection).from_table('auth_user').count(), int
+            self.assertIn(
+                type(Query(connection).from_table('auth_user').count()), six.integer_types
             )
 
     def test_init_no_connection(self):
         """
         Test passing in no object works
         """
-        self.assertIsInstance(
-            Query().from_table('auth_user').count(), int
+        self.assertIn(
+            type(Query().from_table('auth_user').count()), six.integer_types
         )
 
 
