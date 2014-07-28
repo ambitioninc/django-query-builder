@@ -15,10 +15,10 @@ class FieldFactory(object):
         :param field: The field used in determining which type of Field object to return.
             This can be a string of the field name, a dict of {'alias': field},
             or a ``Field``
-        :type table: str or dict or :class:`querybuilder.fields.Field`
-        
+        :type table: str or dict or :class:`Field <querybuilder.fields.Field>`
+
         :return: The Field instance if a valid type was determined, otherwise None
-        :rtype: :class:`querybuilder.fields.Field` or None
+        :rtype: :class:`Field <querybuilder.fields.Field>` or None
         """
         field_type = type(field)
         if field_type is dict:
@@ -69,8 +69,8 @@ class Field(object):
 
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
 
@@ -200,8 +200,8 @@ class SimpleField(Field):
 
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
 
@@ -262,8 +262,8 @@ class AggregateField(MultiField):
 
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
 
@@ -274,7 +274,7 @@ class AggregateField(MultiField):
         :type cast: bool
 
         :param over: The QueryWindow to perform the aggregate function over
-        :type over: :class:`querybuilder.query.QueryWindow`
+        :type over: :class:`QueryWindow <querybuilder.query.QueryWindow>`
         """
         super(AggregateField, self).__init__(field, table, alias, cast, distinct)
         self.name = self.function_name
@@ -458,8 +458,8 @@ class NTileField(AggregateField):
 
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
 
@@ -470,7 +470,7 @@ class NTileField(AggregateField):
         :type cast: bool
 
         :param over: The QueryWindow to perform the aggregate function over
-        :type over: :class:`querybuilder.query.QueryWindow`
+        :type over: :class:`QueryWindow <querybuilder.query.QueryWindow>`
 
         :param num_buckets: Number of buckets to use for ntile
         :type num_buckets: int
@@ -502,8 +502,8 @@ class LeadLagField(AggregateField):
 
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
 
@@ -514,8 +514,8 @@ class LeadLagField(AggregateField):
         :type cast: bool
 
         :param over: The QueryWindow to perform the aggregate function over
-        :type over: :class:`querybuilder.query.QueryWindow`
-        
+        :type over: :class:`QueryWindow <querybuilder.query.QueryWindow>`
+
         :param offset: The offset number of rows which to calculate the lag/lead
         :type offset: int
 
@@ -608,8 +608,8 @@ class NthValueField(AggregateField):
 
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
 
@@ -620,8 +620,8 @@ class NthValueField(AggregateField):
         :type cast: bool
 
         :param over: The QueryWindow to perform the aggregate function over
-        :type over: :class:`querybuilder.query.QueryWindow`
-        
+        :type over: :class:`QueryWindow <querybuilder.query.QueryWindow>`
+
         :param n: the n value to use for the Nth value function
         :type n: int
         """
@@ -657,8 +657,8 @@ class DatePartField(MultiField):
 
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
 
@@ -763,8 +763,8 @@ class DatePartField(MultiField):
         Adds this field to the field's table and optionally group by it
 
         :param field: The field to add to the table
-        :type field: str or :class:`querybuilder.fields.Field`
-        
+        :type field: str or :class:`Field <querybuilder.fields.Field>`
+
         :param alias: The alias for the field
         :type alias: str
 

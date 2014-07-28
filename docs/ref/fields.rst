@@ -1,7 +1,7 @@
 .. _ref-fields:
 
-fields
-======
+Field API documentation
+=======================
 
 .. automodule:: querybuilder.fields
 

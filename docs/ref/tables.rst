@@ -1,7 +1,7 @@
 .. _ref-tables:
 
-tables
-======
+Tables API documentation
+========================
 
 .. automodule:: querybuilder.tables
 

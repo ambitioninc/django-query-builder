@@ -18,11 +18,12 @@ class TableFactory(object):
         :param table: The table used in determining which type of Table object to return.
             This can be a string of the table name, a dict of {'alias': table},
             a ``Table`` instance, a django model class, or a Query instance
-        :type table: str or dict or :class:`querybuilder.tables.Table` or ModelBase
-            or :class:`querybuilder.query.Query`
+        :type table: str or dict or :class:`Table <querybuilder.tables.Table>` or
+            :class:`ModelBase <django:django.db.models.base.ModelBase>`
+            or :class:`Query <querybuilder.query.Query>`
 
         :returns: The Table instance if a valid type was determined, otherwise None
-        :rtype: :class:`querybuilder.tables.Table` or None
+        :rtype: :class:`Table <querybuilder.tables.Table>` or None
         """
         # Determine the type of the table
         table_type = type(table)
@@ -68,12 +69,13 @@ class Table(object):
 
         :param table: The table name or model. This can be a string of the table
             name, a dict of {'alias': table}, a Query instance, or a django Model instance
-        :type table: str or dict or :class:`querybuilder.query.Query` or ModelBase
+        :type table: str or dict or :class:`Query <querybuilder.query.Query>` or
+            :class:`ModelBase <django:django.db.models.base.ModelBase>`
 
         :param fields: The fields to select from ``table``. Defaults to '*'. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
-        :type fields: str or tuple or list or :class:`querybuilder.fields.Field`
+        :type fields: str or tuple or list or :class:`Field <querybuilder.fields.Field>`
 
         :param schema: This is not implemented, but it will be a string of the db schema name
         :type schema: str
@@ -91,7 +93,7 @@ class Table(object):
         :type field_prefix: str
 
         :param owner: A reference to the query managing this Table object
-        :type owner: :class:`querybuilder.query.Query`
+        :type owner: :class:`Query <querybuilder.query.Query>`
 
         :param alias: An alias to be used for this table
         :type alias: str
@@ -215,7 +217,7 @@ class Table(object):
 
         :param field: This can be a string of a field name, a dict of {'alias': field}, or
             a ``Field`` instance
-        :type field: str or dict or Field
+        :type field: str or dict or :class:`Field <querybuilder.fields.Field>`
         """
         new_field = FieldFactory(
             field,
@@ -244,7 +246,7 @@ class Table(object):
         :param fields: The fields to select from ``table``. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
-        :type fields: str or tuple or list of str or list of Field or Field
+        :type fields: str or tuple or list of str or list of Field or :class:`Field <querybuilder.fields.Field>`
         """
         self.fields = []
         self.add_fields(fields)
@@ -256,7 +258,7 @@ class Table(object):
         :param fields: The fields to select from ``table``. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
-        :type fields: str or tuple or list of str or list of Field or Field
+        :type fields: str or tuple or list of str or list of Field or :class:`Field <querybuilder.fields.Field>`
         """
         if isinstance(fields, string_types):
             fields = [fields]
@@ -315,7 +317,7 @@ class Table(object):
         :type field: str or dict or Field
 
         :returns: The field if it is found, otherwise None
-        :rtype: Field or None
+        :rtype: :class:`Field <querybuilder.fields.Field>` or None
         """
         if alias:
             field = alias

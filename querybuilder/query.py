@@ -24,12 +24,12 @@ class Join(object):
 
         :param right_table: The table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance
-        :type right_table: str or dict or :class:`querybuilder.tables.Table`
+        :type right_table: str or dict or :class:`Table <querybuilder.tables.Table>`
 
         :param fields: The fields to select from ``table``. Defaults to None. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
-        :type fields: str or tuple or list or :class:`querybuilder.fields.Field`
+        :type fields: str or tuple or list or :class:`Field <querybuilder.fields.Field>`
 
         :param condition: The join condition specifying the fields being joined. If the two tables being
             joined are instances of ``ModelTable`` then the condition should be created automatically.
@@ -44,10 +44,10 @@ class Join(object):
         :param left_table: The left table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance. Defaults to the first table
             in the query.
-        :type left_table: str or dict or :class:`querybuilder.tables.Table` or None
+        :type left_table: str or dict or :class:`Table <querybuilder.tables.Table>` or None
 
         :param owner: A reference to the query managing this Join object
-        :type owner: :class:`querybuilder.query.Query`
+        :type owner: :class:`Query <querybuilder.query.Query>`
 
         :param extract_fields: If True and joining with a ``ModelTable``, then '*'
             fields will be converted to individual fields for each column in the table. Defaults
@@ -98,7 +98,7 @@ class Join(object):
         Sets the left table for this join clause. If no table is specified, the first table
         in the query will be used
 
-        :type left_table: str or dict or :class:`querybuilder.tables.Table` or None
+        :type left_table: str or dict or :class:`Table <querybuilder.tables.Table>` or None
         :param left_table: The left table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance. Defaults to the first table
             in the query.
@@ -115,8 +115,8 @@ class Join(object):
         """
         Returns the left table if one was specified, otherwise the first
         table in the query is returned
-        
-        :rtype: :class:`querybuilder.tables.Table`
+
+        :rtype: :class:`Table <querybuilder.tables.Table>`
         :return: the left table if one was specified, otherwise the first table in the query
         """
         if self.left_table:
@@ -422,12 +422,12 @@ class Group(object):
         """
         :param field: This can be a string of a field name, a dict of {'alias': field}, or
             a ``Field`` instance
-        :type field: str or dict or :class:`querybuilder.fields.Field`
+        :type field: str or dict or :class:`Field <querybuilder.fields.Field>`
 
         :param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
             a ``Table`` instance. A table only needs to be supplied in more complex queries where
             the field name is ambiguous.
-        :type table: str or dict or :class:`querybuilder.tables.Table`
+        :type table: str or dict or :class:`Table <querybuilder.tables.Table>`
         """
         self.field = FieldFactory(field)
         self.table = TableFactory(table)
@@ -453,11 +453,11 @@ class Sorter(object):
         """
         Initializes the instance variables
 
-        :type field: str or dict or :class:`querybuilder.fields.Field`
+        :type field: str or dict or :class:`Field <querybuilder.fields.Field>`
         :param field: This can be a string of a field name, a dict of {'alias': field}, or
             a ``Field`` instance
 
-        :type table: str or dict or :class:`querybuilder.tables.Table`
+        :type table: str or dict or :class:`Table <querybuilder.tables.Table>`
         :param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
             a ``Table`` instance. A table only needs to be supplied in more complex queries where
             the field name is ambiguous.
@@ -601,8 +601,9 @@ class Query(object):
         Adds a ``Table`` and any optional fields to the list of tables
         this query is selecting from.
 
-        :type table: str or dict or :class:`querybuilder.tables.Table`
-            or :class:`querybuilder.query.Query` or :class:`django.db.models.base.ModelBase`
+        :type table: str or dict or :class:`Table <querybuilder.tables.Table>`
+            or :class:`Query <querybuilder.query.Query>` or
+            :class:`ModelBase <django:django.db.models.base.ModelBase>`
         :param table: The table to select fields from. This can be a string of the table
             name, a dict of {'alias': table}, a ``Table`` instance, a Query instance, or a
             django Model instance
@@ -618,7 +619,7 @@ class Query(object):
         :param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
 
         :return: self
-        :rtype: :class:`querybuilder.query.Query`
+        :rtype: :class:`Query <querybuilder.query.Query>`
         """
         # self.mark_dirty()
 
@@ -636,8 +637,8 @@ class Query(object):
         """
         Bulk inserts a list of values into a table
 
-        :type table: str or dict or :class:`querybuilder.tables.Table` 
-            or :class:`querybuilder.query.Query` or :class:`django.db.models.base.ModelBase`
+        :type table: str or dict or :class:`Table <querybuilder.tables.Table>`
+            or :class:`Query <querybuilder.query.Query>` or :class:`ModelBase <django:django.db.models.base.ModelBase>`
         :param table: The table to select fields from. This can be a string of the table
             name, a dict of {'alias': table}, a ``Table`` instance, a Query instance, or a
             django Model instance
@@ -651,7 +652,7 @@ class Query(object):
         :param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
 
         :return: self
-        :rtype: :class:`querybuilder.query.Query`
+        :rtype: :class:`Query <querybuilder.query.Query>`
         """
         table = TableFactory(
             table=table,
@@ -668,8 +669,8 @@ class Query(object):
         """
         Bulk updates rows in a table
 
-        :type table: str or dict or :class:`querybuilder.tables.Table`
-            or :class:`querybuilder.query.Query` or :class:`django.db.models.base.ModelBase`
+        :type table: str or dict or :class:`Table <querybuilder.tables.Table>`
+            or :class:`Query <querybuilder.query.Query>` or :class:`ModelBase <django:django.db.models.base.ModelBase>`
         :param table: The table to select fields from. This can be a string of the table
             name, a dict of {'alias': table}, a ``Table`` instance, a Query instance, or a
             django Model instance
@@ -684,8 +685,8 @@ class Query(object):
         :param pk: The name of the primary key in the table and field_names
 
         :param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
-        
-        :rtype: :class:`querybuilder.query.Query`
+
+        :rtype: :class:`Query <querybuilder.query.Query>`
         :return: self
         """
         table = TableFactory(
@@ -704,7 +705,7 @@ class Query(object):
         """
 
         :return: self
-        :rtype: :class:`querybuilder.query.Query`
+        :rtype: :class:`Query <querybuilder.query.Query>`
         """
         self.with_tables.append(TableFactory(query, alias=alias))
         return self
@@ -716,11 +717,11 @@ class Query(object):
         Joins a table to another table based on a condition and adds fields from the joined table
         to the returned fields.
 
-        :type right_table: str or dict or :class:`querybuilder.tables.Table`
+        :type right_table: str or dict or :class:`Table <querybuilder.tables.Table>`
         :param right_table: The table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance
 
-        :type fields: str or tuple or list or :class:`querybuilder.fields.Field`
+        :type fields: str or tuple or list or :class:`Field <querybuilder.fields.Field>`
         :param fields: The fields to select from ``right_table``. Defaults to `None`. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
@@ -756,7 +757,7 @@ class Query(object):
             is set to True. If no field_prefix is set, one will be automatically created based on
             the join field name.
 
-        :rtype: :class:`querybuilder.query.Query`
+        :rtype: :class:`Query <querybuilder.query.Query>`
         :return: self
         """
         # self.mark_dirty()
@@ -789,8 +790,9 @@ class Query(object):
         # TODO: add test for this
         if allow_duplicates is False:
             for join_item in self.joins:
-                if join_item.right_table.get_identifier() == new_join_item.right_table.get_identifier() and join_item.left_table.get_identifier() == new_join_item.left_table.get_identifier():
-                    return self
+                if join_item.right_table.get_identifier() == new_join_item.right_table.get_identifier():
+                    if join_item.left_table.get_identifier() == new_join_item.left_table.get_identifier():
+                        return self
 
         self.joins.append(new_join_item)
 
@@ -802,11 +804,11 @@ class Query(object):
         """
         Wrapper for ``self.join`` with a default join of 'LEFT JOIN'
 
-        :type right_table: str or dict or :class:`querybuilder.tables.Table`
+        :type right_table: str or dict or :class:`Table <querybuilder.tables.Table>`
         :param right_table: The table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance
 
-        :type fields: str or tuple or list or :class:`querybuilder.fields.Field`
+        :type fields: str or tuple or list or :class:`Field <querybuilder.fields.Field>`
         :param fields: The fields to select from ``right_table``. Defaults to `None`. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
@@ -821,7 +823,7 @@ class Query(object):
         :type schema: str
         :param schema: This is not implemented, but it will be a string of the db schema name
 
-        :type left_table: str or dict or Table
+        :type left_table: str or dict or :class:`Table <querybuilder.tables.Table>`
         :param left_table: The left table being joined with. This can be a string of the table
             name, a dict of {'alias': table}, or a ``Table`` instance. Defaults to the first table
             in the query.
@@ -843,7 +845,7 @@ class Query(object):
             the join field name.
 
         :return: self
-        :rtype: :class:`querybuilder.query.Query`
+        :rtype: :class:`Query <querybuilder.query.Query>`
         """
         return self.join(
             right_table=right_table,
@@ -862,7 +864,7 @@ class Query(object):
         """
         Adds a where condition as a Q object to the query's ``Where`` instance.
 
-        :type q: :class:`django.db.models.Q`
+        :type q: :class:`Q <django:django.db.models.Q>`
         :param q: A django ``Q`` instance. This will be added to the query's ``Where`` object. If no
             Q object is passed, the kwargs will be examined for params to be added to Q objects
 
@@ -870,7 +872,7 @@ class Query(object):
         :param where_type: The connection type of the where condition ('AND', 'OR')
 
         :return: self
-        :rtype: :class:`querybuilder.query.Query`
+        :rtype: :class:`Query <querybuilder.query.Query>`
         """
         # self.mark_dirty()
         if q is not None:
@@ -888,17 +890,17 @@ class Query(object):
         Adds a group by clause to the query by adding a ``Group`` instance to the query's
         groups list
 
-        :type field: str or dict or :class:`querybuidler.fields.Field`
+        :type field: str or dict or :class:`Field <querybuilder.fields.Field>`
         :param field: This can be a string of a field name, a dict of {'alias': field}, or
             a ``Field`` instance
 
-        :type table: str or dict or :class:`querybuilder.table.Table`
+        :type table: str or dict or :class:`Table <querybuilder.table.Table>`
         :param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
             a ``Table`` instance. A table only needs to be supplied in more complex queries where
             the field name is ambiguous.
 
         :return: self
-        :rtype: :class:`querybuilder.query.Query`
+        :rtype: :class:`Query <querybuilder.query.Query>`
         """
         new_group_item = Group(
             field=field,
@@ -919,11 +921,11 @@ class Query(object):
         Adds an order by clause to the query by adding a ``Sorter`` instance to the query's
         sorters list
 
-        :type field: str or dict or :class:`querybuidler.fields.Field`
+        :type field: str or dict or :class:`Field <querybuilder.fields.Field>`
         :param field: This can be a string of a field name, a dict of {'alias': field}, or
             a ``Field`` instance
 
-        :type table: str or dict or :class:`querybuilder.table.Table`
+        :type table: str or dict or :class:`Table <querybuilder.table.Table>`
         :param table: Optional. This can be a string of a table name, a dict of {'alias': table}, or
             a ``Table`` instance. A table only needs to be supplied in more complex queries where
             the field name is ambiguous.
@@ -932,7 +934,7 @@ class Query(object):
         :param desc: Set to True to sort by this field in DESC order or False to sort by this field
             in ASC order. Defaults to False.
 
-        :rtype: :class:`querybuilder.query.Query`
+        :rtype: :class:`Query <querybuilder.query.Query>`
         :return: self
         """
         self.sorters.append(Sorter(
@@ -952,7 +954,7 @@ class Query(object):
         :type offset: int
         :param offset: The offset from the start of the record set where rows should start being returned
 
-        :rtype: :class:`querybuilder.query.Query`
+        :rtype: :class:`Query <querybuilder.query.Query>`
         :return: self
         """
         self._limit = Limit(
@@ -968,7 +970,7 @@ class Query(object):
         :type use_distinct: bool
         :param use_distinct: Whether or not to include the distinct clause
 
-        :rtype: :class:`querybuilder.query.Query`
+        :rtype: :class:`Query <querybuilder.query.Query>`
         :return: self
         """
         self._distinct = use_distinct
@@ -1378,8 +1380,8 @@ class Query(object):
     def wrap(self, alias=None):
         """
         Wraps the query by selecting all fields from itself
-        
-        :rtype: :class:`querybuilder.query.Query`
+
+        :rtype: :class:`Query <querybuilder.query.Query>`
         :return: The wrapped query
         """
         field_names = self.get_field_names()
