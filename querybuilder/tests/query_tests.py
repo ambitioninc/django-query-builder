@@ -34,15 +34,15 @@ class QueryConstructorTests(TestCase):
 
     def test_get_cursor_for_connection(self):
 
-        query = Query(connections.all()[0])
-        self.assertEqual(query.get_cursor().db, connections.all()[0])
+        query = Query(connections['default'])
+        self.assertEqual(query.get_cursor().db, connections['default'])
 
-        query2 = Query(connections.all()[1])
-        self.assertEqual(query2.get_cursor().db, connections.all()[1])
+        query2 = Query(connections['mock-second-database'])
+        self.assertEqual(query2.get_cursor().db, connections['mock-second-database'])
 
         # uses default if no connection is specified
         query3 = Query()
-        self.assertEqual(query3.get_cursor().db, connections.all()[0])
+        self.assertEqual(query3.get_cursor().db, connections['default'])
 
 
 class QueryTestCase(TestCase):
