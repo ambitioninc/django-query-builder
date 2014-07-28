@@ -70,7 +70,14 @@ class FieldTest(QueryTestCase):
                 LeadDifferenceField('margin', over=QueryWindow().order_by('-margin')),
             ]
         )
-        expected_query = 'SELECT tests_order.margin, ((tests_order.margin) - (LAG(tests_order.margin, 1) OVER (ORDER BY margin DESC))) AS margin_lag, ((tests_order.margin) - (LEAD(tests_order.margin, 1) OVER (ORDER BY margin DESC))) AS margin_lead FROM tests_order'
+        expected_query = (
+            'SELECT tests_order.margin, '
+            '((tests_order.margin) - (LAG(tests_order.margin, 1) '
+            'OVER (ORDER BY margin DESC))) AS margin_lag, '
+            '((tests_order.margin) - (LEAD(tests_order.margin, 1) '
+            'OVER (ORDER BY margin DESC))) AS margin_lead '
+            'FROM tests_order'
+        )
         self.assertEqual(expected_query, query.get_sql())
         rows = query.select()
         self.assertEqual(4, len(rows))
@@ -91,7 +98,11 @@ class FieldTest(QueryTestCase):
                 SumField('margin')
             ]
         )
-        expected_query = 'SELECT CAST(0 AS INT) AS time__epoch, SUM(tests_order.margin) AS margin_sum FROM tests_order'
+        expected_query = (
+            'SELECT CAST(0 AS INT) AS time__epoch, '
+            'SUM(tests_order.margin) AS margin_sum '
+            'FROM tests_order'
+        )
         self.assertEqual(expected_query, query.get_sql())
         rows = query.select()
         self.assertEqual(1, len(rows))
@@ -109,7 +120,11 @@ class FieldTest(QueryTestCase):
     #             SumField('margin')
     #         ]
     #     )
-    #     expected_query = 'SELECT CAST(0 AS FLOAT) AS time__epoch, SUM(tests_order.margin) AS margin_sum FROM tests_order'
+    #     expected_query = (
+    #         'SELECT CAST(0 AS FLOAT) AS time__epoch, '
+    #         'SUM(tests_order.margin) AS margin_sum '
+    #         'FROM tests_order'
+    #     )
     #     self.assertEqual(expected_query, query.get_sql())
     #     rows = query.select()
     #     self.assertEqual(1, len(rows))
@@ -128,7 +143,15 @@ class FieldTest(QueryTestCase):
                 SumField('margin')
             ]
         )
-        expected_query = "SELECT CAST(EXTRACT(year FROM tests_order.time) AS INT) AS time__year, CAST(EXTRACT(week FROM tests_order.time) AS INT) AS time__week, CAST(EXTRACT(epoch FROM date_trunc('week', tests_order.time)) AS INT) AS time__epoch, SUM(tests_order.margin) AS margin_sum FROM tests_order GROUP BY time__year, time__week, time__epoch ORDER BY time__epoch ASC"
+        expected_query = (
+            "SELECT CAST(EXTRACT(year FROM tests_order.time) AS INT) AS time__year, "
+            "CAST(EXTRACT(week FROM tests_order.time) AS INT) AS time__week, "
+            "CAST(EXTRACT(epoch FROM date_trunc('week', tests_order.time)) AS INT) AS time__epoch, "
+            "SUM(tests_order.margin) AS margin_sum "
+            "FROM tests_order "
+            "GROUP BY time__year, time__week, time__epoch "
+            "ORDER BY time__epoch ASC"
+        )
         self.assertEqual(expected_query, query.get_sql())
         rows = query.select()
         self.assertEqual(1, len(rows))

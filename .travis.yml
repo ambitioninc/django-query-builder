@@ -13,5 +13,6 @@ install:
 before_script:
   - psql -c 'CREATE DATABASE querybuilder;' -U postgres
 script:
+  - flake8 .
   - coverage run setup.py test
   - coverage report --fail-under=87

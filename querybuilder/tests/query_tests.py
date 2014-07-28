@@ -1,7 +1,8 @@
 import datetime
 
-from django_dynamic_fixture import G
+from django.db import connections
 from django.test import TestCase
+from django_dynamic_fixture import G
 
 from querybuilder.fields import CountField
 from querybuilder.query import Query
@@ -10,6 +11,33 @@ from querybuilder.tests.models import User, Account, Order
 
 def get_comparison_str(item1, item2):
     return 'Items are not equal.\nGot:\n{0}\nExpected:\n{1}'.format(item1, item2)
+
+
+class QueryConstructorTests(TestCase):
+
+    def setUp(self):
+        super(QueryConstructorTests, self).setUp()
+
+        # Copy the default connection
+        default_db_settings = connections.databases['default'].copy()
+        connections['alternate'] = default_db_settings
+
+    def test_init_with_connection(self):
+        """
+        Test passing in a connection object works
+        """
+        for connection in connections.all():
+            self.assertIsInstance(
+                Query(connection).from_table('auth_user').count(), int
+            )
+
+    def test_init_no_connection(self):
+        """
+        Test passing in no object works
+        """
+        self.assertIsInstance(
+            Query().from_table('auth_user').count(), int
+        )
 
 
 class QueryTestCase(TestCase):
@@ -88,7 +116,14 @@ class QueryTest(QueryTestCase):
             Account
         ).wrap().wrap().wrap().wrap()
         query_str = query.get_sql()
-        expected_query = 'WITH T0T0T0T0 AS (SELECT tests_account.* FROM tests_account), T0T0T0 AS (SELECT T0T0T0T0.* FROM T0T0T0T0), T0T0 AS (SELECT T0T0T0.* FROM T0T0T0), T0 AS (SELECT T0T0.* FROM T0T0) SELECT T0.* FROM T0'
+        expected_query = (
+            'WITH T0T0T0T0 AS (SELECT tests_account.* FROM tests_account), '
+            'T0T0T0 AS (SELECT T0T0T0T0.* FROM T0T0T0T0), '
+            'T0T0 AS (SELECT T0T0T0.* FROM T0T0T0), '
+            'T0 AS (SELECT T0T0.* FROM T0T0) '
+            'SELECT T0.* '
+            'FROM T0'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_sql(self):

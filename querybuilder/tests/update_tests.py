@@ -28,7 +28,19 @@ class TestUpdate(QueryTestCase):
 
         sql, sql_params = query.get_update_sql(rows)
 
-        self.assertEqual(sql, 'UPDATE tests_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (%s, %s, %s, %s)) AS new_values (id, user_id, first_name, last_name) WHERE tests_account.id = new_values.id')
+        self.assertEqual(
+            sql,
+            (
+                'UPDATE tests_account '
+                'SET user_id = new_values.user_id, '
+                'first_name = new_values.first_name, '
+                'last_name = new_values.last_name '
+                'FROM (VALUES (%s, %s, %s, %s)) '
+                'AS new_values (id, user_id, first_name, last_name) '
+                'WHERE tests_account.id = new_values.id'
+            )
+        )
+
         self.assertEqual(sql_params[0], 1)
         self.assertEqual(sql_params[1], 1)
         self.assertEqual(sql_params[2], 'Test\'s')
@@ -36,7 +48,18 @@ class TestUpdate(QueryTestCase):
 
         query.update(rows)
         sql = self.logger.get_log()[0]['sql']
-        self.assertEqual(sql, "UPDATE tests_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (1, 1, 'Test''s', '\"User\"')) AS new_values (id, user_id, first_name, last_name) WHERE tests_account.id = new_values.id")
+        self.assertEqual(
+            sql,
+            (
+                "UPDATE tests_account "
+                "SET user_id = new_values.user_id, "
+                "first_name = new_values.first_name, "
+                "last_name = new_values.last_name "
+                "FROM (VALUES (1, 1, 'Test''s', '\"User\"')) "
+                "AS new_values (id, user_id, first_name, last_name) "
+                "WHERE tests_account.id = new_values.id"
+            )
+        )
 
     def test_update_multiple_rows(self):
         query = Query().from_table(
@@ -56,7 +79,18 @@ class TestUpdate(QueryTestCase):
 
         sql, sql_params = query.get_update_sql(rows)
 
-        self.assertEqual(sql, 'UPDATE tests_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (%s, %s, %s, %s), (%s, %s, %s, %s)) AS new_values (id, user_id, first_name, last_name) WHERE tests_account.id = new_values.id')
+        self.assertEqual(
+            sql,
+            (
+                'UPDATE tests_account '
+                'SET user_id = new_values.user_id, '
+                'first_name = new_values.first_name, '
+                'last_name = new_values.last_name '
+                'FROM (VALUES (%s, %s, %s, %s), (%s, %s, %s, %s)) '
+                'AS new_values (id, user_id, first_name, last_name) '
+                'WHERE tests_account.id = new_values.id'
+            )
+        )
         self.assertEqual(sql_params[0], 1)
         self.assertEqual(sql_params[1], 1)
         self.assertEqual(sql_params[2], 'Test')
@@ -68,7 +102,18 @@ class TestUpdate(QueryTestCase):
 
         query.update(rows)
         sql = self.logger.get_log()[0]['sql']
-        self.assertEqual(sql, "UPDATE tests_account SET user_id = new_values.user_id, first_name = new_values.first_name, last_name = new_values.last_name FROM (VALUES (1, 1, 'Test', 'User'), (2, 2, 'Test2', 'User2')) AS new_values (id, user_id, first_name, last_name) WHERE tests_account.id = new_values.id")
+        self.assertEqual(
+            sql,
+            (
+                "UPDATE tests_account "
+                "SET user_id = new_values.user_id, "
+                "first_name = new_values.first_name, "
+                "last_name = new_values.last_name "
+                "FROM (VALUES (1, 1, 'Test', 'User'), (2, 2, 'Test2', 'User2')) "
+                "AS new_values (id, user_id, first_name, last_name) "
+                "WHERE tests_account.id = new_values.id"
+            )
+        )
 
     def test_update_null_numbers(self):
         """

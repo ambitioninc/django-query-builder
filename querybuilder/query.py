@@ -87,7 +87,7 @@ class Join(object):
     def get_sql(self):
         """
         Generates the JOIN sql for the join tables and join condition
-        
+
         :rtype: str
         :return: the JOIN sql for the join tables and join condition
         """
@@ -160,7 +160,7 @@ class Join(object):
     def get_condition(self):
         """
         Determines the condition to be used in the condition part of the join sql.
-        
+
         :return: The condition for the join clause
         :rtype: str or None
         """
@@ -273,7 +273,7 @@ class Where(object):
     def get_condition_operator(self, operator):
         """
         Gets the comparison operator from the Where class's comparison_map
-        
+
         :return: the comparison operator from the Where class's comparison_map
         :rtype: str
         """
@@ -287,7 +287,7 @@ class Where(object):
         :type operator: str
         :param value: the value to be formatted based on the condition operator
         :type value: object
-        
+
         :return: the comparison operator from the Where class's comparison_map
         :rtype: str
         """
@@ -403,7 +403,7 @@ class Where(object):
         """
         Set the query param in self.args based on the prefix and arg index
         and auto increment the arg_index
-        
+
         :return: the string placeholder for the arg
         :rtype: str
         """
@@ -437,7 +437,7 @@ class Group(object):
     def get_name(self):
         """
         Gets the name to reference the grouped field
-        
+
         :return: the name to reference the grouped field
         :rtype: str
         """
@@ -486,7 +486,7 @@ class Sorter(object):
     def get_name(self, use_alias=True):
         """
         Gets the name to reference the sorted field
-        
+
         :return: the name to reference the sorted field
         :rtype: str
         """
@@ -521,7 +521,7 @@ class Limit(object):
     def get_sql(self):
         """
         Generates the sql used for the limit clause of a Query
-        
+
         :return: the sql for the limit clause of a Query
         :rtype: str
         """
@@ -616,7 +616,7 @@ class Query(object):
         :param schema: This is not implemented, but it will be a string of the db schema name
 
         :param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
-        
+
         :return: self
         :rtype: :class:`querybuilder.query.Query`
         """
@@ -649,7 +649,7 @@ class Query(object):
         :param values: A list each values list with the values in the same order as the field names
 
         :param kwargs: Any additional parameters to be passed into the constructor of ``TableFactory``
-        
+
         :return: self
         :rtype: :class:`querybuilder.query.Query`
         """
@@ -702,7 +702,7 @@ class Query(object):
     # TODO: add tests for custom with clauses
     def with_query(self, query=None, alias=None):
         """
-        
+
         :return: self
         :rtype: :class:`querybuilder.query.Query`
         """
@@ -1135,7 +1135,7 @@ class Query(object):
     def format_sql(self):
         """
         Builds the sql in a format that is easy for humans to read and debug
-        
+
         :return: The formatted sql for this query
         :rtype: str
         """
@@ -1178,7 +1178,7 @@ class Query(object):
         """
         Builds a list of the field names for all tables and joined tables by calling
         ``get_field_names()`` on each table
-        
+
         :return: list of field names
         :rtype: list of str
         """
@@ -1193,7 +1193,7 @@ class Query(object):
         """
         Builds a list of the field identifiers for all tables and joined tables by calling
         ``get_field_identifiers()`` on each table
-        
+
         :return: list of field identifiers
         :rtype: list of str
         """
@@ -1233,7 +1233,7 @@ class Query(object):
     def build_select_fields(self):
         """
         Generates the sql for the SELECT portion of the query
-        
+
         :return: the SELECT portion of the query
         :rtype: str
         """
@@ -1259,7 +1259,7 @@ class Query(object):
     def build_from_table(self):
         """
         Generates the sql for the FROM portion of the query
-        
+
         :return: the FROM portion of the query
         :rtype: str
         """
@@ -1279,7 +1279,7 @@ class Query(object):
     def build_joins(self):
         """
         Generates the sql for the JOIN portion of the query
-        
+
         :return: the JOIN portion of the query
         :rtype: str
         """
@@ -1298,7 +1298,7 @@ class Query(object):
     def build_where(self):
         """
         Generates the sql for the WHERE portion of the query
-        
+
         :return: the WHERE portion of the query
         :rtype: str
         """
@@ -1307,7 +1307,7 @@ class Query(object):
     def build_groups(self):
         """
         Generates the sql for the GROUP BY portion of the query
-        
+
         :return: the GROUP BY portion of the query
         :rtype: str
         """
@@ -1345,7 +1345,7 @@ class Query(object):
     def build_limit(self):
         """
         Generates the sql for the LIMIT and OFFSET portions of the query
-        
+
         :return: the LIMIT and/or OFFSET portions of the query
         :rtype: str
         """
@@ -1397,7 +1397,7 @@ class Query(object):
         Gets the args for the query which will be escaped when being executed by the
         db. All inner queries are inspected and their args are combined with this
         query's args.
-        
+
         :return: all args for this query as a dict
         :rtype: dict
         """
@@ -1479,7 +1479,7 @@ class Query(object):
         # get the cursor to execute the query
         cursor = connection.cursor()
 
-        #execute the query
+        # execute the query
         cursor.execute(sql, sql_args)
 
         # get the results as a list of dictionaries
@@ -1545,7 +1545,7 @@ class Query(object):
         # get the cursor to execute the query
         cursor = connection.cursor()
 
-        #execute the query
+        # execute the query
         cursor.execute(sql, sql_args)
 
     def update(self, rows):
@@ -1561,7 +1561,7 @@ class Query(object):
         # get the cursor to execute the query
         cursor = connection.cursor()
 
-        #execute the query
+        # execute the query
         cursor.execute(sql, sql_args)
 
     def sql_delete(self):
@@ -1578,7 +1578,7 @@ class Query(object):
 
         :param field: the field to pass to the COUNT aggregate. Defaults to '*'
         :type field: str
-        
+
         :return: The number of rows that the query will return
         :rtype: int
         """
@@ -1594,7 +1594,7 @@ class Query(object):
         by wrapping the query and performing a MAX aggregate of the specified field
         :param field: the field to pass to the MAX aggregate
         :type field: str
-        
+
         :return: The maximum value of the specified field
         :rtype: int
         """
@@ -1610,7 +1610,7 @@ class Query(object):
         by wrapping the query and performing a MIN aggregate of the specified field
         :param field: the field to pass to the MIN aggregate
         :type field: str
-        
+
         :return: The minimum value of the specified field
         :rtype: int
         """
@@ -1626,7 +1626,7 @@ class Query(object):
         by wrapping the query and performing a SUM aggregate of the specified field
         :param field: the field to pass to the SUM aggregate
         :type field: str
-        
+
         :return: The sum of the specified field
         :rtype: int
         """
@@ -1642,7 +1642,7 @@ class Query(object):
         by wrapping the query and performing an AVG aggregate of the specified field
         :param field: the field to pass to the AVG aggregate
         :type field: str
-        
+
         :return: The average of the specified field
         :rtype: int
         """
@@ -1655,7 +1655,7 @@ class Query(object):
     def _fetch_all_as_dict(self, cursor):
         """
         Iterates over the result set and converts each row to a dictionary
-        
+
         :return: A list of dictionaries where each row is a dictionary
         :rtype: list of dict
         """
@@ -1722,7 +1722,7 @@ class QueryWindow(Query):
         """
         Equivalent to ``self.build_groups()`` except for the GROUP BY
         clause being named PARTITION BY
-        
+
         :return: The sql to be used in the PARTITION BY clause
         :rtype: str
         """
