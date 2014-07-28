@@ -1,7 +1,7 @@
 .. _ref-query:
 
-query
-=====
+Query API documentation
+=======================
 
 .. automodule:: querybuilder.query
 

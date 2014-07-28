@@ -11,14 +11,14 @@ class FieldFactory(object):
     def __new__(cls, field, *args, **kwargs):
         """
         Determines which type of field class to instantiate based on the field argument
-        
+
         :param field: The field used in determining which type of Field object to return.
             This can be a string of the field name, a dict of {'alias': field},
             or a ``Field``
-        :type table: str or dict or :class:`querybuilder.fields.Field`
-        
+        :type table: str or dict or :class:`Field <querybuilder.fields.Field>`
+
         :return: The Field instance if a valid type was determined, otherwise None
-        :rtype: :class:`querybuilder.fields.Field` or None
+        :rtype: :class:`Field <querybuilder.fields.Field>` or None
         """
         field_type = type(field)
         if field_type is dict:
@@ -64,20 +64,19 @@ class Field(object):
 
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None):
         """
-        
         :param field: A string of a field name
         :type field: str
-        
+
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
-        
+
         :param cast: A data type name this field should be cast to. Ex: 'float'
         :type cast: str
-        
+
         :param distinct: Indicates if a DISTINCT flag should be added during sql generation
         :type cast: bool
         """
@@ -96,7 +95,7 @@ class Field(object):
         """
         Gets the SELECT sql part for a field
         Ex: field_name AS alias
-        
+
         :return: the sql for this field used in the SELECT portion of the query
         :rtype: str
         """
@@ -114,7 +113,7 @@ class Field(object):
         """
         Gets the name for the field and returns it. This identifies the field if there
         is not an alias set.
-        
+
         :return: The name for the field
         :rtype: str
         """
@@ -127,7 +126,7 @@ class Field(object):
         """
         Gets the alias for the field or the auto_alias if one is set.
         If there isn't any kind of alias, None is returned.
-        
+
         :return: The field alias, auto_alias, or None
         :rtype: str or None
         """
@@ -148,10 +147,9 @@ class Field(object):
 
     def get_identifier(self):
         """
-        Gets the name for the field of how it should
-        be referenced within a query. It will be
-        prefixed with the table name or table alias
-        
+        Gets the name for the field of how it should be referenced within a query.
+        It will be prefixed with the table name or table alias
+
         :return: the name to reference the field within a query
         :rtype: str
         """
@@ -164,7 +162,7 @@ class Field(object):
         """
         Gets the SELECT field portion for the field without the alias. If the field
         has a table, it will be included here like table.field
-        
+
         :return: Gets the SELECT field portion for the field without the alias
         :rtype: str
         """
@@ -196,20 +194,20 @@ class SimpleField(Field):
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None):
         """
         Sets the name of the field to the passed in field value
-        
+
         :param field: A string of a field name
         :type field: str
-        
+
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
-        
+
         :param cast: A data type name this field should be cast to. Ex: 'float'
         :type cast: str
-        
+
         :param distinct: Indicates if a DISTINCT flag should be added during sql generation
         :type cast: bool
         """
@@ -258,25 +256,25 @@ class AggregateField(MultiField):
         """
         Sets the field to a field instance because aggregate functions are treated as fields
         that perform an operation on a db column
-        
+
         :param field: A string of a field name
         :type field: str
-        
+
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
-        
+
         :param cast: A data type name this field should be cast to. Ex: 'float'
         :type cast: str
-        
+
         :param distinct: Indicates if a DISTINCT flag should be added during sql generation
         :type cast: bool
-        
+
         :param over: The QueryWindow to perform the aggregate function over
-        :type over: :class:`querybuilder.query.QueryWindow`
+        :type over: :class:`QueryWindow <querybuilder.query.QueryWindow>`
         """
         super(AggregateField, self).__init__(field, table, alias, cast, distinct)
         self.name = self.function_name
@@ -297,7 +295,7 @@ class AggregateField(MultiField):
         """
         Gets the SELECT field portion for the field without the alias. If the field
         has a table, it will be included here like AggregateFunction(table.field)
-        
+
         :return: Gets the SELECT field portion for the field without the alias
         :rtype: str
         """
@@ -310,7 +308,7 @@ class AggregateField(MultiField):
     def get_field_identifier(self):
         """
         Gets the identifier of the field used in the aggregate function
-        
+
         :return: the identifier of the field used in the aggregate function
         :rtype: str
         """
@@ -319,7 +317,7 @@ class AggregateField(MultiField):
     def get_over(self):
         """
         Gets the over clause to be used in the window function sql
-        
+
         :returns: the over clause to be used in the window function sql
         :rtype: str
         """
@@ -454,25 +452,25 @@ class NTileField(AggregateField):
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, over=None, num_buckets=1):
         """
         Sets the num_buckets for ntile
-        
+
         :param field: A string of a field name
         :type field: str
-        
+
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
-        
+
         :param cast: A data type name this field should be cast to. Ex: 'float'
         :type cast: str
-        
+
         :param distinct: Indicates if a DISTINCT flag should be added during sql generation
         :type cast: bool
-        
+
         :param over: The QueryWindow to perform the aggregate function over
-        :type over: :class:`querybuilder.query.QueryWindow`
+        :type over: :class:`QueryWindow <querybuilder.query.QueryWindow>`
 
         :param num_buckets: Number of buckets to use for ntile
         :type num_buckets: int
@@ -483,7 +481,7 @@ class NTileField(AggregateField):
     def get_field_identifier(self):
         """
         Returns the number of buckets
-        
+
         :return: the number of buckets used for the ntile function
         :rtype: int
         """
@@ -498,29 +496,29 @@ class LeadLagField(AggregateField):
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, over=None, offset=1, default=None):
         """
         Sets the offset and default value for the lag/lead calculation
-        
+
         :param field: A string of a field name
         :type field: str
-        
+
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
-        
+
         :param cast: A data type name this field should be cast to. Ex: 'float'
         :type cast: str
-        
+
         :param distinct: Indicates if a DISTINCT flag should be added during sql generation
         :type cast: bool
-        
+
         :param over: The QueryWindow to perform the aggregate function over
-        :type over: :class:`querybuilder.query.QueryWindow`
-        
+        :type over: :class:`QueryWindow <querybuilder.query.QueryWindow>`
+
         :param offset: The offset number of rows which to calculate the lag/lead
         :type offset: int
-        
+
         :param default: The default value to use if the offset doesn't find a field
         :type default: number or str or object
         """
@@ -604,26 +602,26 @@ class NthValueField(AggregateField):
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, over=None, n=1):
         """
         Sets the Nth value
-        
+
         :param field: A string of a field name
         :type field: str
-        
+
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
-        
+
         :param cast: A data type name this field should be cast to. Ex: 'float'
         :type cast: str
-        
+
         :param distinct: Indicates if a DISTINCT flag should be added during sql generation
         :type cast: bool
-        
+
         :param over: The QueryWindow to perform the aggregate function over
-        :type over: :class:`querybuilder.query.QueryWindow`
-        
+        :type over: :class:`QueryWindow <querybuilder.query.QueryWindow>`
+
         :param n: the n value to use for the Nth value function
         :type n: int
         """
@@ -633,7 +631,7 @@ class NthValueField(AggregateField):
     def get_field_identifier(self):
         """
         Returns the field's sql and the n value
-        
+
         :return: the field's sql and the n value
         :rtype: str
         """
@@ -656,28 +654,28 @@ class DatePartField(MultiField):
         """
         :param field: A string of a field name
         :type field: str
-        
+
         :param table: A Table instance used to disambiguate the field. This is optional in
             simple queries
-        :type table: :class:`querybuilder.tables.Table`
-        
+        :type table: :class:`Table <querybuilder.tables.Table>`
+
         :param alias: An alias to be used for this field
         :type alias: str
-        
+
         :param cast: A data type name this field should be cast to. Ex: 'float'
         :type cast: str
-        
+
         :param distinct: Indicates if a DISTINCT flag should be added during sql generation
         :type cast: bool
-        
+
         :param auto: Set to True for this date field to auto generate the necessary other date parts and
             apply the appropriate groupings. Defaults to False
         :type auto: bool
-        
+
         :param desc: If this is set to True, the results will be sorted by the datetime field in
             descending order. Defaults to False
         :type desc: bool
-        
+
         :param include_datetime: If set to True, datetime objects will be returned in addition to the
             unix timestamp. Defaults to False.
         :type include_datetime: bool
@@ -696,7 +694,7 @@ class DatePartField(MultiField):
     def get_select_sql(self):
         """
         Extract the date part from the date field
-        
+
         :return: The EXTRACT sql portion for this field
         :rtype: str
         """
@@ -763,13 +761,13 @@ class DatePartField(MultiField):
     def add_to_table(self, field, alias, add_group=False):
         """
         Adds this field to the field's table and optionally group by it
-        
+
         :param field: The field to add to the table
-        :type field: str or :class:`querybuilder.fields.Field`
-        
+        :type field: str or :class:`Field <querybuilder.fields.Field>`
+
         :param alias: The alias for the field
         :type alias: str
-        
+
         :param add_group: Whether or not the table should group by this field
         :type: bool
         """

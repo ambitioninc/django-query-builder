@@ -310,7 +310,11 @@ class WhereTest(QueryTestCase):
         ))
 
         query_str = query.get_sql()
-        expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s AND (three = %(A1)s OR five = %(A2)s))'
+        expected_query = (
+            'SELECT test_table.* '
+            'FROM test_table '
+            'WHERE (one = %(A0)s AND (three = %(A1)s OR five = %(A2)s))'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_and_with_not_combined_or(self):
@@ -325,7 +329,11 @@ class WhereTest(QueryTestCase):
         ))
 
         query_str = query.get_sql()
-        expected_query = 'SELECT test_table.* FROM test_table WHERE (one = %(A0)s AND ((NOT(three = %(A1)s)) OR five = %(A2)s))'
+        expected_query = (
+            'SELECT test_table.* '
+            'FROM test_table '
+            'WHERE (one = %(A0)s AND ((NOT(three = %(A1)s)) OR five = %(A2)s))'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_complex(self):

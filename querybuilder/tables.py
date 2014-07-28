@@ -14,15 +14,16 @@ class TableFactory(object):
     def __new__(cls, table, *args, **kwargs):
         """
         Determines which type of table class to instantiate based on the table argument
-        
+
         :param table: The table used in determining which type of Table object to return.
             This can be a string of the table name, a dict of {'alias': table},
             a ``Table`` instance, a django model class, or a Query instance
-        :type table: str or dict or :class:`querybuilder.tables.Table` or ModelBase
-            or :class:`querybuilder.query.Query`
-        
+        :type table: str or dict or :class:`Table <querybuilder.tables.Table>` or
+            :class:`ModelBase <django:django.db.models.base.ModelBase>`
+            or :class:`Query <querybuilder.query.Query>`
+
         :returns: The Table instance if a valid type was determined, otherwise None
-        :rtype: :class:`querybuilder.tables.Table` or None
+        :rtype: :class:`Table <querybuilder.tables.Table>` or None
         """
         # Determine the type of the table
         table_type = type(table)
@@ -65,34 +66,35 @@ class Table(object):
                  field_prefix=None, owner=None, alias=None):
         """
         Initializes the table and sets default values
-        
+
         :param table: The table name or model. This can be a string of the table
             name, a dict of {'alias': table}, a Query instance, or a django Model instance
-        :type table: str or dict or :class:`querybuilder.query.Query` or ModelBase
-        
+        :type table: str or dict or :class:`Query <querybuilder.query.Query>` or
+            :class:`ModelBase <django:django.db.models.base.ModelBase>`
+
         :param fields: The fields to select from ``table``. Defaults to '*'. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
-        :type fields: str or tuple or list or :class:`querybuilder.fields.Field`
-        
+        :type fields: str or tuple or list or :class:`Field <querybuilder.fields.Field>`
+
         :param schema: This is not implemented, but it will be a string of the db schema name
         :type schema: str
-        
+
         :param extract_fields: If True, then '*' fields will be converted to individual
             fields for each column in the table. Defaults to False.
         :type extract_fields: bool
-        
+
         :param prefix_fields: If True, then the table will have each of its field names
             prefixed with the field_prefix. Defaults to False.
         :type prefix_fields: bool
-        
+
         :param field_prefix: The field prefix to be used in front of each field name if prefix_fields
             is set to True.
         :type field_prefix: str
-        
+
         :param owner: A reference to the query managing this Table object
-        :type owner: :class:`querybuilder.query.Query`
-        
+        :type owner: :class:`Query <querybuilder.query.Query>`
+
         :param alias: An alias to be used for this table
         :type alias: str
         """
@@ -122,7 +124,7 @@ class Table(object):
         """
         Gets the FROM sql portion for this table
         Ex: table_name AS alias
-        
+
         :returns: Returns the table identifier to be used in the FROM sql portion of the query
         :rtype: str
         """
@@ -136,7 +138,7 @@ class Table(object):
         """
         Gets the alias for the table or the auto_alias if one is set.
         If there isn't any kind of alias, None is returned.
-        
+
         :returns: The table alias, auto_alias, or None
         :rtype: str or None
         """
@@ -152,7 +154,7 @@ class Table(object):
         """
         Gets the name for the table and returns it. This identifies the table if there
         is not an alias set.
-        
+
         :returns: The name for the table
         :rtype: str
         """
@@ -173,7 +175,7 @@ class Table(object):
         Gets the name to reference the table within a query. If
         a table is aliased, it will return the alias, otherwise
         it returns the table name
-        
+
         :returns: the name to reference the table within a query
         :rtype: str
         """
@@ -185,7 +187,7 @@ class Table(object):
     def add_field(self, field):
         """
         Adds a field to this table
-        
+
         :param field: This can be a string of a field name, a dict of {'alias': field}, or
             a ``Field`` instance
         :type field: str or dict or Field
@@ -212,10 +214,10 @@ class Table(object):
     def remove_field(self, field):
         """
         Removes a field from this table
-        
+
         :param field: This can be a string of a field name, a dict of {'alias': field}, or
             a ``Field`` instance
-        :type field: str or dict or Field
+        :type field: str or dict or :class:`Field <querybuilder.fields.Field>`
         """
         new_field = FieldFactory(
             field,
@@ -240,11 +242,11 @@ class Table(object):
     def set_fields(self, fields):
         """
         This will clear the table's current fields and add all new fields
-        
+
         :param fields: The fields to select from ``table``. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
-        :type fields: str or tuple or list of str or list of Field or Field
+        :type fields: str or tuple or list of str or list of Field or :class:`Field <querybuilder.fields.Field>`
         """
         self.fields = []
         self.add_fields(fields)
@@ -252,11 +254,11 @@ class Table(object):
     def add_fields(self, fields):
         """
         Adds all of the passed fields to the table's current field list
-        
+
         :param fields: The fields to select from ``table``. This can be
             a single field, a tuple of fields, or a list of fields. Each field can be a string
             or ``Field`` instance
-        :type fields: str or tuple or list of str or list of Field or Field
+        :type fields: str or tuple or list of str or list of Field or :class:`Field <querybuilder.fields.Field>`
         """
         if isinstance(fields, string_types):
             fields = [fields]
@@ -271,7 +273,7 @@ class Table(object):
         Loop through this tables fields and calls the get_sql
         method on each of them to build the field list for the FROM
         clause
-        
+
         :returns: A list of sql for each field in this table
         :rtype: list of str
         """
@@ -281,7 +283,7 @@ class Table(object):
         """
         Loop through this tables fields and calls the get_name
         method on each of them to build a list of field names
-        
+
         :returns: A list of field names found in this table
         :rtype: list of str
         """
@@ -291,7 +293,7 @@ class Table(object):
         """
         Loop through this tables fields and calls the get_identifier
         method on each of them to build a list of field identifiers
-        
+
         :returns: A list of field identifiers found in this table
         :rtype: list of str
         """
@@ -301,7 +303,7 @@ class Table(object):
         """
         Gets the prefix to be used in front of each field. If no prefix is
         set, then the identifier for this table is returned
-        
+
         :returns: The field prefix for this table
         :rtype: str
         """
@@ -310,12 +312,12 @@ class Table(object):
     def find_field(self, field=None, alias=None):
         """
         Finds a field by name or alias.
-        
+
         :param field: string of the field name or alias, dict of {'alias': field}, or a Field instance
         :type field: str or dict or Field
-        
+
         :returns: The field if it is found, otherwise None
-        :rtype: Field or None
+        :rtype: :class:`Field <querybuilder.fields.Field>` or None
         """
         if alias:
             field = alias

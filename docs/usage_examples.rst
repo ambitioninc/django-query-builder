@@ -151,6 +151,25 @@ Inner queries
     inner_query = Query().from_table(Account)
     outer_query = Query().from_table(inner_query)
 
+Connection Setup
+----------------
+
+Arbitrary django connections can be passed into the Query constructor to connect to alternate databases.
+
+.. code-block:: python
+
+    from django.db import connections
+    from querybuilder.query import Query
+
+    connections.all()
+    #[<django.db.backends.postgresql_psycopg2.base.DatabaseWrapper at 0x1127b4390>,
+    # <django.db.backends.postgresql_psycopg2.base.DatabaseWrapper at 0x1127b44d0>]
+
+    Query(connections.all()[0]).from_table('auth_user').count()
+    # 15L
+    Query(connections.all()[1]).from_table('auth_user').count()
+    # 223L
+
 Reference Material
 ------------------
 * http://www.postgresql.org/docs/9.1/static/functions-window.html
