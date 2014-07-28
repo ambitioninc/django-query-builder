@@ -1,6 +1,16 @@
 .. image:: https://travis-ci.org/ambitioninc/django-query-builder.png
    :target: https://travis-ci.org/ambitioninc/django-query-builder
 
+.. image:: https://coveralls.io/repos/ambitioninc/django-query-builder/badge.png?branch=develop
+    :target: https://coveralls.io/r/ambitioninc/django-query-builder?branch=develop
+
+.. image:: https://pypip.in/v/django-query-builder/badge.png
+    :target: https://crate.io/packages/django-query-builder/
+    :alt: Latest PyPI version
+
+.. image:: https://pypip.in/d/django-query-builder/badge.png
+    :target: https://crate.io/packages/django-query-builder/
+
 django-query-builder
 ====================
 querybuilder is a django library for assisting with the construction and
