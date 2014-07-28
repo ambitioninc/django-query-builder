@@ -1,7 +1,6 @@
 import datetime
 
 from django.db import connections
-from django.db.backends.util import CursorDebugWrapper, CursorWrapper
 from django.test import TestCase
 from django_dynamic_fixture import G
 import six
