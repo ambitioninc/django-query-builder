@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.5.9
+------
+* Fixed issue with certain functions for alternate databases
+
 v0.5.8
 ------
 

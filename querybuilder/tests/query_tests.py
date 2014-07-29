@@ -19,10 +19,10 @@ class QueryConstructorTests(TestCase):
         """
         Test passing in a connection object works
         """
-        for connection in connections.all():
-            self.assertIn(
-                type(Query(connection).from_table('auth_user').count()), six.integer_types
-            )
+        conn = connections['default']
+        self.assertIn(
+            type(Query(conn).from_table('auth_user').count()), six.integer_types
+        )
 
     def test_init_no_connection(self):
         """
