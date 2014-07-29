@@ -33,9 +33,10 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Framework :: Django',
+        'Development Status :: 5 - Production/Stable',
     ],
     license='MIT',
     install_requires=[
