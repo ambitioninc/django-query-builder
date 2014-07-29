@@ -235,6 +235,15 @@ class MultiField(Field):
         if self.field and self.field.table is None:
             self.field.set_table(self.table)
 
+    def get_field_identifier(self):
+        """
+        Gets the identifier of the nested field
+
+        :return: the identifier of the nested field
+        :rtype: str
+        """
+        return self.field.get_identifier()
+
 
 class ExpressionField(Field):
     pass
