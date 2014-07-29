@@ -7,7 +7,10 @@ env:
   global:
     - DB=postgres
   matrix:
+    - DJANGO=https://github.com/django/django/archive/1.7c2.zip
     - DJANGO=1.6.5
+    - DJANGO=1.5
+    - DJANGO=1.4
 install:
   - pip install -q coverage coveralls flake8 Django==$DJANGO
 before_script:
