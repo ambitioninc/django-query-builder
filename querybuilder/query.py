@@ -1411,7 +1411,7 @@ class Query(object):
         :return: The wrapped query
         """
         field_names = self.get_field_names()
-        query = Query().from_table(deepcopy(self), alias=alias)
+        query = Query(self.connection).from_table(deepcopy(self), alias=alias)
         self.__dict__.update(query.__dict__)
 
         # set explicit field names
@@ -1610,7 +1610,7 @@ class Query(object):
         :return: The number of rows that the query will return
         :rtype: int
         """
-        q = Query().from_table(self, fields=[
+        q = Query(self.connection).from_table(self, fields=[
             CountField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
@@ -1626,7 +1626,7 @@ class Query(object):
         :return: The maximum value of the specified field
         :rtype: int
         """
-        q = Query().from_table(self, fields=[
+        q = Query(self.connection).from_table(self, fields=[
             MaxField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
@@ -1642,7 +1642,7 @@ class Query(object):
         :return: The minimum value of the specified field
         :rtype: int
         """
-        q = Query().from_table(self, fields=[
+        q = Query(self.connection).from_table(self, fields=[
             MinField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
@@ -1658,7 +1658,7 @@ class Query(object):
         :return: The sum of the specified field
         :rtype: int
         """
-        q = Query().from_table(self, fields=[
+        q = Query(self.connection).from_table(self, fields=[
             SumField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
@@ -1674,7 +1674,7 @@ class Query(object):
         :return: The average of the specified field
         :rtype: int
         """
-        q = Query().from_table(self, fields=[
+        q = Query(self.connection).from_table(self, fields=[
             AvgField(field)
         ])
         rows = q.select(bypass_safe_limit=True)
