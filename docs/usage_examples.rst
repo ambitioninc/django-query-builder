@@ -88,6 +88,21 @@ Alias a table and fields:
     # "SELECT my_table.id AS the_id, my_table.email AS the_email FROM tests_user AS my_table"
 
 
+A field object can also be passed in the field list so any other field options can be included. This is especially
+useful for custom fields, aggregates, and date part fields.
+
+.. code-block:: python
+
+    query = Query().from_table(User, [
+        SimpleField('id', alias='the_id'),
+        {'the_email': SimpleField('email')}
+    ])
+    query.select()
+    # [{"the_id": 1, "the_email": "user1@test.com"}, {"the_id": 2, "the_email": "user2@test.com"}]
+    query.get_sql()
+    # "SELECT my_table.id AS the_id, my_table.email AS the_email FROM tests_user AS my_table"
+
+
 Selecting from inner queries is just as simple as selecting from a table. The inner query can be aliased and
 query builder with set up the nested queries using a WITH clause
 Select from Query:
@@ -221,31 +236,139 @@ contains
 startswith
 
 
+Fields
+------
+All fields in querybuilder inherit from the base Field class. Some field types like SimpleField only have a name
+specified, but more complex fields like aggregates and date parts provide much more functionality. Custom fields
+can easily be created by extending one of these field classes as demonstrated later in the examples.
+
+
 Aggregates
 ----------
+A full list of available fields is available in the Field API documentation. Some more examples are in the
+field_tests.py file. Some more examples will be added to demonstrate why these are useful. To become more familiar
+with window functions and how these are used, check out the postgres docs
+http://www.postgresql.org/docs/9.3/static/functions-window.html
+
+.. code-block:: python
+
+    query = Query().from_table(Order, [SumField('revenue')])
+    query.get_sql()
+    # SELECT SUM(tests_order.revenue) AS revenue_sum FROM tests_order
+
+    query = Query().from_table(Order, ['*', RowNumberField('revenue', over=QueryWindow().order_by('margin'))])
+    query.get_sql()
+    # SELECT tests_order.*, ROW_NUMBER() OVER (ORDER BY margin ASC) AS revenue_row_number FROM tests_order
+
+    query = Query().from_table(
+        Order,
+        ['*', RowNumberField('revenue', over=QueryWindow().order_by('margin').partition_by('account_id'))]
+    )
+    query.get_sql()
+    # SELECT tests_order.*, ROW_NUMBER() OVER (PARTITION BY account_id ORDER BY margin ASC) AS revenue_row_number
+    # FROM tests_order
+
+
+
+
+CustomFields
+------------
+It is possible to create your own custom field and use it in a query by extending a field class.
+
+.. code-block:: python
+
+    class MultiplyField(MultiField):
+        def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, multiply_by=1):
+            super(MultiplyField, self).__init__(field, table, alias, cast, distinct)
+            self.multiply_by = multiply_by
+            self.auto_alias = '{0}_{1}'.format(self.field.name, 'mult')
+
+        def get_select_sql(self):
+            return '({0}*{1})'.format(self.get_field_identifier(), self.multiply_by)
+
+    query = Query().from_table(Order, ['revenue', MultiplyField('revenue', multiply_by=2)])
+    query.get_sql()
+    # SELECT tests_order.revenue, (tests_order.revenue*2) AS revenue_mult FROM tests_order
+
+
+Date functions
+--------------
+Several date part functions exist in order to extract date parts (year, month, day, hour, minute, second).
+
+.. code-block:: python
+
+    query = Query().from_table(Order, [Day('time')])
+    query.get_sql()
+    # SELECT CAST(EXTRACT(day FROM tests_order.time) AS INT) AS time__day FROM tests_order
+    query.select()
+    # [{'time__day': 19}, {'time__day': 19}, {'time__day': 19}, {'time__day': 19}]
+
+
+A more useful way to use these functions is to pass the auto=True flag. This is used if you want to group records
+by specific date parts. Normally, to group by day, you would have to extract year, month, and day then group by
+year, month, and day in addition to any other grouping criteria.
+
+.. code-block:: python
+
+    query = Query().from_table(Order, [SumField('revenue'), Day('time', auto=True)])
+    query.get_sql()
+    # SELECT SUM(tests_order.revenue) AS revenue_sum,
+    # CAST(EXTRACT(year FROM tests_order.time) AS INT) AS time__year,
+    # CAST(EXTRACT(month FROM tests_order.time) AS INT) AS time__month,
+    # CAST(EXTRACT(day FROM tests_order.time) AS INT) AS time__day,
+    # CAST(EXTRACT(epoch FROM date_trunc('day', tests_order.time)) AS INT) AS time__epoch
+    # FROM tests_order GROUP BY time__year, time__month, time__day, time__epoch ORDER BY time__epoch ASC
+    query.select()
+    # [{'time__day': 19, 'time__month': 10, 'revenue_sum': 1800.0, 'time__year': 2012, 'time__epoch': 1350604800}]
+
+
+Providing additional grouping criteria is simple. Let's say you want to see this data grouped per account:
+
+.. code-block:: python
+
+    query = Query().from_table(Order, ['account_id', SumField('revenue'), Day('time', auto=True)]).group_by('account_id')
+    query.get_sql()
+    # SELECT tests_order.account_id,
+    # SUM(tests_order.revenue) AS revenue_sum,
+    # CAST(EXTRACT(year FROM tests_order.time) AS INT) AS time__year,
+    # CAST(EXTRACT(month FROM tests_order.time) AS INT) AS time__month,
+    # CAST(EXTRACT(day FROM tests_order.time) AS INT) AS time__day,
+    # CAST(EXTRACT(epoch FROM date_trunc('day', tests_order.time)) AS INT) AS time__epoch
+    # FROM tests_order GROUP BY time__year, time__month, time__day, time__epoch, account_id ORDER BY time__epoch ASC
+    query.select()
+    # [
+    #     {'account_id': 1, 'time__day': 19, 'time__month': 10, 'time__year': 2012, 'time__epoch': 1350604800, 'revenue_sum': 300.0},
+    #     {'account_id': 2, 'time__day': 19, 'time__month': 10, 'time__year': 2012, 'time__epoch': 1350604800, 'revenue_sum': 1500.0}
+    # ]
+
+
+Going off of this same example, lets say you wanted to rank the accounts:
+
+.. code-block:: python
+
+    query = Query().from_table(Order, ['account_id', SumField('revenue'), Day('time', auto=True)]).group_by('account_id')
+    rank_query = Query().from_table(query, ['account_id', RankField(over=QueryWindow().order_by('-revenue_sum'))])
+    rank_query.get_sql()
+    # WITH T0 AS (
+    # SELECT tests_order.account_id,
+    # SUM(tests_order.revenue) AS revenue_sum,
+    # CAST(EXTRACT(year FROM tests_order.time) AS INT) AS time__year,
+    # CAST(EXTRACT(month FROM tests_order.time) AS INT) AS time__month,
+    # CAST(EXTRACT(day FROM tests_order.time) AS INT) AS time__day,
+    # CAST(EXTRACT(epoch FROM date_trunc('day', tests_order.time)) AS INT) AS time__epoch
+    # FROM tests_order
+    # GROUP BY time__year, time__month, time__day, time__epoch, account_id
+    # ORDER BY time__epoch ASC)
+    # SELECT T0.account_id, RANK() OVER (ORDER BY revenue_sum DESC) AS rank FROM T0
+    rank_query.select()
+    # [{'account_id': 2, 'rank': 1L}, {'account_id': 1, 'rank': 2L}]
+
+This obviously is not an efficient query for large data sets, but it can be convenient in many cases.
 
 
 Joins
 -----
 
-
-Date functions
---------------
-
-
-Window functions
-----------------
-
-
-Inner queries
--------------
-
-.. code-block:: python
-
-    from querybuilder.query import Query
-
-    inner_query = Query().from_table(Account)
-    outer_query = Query().from_table(inner_query)
 
 Connection Setup
 ----------------
@@ -268,4 +391,4 @@ Arbitrary django connections can be passed into the Query constructor to connect
 
 Reference Material
 ------------------
-* http://www.postgresql.org/docs/9.1/static/functions-window.html
+* http://www.postgresql.org/docs/9.3/static/functions-window.html
