@@ -1,13 +1,14 @@
+sudo: false
 language: python
 python:
   - '2.7'
-  - '3.3'
   - '3.4'
 env:
   global:
     - DB=postgres
   matrix:
-    - DJANGO=1.6.5
+    - DJANGO=1.6.10
+    - DJANGO=1.7.4
 install:
   - pip install -q coverage coveralls flake8 Django==$DJANGO
 before_script:

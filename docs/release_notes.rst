@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+v0.5.10
+-------
+* Updated the usage examples
+* Fixed infinite loop bug when a MultiField did not implement an identifier method
+
 v0.5.9
 ------
 * Fixed issue with certain functions for alternate databases

@@ -1,10 +1,12 @@
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from querybuilder.logger import Logger, LogManager
 from querybuilder.query import Query
 from querybuilder.tests.models import Account
 
 
+@override_settings(DEBUG=True)
 class LogManagerTest(TestCase):
     """
     Includes functions to test the LogManager
@@ -31,6 +33,7 @@ class LogManagerTest(TestCase):
         self.assertEqual(logger_one.count(), 2, 'Incorrect number of queries')
 
 
+@override_settings(DEBUG=True)
 class LoggerTest(TestCase):
     """
     Includes functions to test the Logger

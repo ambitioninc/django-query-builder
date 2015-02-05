@@ -1,9 +1,12 @@
+from django.test.utils import override_settings
+
 from querybuilder.logger import Logger, LogManager
 from querybuilder.query import Query
 from querybuilder.tests.models import Account
 from querybuilder.tests.query_tests import QueryTestCase
 
 
+@override_settings(DEBUG=True)
 class InsertTest(QueryTestCase):
 
     def setUp(self):
