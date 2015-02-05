@@ -28,8 +28,6 @@ def configure_settings():
         else:
             raise RuntimeError('Unsupported test DB {0}'.format(test_db))
 
-        installed_apps = [
-        ]
         settings.configure(
             DATABASES={
                 'default': db_config,
@@ -38,6 +36,7 @@ def configure_settings():
                     'TEST_MIRROR': 'default',
                 },
             },
+            MIDDLEWARE_CLASSES={},
             INSTALLED_APPS=(
                 'django.contrib.auth',
                 'django.contrib.contenttypes',
@@ -45,9 +44,8 @@ def configure_settings():
                 'django.contrib.admin',
                 'querybuilder',
                 'querybuilder.tests',
-            ) + ('south',) if django.VERSION[1] == '6' else (),
+            ) + (('south',) if django.VERSION[1] == '6' else ()),
             ROOT_URLCONF='querybuilder.urls',
-            DEBUG=False,
             TIME_ZONE='UTC',
             USE_TZ=False,
         )
