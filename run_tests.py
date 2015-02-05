@@ -4,6 +4,7 @@ Provides the ability to run test on a standalone Django app.
 import sys
 from optparse import OptionParser
 
+import django
 from django.conf import settings
 
 from settings import configure_settings
@@ -11,6 +12,8 @@ from settings import configure_settings
 
 # Configure the default settings
 configure_settings()
+if django.VERSION[1] == 7:
+    django.setup()
 
 # Django nose must be imported here since it depends on the settings being configured
 from django_nose import NoseTestSuiteRunner

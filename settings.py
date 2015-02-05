@@ -1,5 +1,6 @@
 import os
 
+import django
 from django.conf import settings
 
 
@@ -27,6 +28,8 @@ def configure_settings():
         else:
             raise RuntimeError('Unsupported test DB {0}'.format(test_db))
 
+        installed_apps = [
+        ]
         settings.configure(
             DATABASES={
                 'default': db_config,
@@ -40,10 +43,9 @@ def configure_settings():
                 'django.contrib.contenttypes',
                 'django.contrib.sessions',
                 'django.contrib.admin',
-                'south',
                 'querybuilder',
                 'querybuilder.tests',
-            ),
+            ) + ('south',) if django.VERSION[1] == '6' else (),
             ROOT_URLCONF='querybuilder.urls',
             DEBUG=False,
             TIME_ZONE='UTC',
