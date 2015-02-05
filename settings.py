@@ -1,5 +1,6 @@
 import os
 
+import django
 from django.conf import settings
 
 
@@ -35,17 +36,16 @@ def configure_settings():
                     'TEST_MIRROR': 'default',
                 },
             },
+            MIDDLEWARE_CLASSES={},
             INSTALLED_APPS=(
                 'django.contrib.auth',
                 'django.contrib.contenttypes',
                 'django.contrib.sessions',
                 'django.contrib.admin',
-                'south',
                 'querybuilder',
                 'querybuilder.tests',
-            ),
+            ) + (('south',) if django.VERSION[1] == '6' else ()),
             ROOT_URLCONF='querybuilder.urls',
-            DEBUG=False,
             TIME_ZONE='UTC',
             USE_TZ=False,
         )

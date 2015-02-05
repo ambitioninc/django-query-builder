@@ -1,10 +1,13 @@
+from django.test.utils import override_settings
 from django_dynamic_fixture import G
+
 from querybuilder.logger import Logger
 from querybuilder.query import Query
 from querybuilder.tests.models import Account, Order
 from querybuilder.tests.query_tests import QueryTestCase
 
 
+@override_settings(DEBUG=True)
 class TestUpdate(QueryTestCase):
 
     def setUp(self):
