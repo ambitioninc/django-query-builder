@@ -1764,7 +1764,7 @@ class QueryBuilderQuerySet(QuerySet):
         model = None
 
     def __init__(self, model=None, query=None, using=None):
-        if self.Meta is not None and model is None and hasattr(self.Meta, "model"):
+        if self.Meta is not None and model is None and hasattr(self.Meta, 'model'):
             model = self.Meta.model
             if isinstance(model, str):
                 model = get_model(*model.split('.', 1))
@@ -1776,7 +1776,7 @@ class QueryBuilderQuerySet(QuerySet):
             self._queryset,
             k.start,
             k.stop
-        ).all()[k.start:k.stop]
+        )
 
     def get_model_queryset(self, queryset, offset, limit):
         raise NotImplementedError
@@ -1788,11 +1788,11 @@ class QueryBuilderQuerySet(QuerySet):
 
     def call_field_filter_method(self, field, value, type='filter'):
         field_name = self.get_field_name_from_filter(field)
-        filter_method_name = "{0}__{1}".format(
+        filter_method_name = '{0}__{1}'.format(
             type,
             field_name
         )
-        default_filter_method_name = "{0}__".format(
+        default_filter_method_name = '{0}__'.format(
             type
         )
         filter_method = getattr(self, default_filter_method_name)
@@ -1828,11 +1828,11 @@ class QueryBuilderQuerySet(QuerySet):
             if field[0] == '-':
                 field = field[1:]
                 desc = True
-            method_name = "{0}__{1}".format(
+            method_name = '{0}__{1}'.format(
                 'order',
                 field
             )
-            default_method_name = "{0}__".format(
+            default_method_name = '{0}__'.format(
                 'order'
             )
             method = getattr(self, default_method_name)
@@ -1843,3 +1843,37 @@ class QueryBuilderQuerySet(QuerySet):
 
     def distinct(self, *field_names):
         raise NotImplementedError
+
+
+class JsonQueryset(QueryBuilderQuerySet):
+
+    def __init__(self, *args, **kwargs):
+        super(JsonQueryset, self).__init__(*args, **kwargs)
+        self.json_query = Query().from_table(self.model)
+
+    def get_model_queryset(self, queryset, offset, limit):
+        return [self.model(**fields) for fields in self.json_query.limit(limit, offset).select()]
+
+    def count(self):
+        return self.json_query.count()
+
+    def order_by(self, *field_names):
+        for field_name in field_names:
+            reverse = '-' if field_name[0] == '-' else ''
+            field_name = field_name.lstrip('-')
+            parts = field_name.split('->')
+            if len(parts) == 2:
+                self.json_query.order_by('{0}{1}->>\'{2}\''.format(reverse, parts[0], parts[1]))
+            else:
+                self.json_query.order_by('{0}{1}'.format(reverse, field_name))
+        return self
+
+    def filter(self, *args, **kwargs):
+        for key, value in kwargs.items():
+            key = key.replace('__exact', '')
+            if hasattr(value, 'id'):
+                key = '{0}_id'.format(key)
+                self.json_query.where(**{'{0}'.format(key): value.id})
+            else:
+                self.json_query.where(**{key: value})
+        return self
