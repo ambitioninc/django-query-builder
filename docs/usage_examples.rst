@@ -376,6 +376,7 @@ Filtering and ordering by json fields is currently in an experimental phase.
 Queryset example:
 
 .. code-block:: python
+
     from querybuilder.query import JsonQueryset
 
     records = JsonQueryset(model=MetricRecord).filter(**{'data->field_name': 'my_value'}).order_by('data->my_sort_field')
@@ -383,6 +384,7 @@ Queryset example:
 Custom field example:
 
 .. code-block:: python
+
     from querybuilder.fields import JsonField
 
     my_field = JsonField('data', key='field_name', alias='my_field_alias')
