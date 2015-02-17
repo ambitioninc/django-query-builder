@@ -215,6 +215,25 @@ class SimpleField(Field):
         self.name = field
 
 
+class JsonField(SimpleField):
+    """
+    Used to access postgres native json fields
+    """
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, key=None):
+        super(JsonField, self).__init__(field, table, alias, cast, distinct)
+        self.key = key
+
+    def get_select_sql(self):
+        if self.table:
+            return '{0}.{1}->\'{2}\''.format(self.table.get_identifier(), self.name, self.key)
+        return '{0}->\'{1}\''.format(self.name, self.key)
+
+    def get_where_key(self):
+        if self.table:
+            return '{0}.{1}->>\'{2}\''.format(self.table.get_identifier(), self.name, self.key)
+        return '{0}->>\'{1}\''.format(self.name, self.key)
+
+
 class MultiField(Field):
     """
     A field that contains one or more nested fields
