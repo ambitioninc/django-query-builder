@@ -371,7 +371,8 @@ Joins
 
 Json Fields
 -----------
-Filtering and ordering by json fields is currently in an experimental phase.
+Filtering and ordering by json fields is currently in an experimental phase. This only works with versions of
+postgres that have a json data type field and versions of jsonfield that use json field types like jsonfield==0.9.20
 
 Queryset example:
 
