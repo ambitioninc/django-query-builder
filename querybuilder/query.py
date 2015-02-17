@@ -1772,11 +1772,15 @@ class QueryBuilderQuerySet(QuerySet):
         self._queryset = self.model.objects.get_query_set()
 
     def __getitem__(self, k):
-        return self.get_model_queryset(
-            self._queryset,
-            k.start,
-            k.stop
-        )
+        if isinstance(k, int):
+            return self.get_model_queryset(self._queryset, k, 1)[0]
+        elif hasattr(k, 'start'):
+            return self.get_model_queryset(
+                self._queryset,
+                k.start,
+                k.stop
+            )
+        return None
 
     def get_model_queryset(self, queryset, offset, limit):
         raise NotImplementedError
@@ -1824,6 +1828,8 @@ class QueryBuilderQuerySet(QuerySet):
 
     def order_by(self, *field_names):
         for field in field_names:
+            if field == 'pk':
+                field = self.model._meta.pk.name
             desc = False
             if field[0] == '-':
                 field = field[1:]
@@ -1859,6 +1865,8 @@ class JsonQueryset(QueryBuilderQuerySet):
 
     def order_by(self, *field_names):
         for field_name in field_names:
+            if field_name == 'pk':
+                field_name = self.model._meta.pk.name
             reverse = '-' if field_name[0] == '-' else ''
             field_name = field_name.lstrip('-')
             parts = field_name.split('->')
@@ -1871,6 +1879,10 @@ class JsonQueryset(QueryBuilderQuerySet):
     def filter(self, *args, **kwargs):
         for key, value in kwargs.items():
             key = key.replace('__exact', '')
+            parts = key.split('->')
+            if len(parts) == 2:
+                key = '{0}->>\'{1}\''.format(parts[0], parts[1])
+                value = unicode(value)
             if hasattr(value, 'id'):
                 key = '{0}_id'.format(key)
                 self.json_query.where(**{'{0}'.format(key): value.id})

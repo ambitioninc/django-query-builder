@@ -1,12 +1,12 @@
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
 from querybuilder.fields import JsonField
-from querybuilder.query import Query
+from querybuilder.query import Query, JsonQueryset
 from querybuilder.tests.models import MetricRecord
 
 
 @override_settings(DEBUG=True)
-class TestUpdate(TestCase):
+class JsonFieldTest(TestCase):
 
     def test_one(self):
         metric_record = MetricRecord(data={
@@ -65,3 +65,26 @@ class TestUpdate(TestCase):
             )
         )
         self.assertEqual(query.select(), [])
+
+
+@override_settings(DEBUG=True)
+class JsonQuerysetTest(TestCase):
+
+    def test_one(self):
+        metric_record = MetricRecord(data={
+            'one': 1,
+            'two': 'two',
+        })
+        metric_record.save()
+
+        record = JsonQueryset(model=MetricRecord).filter(**{'data->two': 'one'}).first()
+        self.assertIsNone(record)
+
+        record = JsonQueryset(model=MetricRecord).filter(**{'data->two': 'two'}).first()
+        self.assertEqual(record.data['two'], 'two')
+
+        record = JsonQueryset(model=MetricRecord).filter(**{'data->one': '1'}).first()
+        self.assertEqual(record.data['one'], 1)
+
+        record = JsonQueryset(model=MetricRecord).filter(**{'data->one': '2'}).first()
+        self.assertIsNone(record)
