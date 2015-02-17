@@ -9,12 +9,14 @@ env:
   matrix:
     - DJANGO=1.6.10
     - DJANGO=1.7.4
+addons:
+  postgresql: '9.3'
 install:
   - pip install -q coverage coveralls flake8 Django==$DJANGO
 before_script:
   - psql -c 'CREATE DATABASE querybuilder;' -U postgres
 script:
-  - flake8 .
+  - flake8 ./querybuilder
   - coverage run setup.py test
   - coverage report --fail-under=92
 after_success:
