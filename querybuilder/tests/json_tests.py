@@ -77,6 +77,11 @@ class JsonQuerysetTest(TestCase):
         })
         metric_record.save()
 
+        metric_record2 = MetricRecord(data={
+            'one': 5,
+        })
+        metric_record2.save()
+
         record = JsonQueryset(model=MetricRecord).filter(**{'data->two': 'one'}).first()
         self.assertIsNone(record)
 
@@ -88,3 +93,7 @@ class JsonQuerysetTest(TestCase):
 
         record = JsonQueryset(model=MetricRecord).filter(**{'data->one': '2'}).first()
         self.assertIsNone(record)
+
+        records = list(JsonQueryset(model=MetricRecord).order_by('data->one'))
+        self.assertEqual(records[0].data['one'], 1)
+        self.assertEqual(records[1].data['one'], 5)
