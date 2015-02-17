@@ -51,7 +51,7 @@ setup(
         'mock==1.0.1',
         'south',
         'django-dynamic-fixture',
-        'jsonfield==0.9.20',
+        'jsonfield==1.0.2',
     ],
     test_suite='run_tests.run_tests',
     include_package_data=True,
