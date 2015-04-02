@@ -1,7 +1,7 @@
 import abc
 
 from django.db.models.base import ModelBase
-from six import string_types
+from six import string_types, with_metaclass
 
 import querybuilder
 from querybuilder.fields import FieldFactory
@@ -44,7 +44,7 @@ class TableFactory(object):
         return None
 
 
-class Table(object):
+class Table(with_metaclass(abc.ABCMeta, object)):
     """
     Abstract table class that all table types extend.
 
@@ -60,7 +60,6 @@ class Table(object):
             An alias that is set automatically by the Query if needed for inner query
             namespacing
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, table=None, fields=None, schema=None, extract_fields=False, prefix_fields=False,
                  field_prefix=None, owner=None, alias=None):
