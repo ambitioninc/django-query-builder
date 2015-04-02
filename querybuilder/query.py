@@ -1769,7 +1769,7 @@ class QueryBuilderQuerySet(QuerySet):
             if isinstance(model, str):
                 model = get_model(*model.split('.', 1))
         super(QueryBuilderQuerySet, self).__init__(model, query, using)
-        self._queryset = self.model.objects.get_query_set()
+        self._queryset = self.model.objects.get_queryset()
 
     def __getitem__(self, k):
         if isinstance(k, int):
@@ -1808,7 +1808,7 @@ class QueryBuilderQuerySet(QuerySet):
         pass
 
     def filter(self, *args, **kwargs):
-        for field, value in kwargs.iteritems():
+        for field, value in six.iteritems(kwargs):
             self.call_field_filter_method(field, value, type='filter')
         return self
 
@@ -1816,7 +1816,7 @@ class QueryBuilderQuerySet(QuerySet):
         pass
 
     def exclude(self, *args, **kwargs):
-        for field, value in kwargs.iteritems():
+        for field, value in six.iteritems(kwargs):
             self.call_field_filter_method(field, value, type='exclude')
         return self
 

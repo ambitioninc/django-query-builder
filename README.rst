@@ -36,7 +36,7 @@ Requirements
 ------------
 * Python 2.7
 * Python 3.3, 3.4
-* Django 1.4+
+* Django 1.6+
 
 Installation
 ------------
