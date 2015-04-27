@@ -1763,12 +1763,12 @@ class QueryBuilderQuerySet(QuerySet):
     class Meta:
         model = None
 
-    def __init__(self, model=None, query=None, using=None):
+    def __init__(self, model=None, query=None, using=None, **kwargs):
         if self.Meta is not None and model is None and hasattr(self.Meta, 'model'):
             model = self.Meta.model
             if isinstance(model, str):
                 model = get_model(*model.split('.', 1))
-        super(QueryBuilderQuerySet, self).__init__(model, query, using)
+        super(QueryBuilderQuerySet, self).__init__(model, query, using, **kwargs)
         self._queryset = self.model.objects.get_queryset()
 
     def __getitem__(self, k):
