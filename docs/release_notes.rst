@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.7.2
+------
+* Fixed queryset init args
+
 v0.7.1
 ------
 * Added Django 1.7 app config
