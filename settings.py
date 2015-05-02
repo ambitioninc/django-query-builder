@@ -1,6 +1,5 @@
 import os
 
-import django
 from django.conf import settings
 
 
@@ -29,6 +28,8 @@ def configure_settings():
             raise RuntimeError('Unsupported test DB {0}'.format(test_db))
 
         settings.configure(
+            TEST_RUNNER='django_nose.NoseTestSuiteRunner',
+            NOSE_ARGS=['--nocapture', '--nologcapture', '--verbosity=1'],
             DATABASES={
                 'default': db_config,
                 'mock-second-database': {
@@ -44,7 +45,7 @@ def configure_settings():
                 'django.contrib.admin',
                 'querybuilder',
                 'querybuilder.tests',
-            ) + (('south',) if django.VERSION[1] == '6' else ()),
+            ),
             ROOT_URLCONF='querybuilder.urls',
             TIME_ZONE='UTC',
             USE_TZ=False,
