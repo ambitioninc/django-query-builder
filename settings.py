@@ -30,6 +30,7 @@ def configure_settings():
         settings.configure(
             TEST_RUNNER='django_nose.NoseTestSuiteRunner',
             NOSE_ARGS=['--nocapture', '--nologcapture', '--verbosity=1'],
+            MIDDLEWARE_CLASSES=(),
             DATABASES={
                 'default': db_config,
                 'mock-second-database': {
@@ -37,7 +38,6 @@ def configure_settings():
                     'TEST_MIRROR': 'default',
                 },
             },
-            MIDDLEWARE_CLASSES={},
             INSTALLED_APPS=(
                 'django.contrib.auth',
                 'django.contrib.contenttypes',

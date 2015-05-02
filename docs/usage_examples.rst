@@ -369,6 +369,30 @@ This obviously is not an efficient query for large data sets, but it can be conv
 Joins
 -----
 
+Json Fields
+-----------
+Filtering and ordering by json fields is currently in an experimental phase. This only works with versions of
+postgres that have a json data type field and versions of jsonfield that use json field types like jsonfield==0.9.20
+
+Queryset example:
+
+.. code-block:: python
+
+    from querybuilder.query import JsonQueryset
+
+    records = JsonQueryset(model=MetricRecord).filter(**{'data->field_name': 'my_value'}).order_by('data->my_sort_field')
+
+Custom field example:
+
+.. code-block:: python
+
+    from querybuilder.fields import JsonField
+
+    my_field = JsonField('data', key='field_name', alias='my_field_alias')
+    query = Query().from_table(MetricRecord, fields=[my_field]).where(**{
+        my_field.get_where_key(): 'my_value'
+    })
+
 
 Connection Setup
 ----------------

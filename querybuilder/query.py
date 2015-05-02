@@ -4,7 +4,7 @@ from django.db import connection as default_django_connection
 from django.db.models import Q, get_model
 from django.db.models.query import QuerySet
 from django.db.models.constants import LOOKUP_SEP
-from six import string_types
+import six
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath
@@ -478,7 +478,7 @@ class Sorter(object):
         # if the specified field is a string with '-' at the beginning
         # the '-' needs to be removed and this sorter needs to be
         # set to desc
-        if isinstance(self.field.field, string_types) and str(self.field.field[0]) == '-':
+        if isinstance(self.field.field, six.string_types) and str(self.field.field[0]) == '-':
             self.desc = True
             self.field.field = self.field.field[1:]
             self.field.name = self.field.name[1:]
@@ -1763,20 +1763,24 @@ class QueryBuilderQuerySet(QuerySet):
     class Meta:
         model = None
 
-    def __init__(self, model=None, query=None, using=None):
-        if self.Meta is not None and model is None and hasattr(self.Meta, "model"):
+    def __init__(self, model=None, query=None, using=None, **kwargs):
+        if self.Meta is not None and model is None and hasattr(self.Meta, 'model'):
             model = self.Meta.model
             if isinstance(model, str):
                 model = get_model(*model.split('.', 1))
-        super(QueryBuilderQuerySet, self).__init__(model, query, using)
-        self._queryset = self.model.objects.get_query_set()
+        super(QueryBuilderQuerySet, self).__init__(model, query, using, **kwargs)
+        self._queryset = self.model.objects.get_queryset()
 
     def __getitem__(self, k):
-        return self.get_model_queryset(
-            self._queryset,
-            k.start,
-            k.stop
-        ).all()[k.start:k.stop]
+        if isinstance(k, int):
+            return self.get_model_queryset(self._queryset, k, 1)[0]
+        elif hasattr(k, 'start'):
+            return self.get_model_queryset(
+                self._queryset,
+                k.start,
+                k.stop
+            )
+        return None
 
     def get_model_queryset(self, queryset, offset, limit):
         raise NotImplementedError
@@ -1788,11 +1792,11 @@ class QueryBuilderQuerySet(QuerySet):
 
     def call_field_filter_method(self, field, value, type='filter'):
         field_name = self.get_field_name_from_filter(field)
-        filter_method_name = "{0}__{1}".format(
+        filter_method_name = '{0}__{1}'.format(
             type,
             field_name
         )
-        default_filter_method_name = "{0}__".format(
+        default_filter_method_name = '{0}__'.format(
             type
         )
         filter_method = getattr(self, default_filter_method_name)
@@ -1804,7 +1808,7 @@ class QueryBuilderQuerySet(QuerySet):
         pass
 
     def filter(self, *args, **kwargs):
-        for field, value in kwargs.iteritems():
+        for field, value in six.iteritems(kwargs):
             self.call_field_filter_method(field, value, type='filter')
         return self
 
@@ -1812,7 +1816,7 @@ class QueryBuilderQuerySet(QuerySet):
         pass
 
     def exclude(self, *args, **kwargs):
-        for field, value in kwargs.iteritems():
+        for field, value in six.iteritems(kwargs):
             self.call_field_filter_method(field, value, type='exclude')
         return self
 
@@ -1824,15 +1828,17 @@ class QueryBuilderQuerySet(QuerySet):
 
     def order_by(self, *field_names):
         for field in field_names:
+            if field == 'pk':
+                field = self.model._meta.pk.name
             desc = False
             if field[0] == '-':
                 field = field[1:]
                 desc = True
-            method_name = "{0}__{1}".format(
+            method_name = '{0}__{1}'.format(
                 'order',
                 field
             )
-            default_method_name = "{0}__".format(
+            default_method_name = '{0}__'.format(
                 'order'
             )
             method = getattr(self, default_method_name)
@@ -1843,3 +1849,43 @@ class QueryBuilderQuerySet(QuerySet):
 
     def distinct(self, *field_names):
         raise NotImplementedError
+
+
+class JsonQueryset(QueryBuilderQuerySet):
+
+    def __init__(self, *args, **kwargs):
+        super(JsonQueryset, self).__init__(*args, **kwargs)
+        self.json_query = Query().from_table(self.model)
+
+    def get_model_queryset(self, queryset, offset, limit):
+        return [self.model(**fields) for fields in self.json_query.limit(limit, offset).select()]
+
+    def count(self):
+        return self.json_query.count()
+
+    def order_by(self, *field_names):
+        for field_name in field_names:
+            if field_name == 'pk':
+                field_name = self.model._meta.pk.name
+            reverse = '-' if field_name[0] == '-' else ''
+            field_name = field_name.lstrip('-')
+            parts = field_name.split('->')
+            if len(parts) == 2:
+                self.json_query.order_by('{0}{1}->>\'{2}\''.format(reverse, parts[0], parts[1]))
+            else:
+                self.json_query.order_by('{0}{1}'.format(reverse, field_name))
+        return self
+
+    def filter(self, *args, **kwargs):
+        for key, value in kwargs.items():
+            key = key.replace('__exact', '')
+            parts = key.split('->')
+            if len(parts) == 2:
+                key = '{0}->>\'{1}\''.format(parts[0], parts[1])
+                value = six.u('{0}'.format(value))
+            if hasattr(value, 'id'):
+                key = '{0}_id'.format(key)
+                self.json_query.where(**{'{0}'.format(key): value.id})
+            else:
+                self.json_query.where(**{key: value})
+        return self

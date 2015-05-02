@@ -1,4 +1,5 @@
 from django.db import models
+from jsonfield import JSONField
 
 
 class User(models.Model):
@@ -26,3 +27,11 @@ class Order(models.Model):
     margin = models.FloatField()
     margin_percent = models.FloatField()
     time = models.DateTimeField()
+
+
+class MetricRecord(models.Model):
+    """
+    Example metric model
+    """
+    other_value = models.FloatField(default=0)
+    data = JSONField()

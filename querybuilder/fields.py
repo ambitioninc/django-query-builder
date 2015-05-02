@@ -1,6 +1,6 @@
 import abc
 
-from six import string_types
+from six import string_types, with_metaclass
 
 
 class FieldFactory(object):
@@ -35,7 +35,7 @@ class FieldFactory(object):
         return None
 
 
-class Field(object):
+class Field(with_metaclass(abc.ABCMeta, object)):
     """
     Abstract field class that all field types extend.
 
@@ -60,7 +60,6 @@ class Field(object):
             This is a flag that is read when adding fields which could indicate some
             other fields need to be automatically created.
     """
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None):
         """
@@ -213,6 +212,25 @@ class SimpleField(Field):
         """
         super(SimpleField, self).__init__(field, table, alias, cast, distinct)
         self.name = field
+
+
+class JsonField(SimpleField):
+    """
+    Used to access postgres native json fields
+    """
+    def __init__(self, field=None, table=None, alias=None, cast=None, distinct=None, key=None):
+        super(JsonField, self).__init__(field, table, alias, cast, distinct)
+        self.key = key
+
+    def get_select_sql(self):
+        if self.table:
+            return '{0}.{1}->\'{2}\''.format(self.table.get_identifier(), self.name, self.key)
+        return '{0}->\'{1}\''.format(self.name, self.key)
+
+    def get_where_key(self):
+        if self.table:
+            return '{0}.{1}->>\'{2}\''.format(self.table.get_identifier(), self.name, self.key)
+        return '{0}->>\'{1}\''.format(self.name, self.key)
 
 
 class MultiField(Field):

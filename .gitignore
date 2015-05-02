@@ -16,6 +16,7 @@ htmlcov/
 # Python egg metadata, regenerated from source files by setuptools.
 /*.egg-info
 /*.egg
+.eggs/
 
 # Virtualenv
 env/
@@ -32,3 +33,6 @@ docs/_build/
 
 # IPython Notebook
 .ipynb_checkpoints/
+
+# Test database
+test_ambition_dev

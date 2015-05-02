@@ -1,6 +1,18 @@
 Release Notes
 =============
 
+v0.7.2
+------
+* Fixed queryset init args
+
+v0.7.1
+------
+* Added Django 1.7 app config
+
+v0.7.0
+------
+* Added basic support for filtering and ordering json fields
+
 v0.5.10
 -------
 * Updated the usage examples
