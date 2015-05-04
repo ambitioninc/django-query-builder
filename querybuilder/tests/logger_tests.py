@@ -1,3 +1,4 @@
+from django.db import connection
 from django.test import TestCase
 from django.test.utils import override_settings
 
@@ -60,13 +61,14 @@ class LoggerTest(TestCase):
         """
         Verifies that the query index gets updated
         """
+        print 'start logging!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
         logger = Logger()
 
         query = Query().from_table(Account)
         query.select()
         query.select()
         logger.start_logging()
-        self.assertEqual(2, logger.query_index)
+        self.assertEqual(logger.query_index, len(connection.queries))
 
     def test_count(self):
         """
@@ -94,18 +96,15 @@ class LoggerTest(TestCase):
         query.select()
 
         self.assertEqual(2, logger.count())
-        self.assertEqual(2, logger.query_index)
 
         logger.stop_logging()
         query.select()
         query.select()
         self.assertEqual(2, logger.count())
-        self.assertEqual(4, logger.query_index)
 
         logger.start_logging()
         query.select()
         self.assertEqual(3, logger.count())
-        self.assertEqual(5, logger.query_index)
 
     def test_get_log(self):
         """
@@ -164,8 +163,8 @@ class LoggerTest(TestCase):
         query.select()
         logger_one.update_log()
 
-        # the index should be at 1
-        self.assertEqual(1, logger_one.query_index)
+        # there should be one query
+        self.assertEqual(logger_one.count(), 1)
 
         # increment the connection query count
         query.select()
@@ -175,9 +174,6 @@ class LoggerTest(TestCase):
 
         # make sure no queries
         self.assertEqual(0, len(logger_one.queries))
-
-        # query index should match that of the connection log
-        self.assertEqual(2, logger_one.query_index)
 
     def test_clear_log_no_index(self):
         """
