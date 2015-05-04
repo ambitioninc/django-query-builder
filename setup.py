@@ -30,7 +30,6 @@ setup(
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
@@ -42,16 +41,15 @@ setup(
     ],
     license='MIT',
     install_requires=[
-        'Django>=1.6',
+        'django>=1.7',
         'pytz>=2012h',
         'fleming>=0.3',
         'six',
     ],
     tests_require=[
         'psycopg2',
-        'django-nose',
+        'django-nose>=1.4',
         'mock==1.0.1',
-        'south>=1.0.2',
         'django-dynamic-fixture',
         'jsonfield==0.9.20',
     ],

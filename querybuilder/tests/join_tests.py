@@ -215,6 +215,7 @@ class JoinTest(QueryTestCase):
         )
 
         query_str = query.get_sql()
+
         expected_query = (
             'SELECT tests_account.*, '
             'tests_order.id AS order__id, '
@@ -222,4 +223,4 @@ class JoinTest(QueryTestCase):
             'FROM tests_account '
             'JOIN tests_order ON tests_order.account_id = tests_account.id'
         )
-        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+        self.assertEqual(query_str, expected_query)
