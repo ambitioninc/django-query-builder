@@ -61,7 +61,6 @@ class LoggerTest(TestCase):
         """
         Verifies that the query index gets updated
         """
-        print 'start logging!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
         logger = Logger()
 
         query = Query().from_table(Account)
