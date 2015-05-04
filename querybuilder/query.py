@@ -139,7 +139,10 @@ class Join(object):
 
             # check if this join type is for a related field
             for field in self.left_table.model._meta.get_all_related_objects():
-                if field.model == self.right_table.model:
+                related_model = field.model
+                if hasattr(field, 'related_model'):
+                    related_model = field.related_model
+                if related_model == self.right_table.model:
                     if self.right_table.field_prefix is None:
                         self.right_table.field_prefix = field.get_accessor_name()
                         if len(self.right_table.field_prefix) > 4 and self.right_table.field_prefix[-4:] == '_set':
@@ -172,7 +175,10 @@ class Join(object):
 
             # check if this join type is for a related field
             for field in self.right_table.model._meta.get_all_related_objects():
-                if field.model == self.left_table.model:
+                related_model = field.model
+                if hasattr(field, 'related_model'):
+                    related_model = field.related_model
+                if related_model == self.left_table.model:
                     table_join_field = field.field.column
                     # self.table_join_name = field.get_accessor_name()
                     condition = '{0}.{1} = {2}.{3}'.format(

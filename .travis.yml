@@ -7,12 +7,12 @@ env:
   global:
     - DB=postgres
   matrix:
-    - DJANGO=1.6.11
-    - DJANGO=1.7.7
+    - DJANGO=">=1.7,<1.8"
+    - DJANGO=">=1.8,<1.9"
 addons:
   postgresql: '9.3'
 install:
-  - pip install -q coverage coveralls flake8 Django==$DJANGO
+  - pip install -q coverage coveralls flake8 Django$DJANGO django-nose>=1.4
 before_script:
   - psql -c 'CREATE DATABASE querybuilder;' -U postgres
 script:
