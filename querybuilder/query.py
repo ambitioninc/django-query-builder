@@ -1616,10 +1616,17 @@ class Query(object):
         :return: The number of rows that the query will return
         :rtype: int
         """
-        q = Query(self.connection).from_table(self, fields=[
-            CountField(field)
-        ])
-        rows = q.select(bypass_safe_limit=True)
+        query_copy = deepcopy(self)
+        if not query_copy.tables:
+            raise Exception('No tables specified to do a count')
+
+        for table in query_copy.tables:
+            for field in table.fields:
+                table.remove_field(field)
+
+        query_copy.tables[0].add_field(CountField('*'))
+        del query_copy.sorters[:]
+        rows = query_copy.select(bypass_safe_limit=True)
         return list(rows[0].values())[0]
 
     def max(self, field):
@@ -1894,4 +1901,8 @@ class JsonQueryset(QueryBuilderQuerySet):
                 self.json_query.where(**{'{0}'.format(key): value.id})
             else:
                 self.json_query.where(**{key: value})
+        return self
+
+    def limit(self, *args, **kwargs):
+        self.json_query.limit(*args, **kwargs)
         return self
