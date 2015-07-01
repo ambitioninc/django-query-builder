@@ -115,8 +115,9 @@ class AggregateTest(QueryTestCase):
 
     def test_count(self):
         query = Query().from_table(
-            User
-        )
+            User,
+            ['one', 'two']
+        ).order_by('id')
         received = query.count()
         expected = len(User.objects.all())
         self.assertEqual(
@@ -127,6 +128,11 @@ class AggregateTest(QueryTestCase):
                 received
             )
         )
+        self.assertEqual(query.get_count_query().get_sql(), 'SELECT COUNT(tests_user.*) AS all_count FROM tests_user')
+
+        # Make sure the copy didn't modify the original
+        self.assertEqual(len(query.tables[0].fields), 2)
+        self.assertEqual(len(query.sorters), 1)
 
     def test_max(self):
         """
