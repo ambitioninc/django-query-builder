@@ -127,7 +127,7 @@ class AggregateTest(QueryTestCase):
                 received
             )
         )
-        self.assertEqual(query.get_sql(), 'SELECT COUNT(*) as all_count FROM tests_user')
+        self.assertEqual(query.get_count_query().get_sql(), 'SELECT COUNT(*) as all_count FROM tests_user')
 
     def test_max(self):
         """

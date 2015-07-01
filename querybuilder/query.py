@@ -1605,16 +1605,9 @@ class Query(object):
         """
         pass
 
-    def count(self, field='*'):
+    def get_count_query(self):
         """
-        Returns a COUNT of the query by wrapping the query and performing a COUNT
-        aggregate of the specified field
-
-        :param field: the field to pass to the COUNT aggregate. Defaults to '*'
-        :type field: str
-
-        :return: The number of rows that the query will return
-        :rtype: int
+        Copies the query object and alters the field list and order by to do a more efficient count
         """
         query_copy = deepcopy(self)
         if not query_copy.tables:
@@ -1626,7 +1619,20 @@ class Query(object):
 
         query_copy.tables[0].add_field(CountField('*'))
         del query_copy.sorters[:]
-        rows = query_copy.select(bypass_safe_limit=True)
+        return query_copy
+
+    def count(self, field='*'):
+        """
+        Returns a COUNT of the query by wrapping the query and performing a COUNT
+        aggregate of the specified field
+
+        :param field: the field to pass to the COUNT aggregate. Defaults to '*'
+        :type field: str
+
+        :return: The number of rows that the query will return
+        :rtype: int
+        """
+        rows = self.get_count_query().select(bypass_safe_limit=True)
         return list(rows[0].values())[0]
 
     def max(self, field):
