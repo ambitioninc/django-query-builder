@@ -1426,6 +1426,17 @@ class Query(object):
 
         return self
 
+    def copy(self):
+        """
+        Deeply copies everything in the query object and safely copies the connection object
+        """
+        connection = self.connection
+        del self.connection
+        copied_query = deepcopy(self)
+        copied_query.connection = connection
+        self.connection = connection
+        return copied_query
+
     def get_args(self):
         """
         Gets the args for the query which will be escaped when being executed by the
@@ -1609,13 +1620,12 @@ class Query(object):
         """
         Copies the query object and alters the field list and order by to do a more efficient count
         """
-        query_copy = deepcopy(self)
+        query_copy = self.copy()
         if not query_copy.tables:
             raise Exception('No tables specified to do a count')
 
         for table in query_copy.tables:
-            for field in table.fields:
-                table.remove_field(field)
+            del table.fields[:]
 
         query_copy.tables[0].add_field(CountField('*'))
         del query_copy.sorters[:]
