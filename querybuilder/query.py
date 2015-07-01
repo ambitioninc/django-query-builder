@@ -1426,6 +1426,17 @@ class Query(object):
 
         return self
 
+    def copy(self):
+        """
+        Deeply copies everything in the query object except the connection object is shared
+        """
+        connection = self.connection
+        del self.connection
+        copied_query = deepcopy(self)
+        copied_query.connection = connection
+        self.connection = connection
+        return copied_query
+
     def get_args(self):
         """
         Gets the args for the query which will be escaped when being executed by the
@@ -1605,6 +1616,21 @@ class Query(object):
         """
         pass
 
+    def get_count_query(self):
+        """
+        Copies the query object and alters the field list and order by to do a more efficient count
+        """
+        query_copy = self.copy()
+        if not query_copy.tables:
+            raise Exception('No tables specified to do a count')
+
+        for table in query_copy.tables:
+            del table.fields[:]
+
+        query_copy.tables[0].add_field(CountField('*'))
+        del query_copy.sorters[:]
+        return query_copy
+
     def count(self, field='*'):
         """
         Returns a COUNT of the query by wrapping the query and performing a COUNT
@@ -1616,10 +1642,7 @@ class Query(object):
         :return: The number of rows that the query will return
         :rtype: int
         """
-        q = Query(self.connection).from_table(self, fields=[
-            CountField(field)
-        ])
-        rows = q.select(bypass_safe_limit=True)
+        rows = self.get_count_query().select(bypass_safe_limit=True)
         return list(rows[0].values())[0]
 
     def max(self, field):
@@ -1894,4 +1917,8 @@ class JsonQueryset(QueryBuilderQuerySet):
                 self.json_query.where(**{'{0}'.format(key): value.id})
             else:
                 self.json_query.where(**{key: value})
+        return self
+
+    def limit(self, *args, **kwargs):
+        self.json_query.limit(*args, **kwargs)
         return self

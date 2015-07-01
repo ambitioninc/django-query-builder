@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+v0.8.1
+------
+* More efficient count query
+* Add limit support on JsonQueryset
+* Added copy method to Query object
+
 v0.7.2
 ------
 * Fixed queryset init args
