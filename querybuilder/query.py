@@ -1428,7 +1428,7 @@ class Query(object):
 
     def copy(self):
         """
-        Deeply copies everything in the query object and safely copies the connection object
+        Deeply copies everything in the query object except the connection object is shared
         """
         connection = self.connection
         del self.connection
