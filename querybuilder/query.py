@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from django.db import connection as default_django_connection
-from django.db.models import Q, get_model
+from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.db.models.constants import LOOKUP_SEP
 import six
@@ -9,6 +9,12 @@ import six
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
+
+try:
+    from django.apps import apps
+    get_model = apps.get_model
+except ImportError:
+    from django.db.models import get_model
 
 
 class Join(object):
