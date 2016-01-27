@@ -52,7 +52,7 @@ setup(
         'django-nose>=1.4',
         'mock==1.0.1',
         'django-dynamic-fixture',
-        'jsonfield==0.9.20',
+        # 'git+https://github.com/ambitioninc/django-jsonfield.git@0.9.23-django19'
     ],
     test_suite='run_tests.run_tests',
     include_package_data=True,

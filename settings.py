@@ -41,10 +41,11 @@ def configure_settings():
             INSTALLED_APPS=(
                 'django.contrib.auth',
                 'django.contrib.contenttypes',
-                'django.contrib.sessions',
-                'django.contrib.admin',
+                # 'django.contrib.sessions',
+                # 'django.contrib.admin',
                 'querybuilder',
                 'querybuilder.tests',
+                # 'querybuilder_test',
             ),
             ROOT_URLCONF='querybuilder.urls',
             TIME_ZONE='UTC',
