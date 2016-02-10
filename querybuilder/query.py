@@ -8,7 +8,7 @@ try:
     # Django 1.9
     from django.apps import apps
     get_model = apps.get_model
-except ImportError:
+except ImportError:  # pragma: no cover
     # Django < 1.9
     from django.db.models import get_model
 import six
