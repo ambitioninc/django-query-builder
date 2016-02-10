@@ -1,9 +1,16 @@
 from copy import deepcopy
 
 from django.db import connection as default_django_connection
-from django.db.models import Q, get_model
+from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.db.models.constants import LOOKUP_SEP
+try:
+    # Django 1.9
+    from django.apps import apps
+    get_model = apps.get_model
+except ImportError:  # pragma: no cover
+    # Django < 1.9
+    from django.db.models import get_model
 import six
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
