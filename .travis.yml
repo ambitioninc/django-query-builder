@@ -1,4 +1,4 @@
-sudo: required
+sudo: false
 language: python
 python:
   - '2.7'
@@ -11,20 +11,11 @@ env:
     - DJANGO=">=1.8,<1.9"
     - DJANGO=">=1.9,<1.10"
 addons:
-  apt:
-    sources:
-    - precise-pgdg-9.5
-    packages:
-    - postgresql-9.5
-    - postgresql-contrib-9.5
-  postgresql: 9.5
-before_script:
-  - sudo cp /etc/postgresql/9.4/main/pg_hba.conf /etc/postgresql/9.5/main/pg_hba.conf
-  - sudo /etc/init.d/postgresql restart
-  - psql -U postgres -c 'create database "querybuilder";'
-  - psql -U postgres querybuilder -c 'create extension "uuid-ossp";'
+  postgresql: '9.4'
 install:
   - pip install -q coverage coveralls flake8 Django$DJANGO django-nose>=1.4
+before_script:
+  - psql -c 'CREATE DATABASE querybuilder;' -U postgres
 script:
   - flake8 ./querybuilder
   - coverage run setup.py test
