@@ -1,4 +1,7 @@
-from django.contrib.postgres.fields import JSONField
+try:
+    from django.contrib.postgres.fields import JSONField
+except ImportError:
+    from jsonfield import JSONField
 from django.db import models
 
 
@@ -35,3 +38,19 @@ class MetricRecord(models.Model):
     """
     other_value = models.FloatField(default=0)
     data = JSONField()
+
+
+class Uniques(models.Model):
+    """
+    For testing upserts
+    """
+    field1 = models.CharField(unique=True, max_length=16)
+    field2 = models.CharField(unique=True, max_length=16)
+    field3 = models.CharField(max_length=16)
+    field4 = models.CharField(max_length=16, default='default_value')
+    field5 = models.CharField(max_length=16, null=True, default=None)
+    field6 = models.CharField(max_length=16)
+    field7 = models.CharField(max_length=16)
+
+    class Meta:
+        unique_together = ('field6', 'field7')

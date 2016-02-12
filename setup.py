@@ -25,7 +25,7 @@ setup(
     url='https://github.com/ambitioninc/django-query-builder',
     author='Wes Okes',
     author_email='wes.okes@gmail.com',
-    keywords='django, database, query',
+    keywords='django, database, query, sql, postgres, upsert',
     packages=find_packages(),
     classifiers=[
         'Programming Language :: Python',
@@ -52,6 +52,7 @@ setup(
         'django-nose>=1.4',
         'mock==1.0.1',
         'django-dynamic-fixture',
+        'jsonfield==0.9.20'
     ],
     test_suite='run_tests.run_tests',
     include_package_data=True,
