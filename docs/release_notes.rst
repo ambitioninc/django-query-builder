@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.10.0
+------
+* Added postgres bulk upsert support
+
 v0.9.0
 ------
 * Added support for django 1.9 and tests with postgres 9.4 using new django json field

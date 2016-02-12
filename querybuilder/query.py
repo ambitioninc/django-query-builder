@@ -1173,6 +1173,43 @@ class Query(object):
 
         return self.sql, sql_args
 
+    def get_upsert_sql(self, rows, unique_fields, update_fields):
+        """
+        Performs postgres upsert with multiple rows
+
+        INSERT INTO table_name (field1, field2)
+        VALUES (1, 'two')
+        ON CONFLICT (unique_field) DO UPDATE SET field2 = EXCLUDED.field2;
+        """
+        ModelClass = self.tables[0].model
+        all_fields = ModelClass._meta.fields
+        pk_name = ModelClass._meta.pk.name
+        all_field_names = [field.name for field in all_fields if field.name != pk_name]
+        all_field_names_sql = ', '.join(all_field_names)
+        unique_field_names_sql = ', '.join(unique_fields)
+        update_fields_sql = ', '.join(['{0} = EXCLUDED.{0}'.format(field_name) for field_name in update_fields])
+
+        row_values = []
+        sql_args = []
+
+        for row in rows:
+            placeholders = []
+            for field_name in all_field_names:
+                sql_args.append(getattr(row, field_name))
+                placeholders.append('%s')
+            row_values.append('({0})'.format(', '.join(placeholders)))
+        row_values_sql = ', '.join(row_values)
+
+        self.sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) DO UPDATE SET {4}'.format(
+            self.tables[0].get_identifier(),
+            all_field_names_sql,
+            row_values_sql,
+            unique_field_names_sql,
+            update_fields_sql
+        )
+
+        return self.sql, sql_args
+
     def format_sql(self):
         """
         Builds the sql in a format that is easy for humans to read and debug
@@ -1603,12 +1640,26 @@ class Query(object):
     def update(self, rows):
         """
         Updates records in the db
-        # TODO: implement this
         """
         if len(rows) == 0:
             return
 
         sql, sql_args = self.get_update_sql(rows)
+
+        # get the cursor to execute the query
+        cursor = self.get_cursor()
+
+        # execute the query
+        cursor.execute(sql, sql_args)
+
+    def upsert(self, rows, unique_fields, update_fields):
+        """
+        Performs an upsert on the set of models defined in rows.
+        """
+        if len(rows) == 0:
+            return
+
+        sql, sql_args = self.get_upsert_sql(rows, unique_fields, update_fields)
 
         # get the cursor to execute the query
         cursor = self.get_cursor()

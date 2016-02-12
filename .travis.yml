@@ -7,6 +7,8 @@ env:
   global:
     - DB=postgres
   matrix:
+    - DJANGO=">=1.7,<1.8"
+    - DJANGO=">=1.8,<1.9"
     - DJANGO=">=1.9,<1.10"
 addons:
   postgresql: '9.4'
