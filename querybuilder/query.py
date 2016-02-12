@@ -1189,17 +1189,6 @@ class Query(object):
         unique_field_names_sql = ', '.join(unique_fields)
         update_fields_sql = ', '.join(['{0} = EXCLUDED.{0}'.format(field_name) for field_name in update_fields])
 
-        # num_columns = len(update_fields)
-        # if num_columns < 2:
-        #     raise Exception('At least 2 fields must be passed to get_update_sql')
-        #
-        # all_null_indices = [
-        #     all(row[index] is None for row in rows)
-        #     for index in range(1, num_columns)
-        # ]
-        #
-        # field_names_sql = '({0})'.format(', '.join(field_names))
-
         row_values = []
         sql_args = []
 
@@ -1210,14 +1199,6 @@ class Query(object):
                 placeholders.append('%s')
             row_values.append('({0})'.format(', '.join(placeholders)))
         row_values_sql = ', '.join(row_values)
-
-        # build field list for SET portion
-        # set_field_list = [
-        #     '{0} = NULL'.format(field_name)
-        #     if all_null_indices[idx] else '{0} = new_values.{0}'.format(field_name)
-        #     for idx, field_name in enumerate(update_field_names)
-        # ]
-        # set_field_list_sql = ', '.join(set_field_list)
 
         self.sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) DO UPDATE SET {4}'.format(
             self.tables[0].get_identifier(),
