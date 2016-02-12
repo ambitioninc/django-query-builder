@@ -15,7 +15,7 @@ class TestUpdate(QueryTestCase):
 
     def test_upsert(self):
         """
-        Verifies that records get upserted correctly. Skipping this test now until travis-ci supports 9.5 addon
+        Verifies that records get upserted correctly. Skipping this test now until travis-ci supports 9.5 addon.
         """
         pass
         items = [
