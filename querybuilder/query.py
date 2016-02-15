@@ -17,6 +17,12 @@ from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, Su
 from querybuilder.helpers import set_value_for_keypath
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
 
+try:
+    from django.apps import apps
+    get_model = apps.get_model
+except ImportError:
+    from django.db.models import get_model
+
 
 class Join(object):
     """
