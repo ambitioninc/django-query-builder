@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.10.1
+------
+* Wrap alias in double quotes to preserve case
+
 v0.10.0
 ------
 * Added postgres bulk upsert support
