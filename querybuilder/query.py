@@ -253,6 +253,7 @@ class Where(object):
         'lt': '<',
         'lte': '<=',
         'contains': 'LIKE',
+        'icontains': 'ILIKE',
         'startswith': 'LIKE',
         'in': 'IN',
     }
@@ -304,7 +305,7 @@ class Where(object):
         :return: the comparison operator from the Where class's comparison_map
         :rtype: str
         """
-        if operator == 'contains':
+        if operator in ('contains', 'icontains'):
             value = '%{0}%'.format(value)
         elif operator == 'startswith':
             value = '{0}%'.format(value)
