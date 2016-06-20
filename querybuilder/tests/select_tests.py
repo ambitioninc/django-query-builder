@@ -22,7 +22,7 @@ class SelectTest(QueryTestCase):
             }
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT table_alias.* FROM test_table AS "table_alias"'
+        expected_query = 'SELECT table_alias.* FROM test_table AS table_alias'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_all_from_model(self):
@@ -40,7 +40,7 @@ class SelectTest(QueryTestCase):
             }
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT table_alias.* FROM tests_account AS "table_alias"'
+        expected_query = 'SELECT table_alias.* FROM tests_account AS table_alias'
         self.assertEqual(query_str, expected_query, '{0}\n!=\n{1}'.format(query_str, expected_query))
 
     def test_select_fields_from_string(self):
@@ -66,7 +66,7 @@ class SelectTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT table_alias.field_one, table_alias.field_two FROM test_table AS "table_alias"'
+        expected_query = 'SELECT table_alias.field_one, table_alias.field_two FROM test_table AS table_alias'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_from_model(self):
@@ -92,7 +92,7 @@ class SelectTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT table_alias.field_one, table_alias.field_two FROM tests_account AS "table_alias"'
+        expected_query = 'SELECT table_alias.field_one, table_alias.field_two FROM tests_account AS table_alias'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_alias_from_string(self):
@@ -128,7 +128,7 @@ class SelectTest(QueryTestCase):
             'SELECT table_alias.field_one AS "field_alias_one", '
             'table_alias.field_two AS "field_alias_two" '
             'FROM test_table '
-            'AS "table_alias"'
+            'AS table_alias'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -165,7 +165,7 @@ class SelectTest(QueryTestCase):
             'SELECT table_alias.field_one AS "field_alias_one", '
             'table_alias.field_two AS "field_alias_two" '
             'FROM tests_account '
-            'AS "table_alias"'
+            'AS table_alias'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -219,8 +219,8 @@ class SelectTest(QueryTestCase):
             'table_one.field_two AS "f2", '
             'table_two.field_three AS "f3", '
             'table_two.field_four AS "f4" '
-            'FROM tests_account AS "table_one", '
-            'second_table AS "table_two"'
+            'FROM tests_account AS table_one, '
+            'second_table AS table_two'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
