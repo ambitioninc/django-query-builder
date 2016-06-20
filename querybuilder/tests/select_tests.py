@@ -244,7 +244,7 @@ class SelectTest(QueryTestCase):
             'tests_account.field_two, '
             'T1.field_three, '
             'T1.field_four '
-            'FROM tests_account, tests_account AS "T1"'
+            'FROM tests_account, tests_account AS T1'
         )
         self.assertEqual(query_str, expected_query, '\n{0}\n!=\n{1}'.format(query_str, expected_query))
 
