@@ -13,7 +13,7 @@ class DateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(EXTRACT(year FROM tests_order.time) AS INT) AS time__year FROM tests_order'
+        expected_query = 'SELECT CAST(EXTRACT(year FROM tests_order.time) AS INT) AS "time__year" FROM tests_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_year_auto(self):
@@ -25,8 +25,8 @@ class DateTest(QueryTestCase):
         )
         query_str = query.get_sql()
         expected_query = (
-            'SELECT CAST(EXTRACT(year FROM tests_order.time) AS INT) AS time__year, '
-            'CAST(EXTRACT(epoch FROM date_trunc(\'year\', tests_order.time)) AS INT) AS time__epoch '
+            'SELECT CAST(EXTRACT(year FROM tests_order.time) AS INT) AS "time__year", '
+            'CAST(EXTRACT(epoch FROM date_trunc(\'year\', tests_order.time)) AS INT) AS "time__epoch" '
             'FROM tests_order '
             'GROUP BY time__year, time__epoch '
             'ORDER BY time__epoch ASC'

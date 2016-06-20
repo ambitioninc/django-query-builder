@@ -24,7 +24,7 @@ class JsonFieldTest(TestCase):
         self.assertEqual(
             query.get_sql(),
             (
-                'SELECT tests_metricrecord.data->\'two\' AS my_two_alias FROM tests_metricrecord '
+                'SELECT tests_metricrecord.data->\'two\' AS "my_two_alias" FROM tests_metricrecord '
                 'WHERE (tests_metricrecord.data->>\'two\' = %(A0)s)'
             )
         )
@@ -36,7 +36,7 @@ class JsonFieldTest(TestCase):
         self.assertEqual(
             query.get_sql(),
             (
-                'SELECT tests_metricrecord.data->\'two\' AS my_two_alias FROM tests_metricrecord '
+                'SELECT tests_metricrecord.data->\'two\' AS "my_two_alias" FROM tests_metricrecord '
                 'WHERE (tests_metricrecord.data->>\'two\' = %(A0)s)'
             )
         )
@@ -48,7 +48,7 @@ class JsonFieldTest(TestCase):
         self.assertEqual(
             query.get_sql(),
             (
-                'SELECT tests_metricrecord.data->\'one\' AS my_one_alias FROM tests_metricrecord '
+                'SELECT tests_metricrecord.data->\'one\' AS "my_one_alias" FROM tests_metricrecord '
                 'WHERE (tests_metricrecord.data->>\'one\' = %(A0)s)'
             )
         )
@@ -60,7 +60,7 @@ class JsonFieldTest(TestCase):
         self.assertEqual(
             query.get_sql(),
             (
-                'SELECT tests_metricrecord.data->\'one\' AS my_one_alias FROM tests_metricrecord '
+                'SELECT tests_metricrecord.data->\'one\' AS "my_one_alias" FROM tests_metricrecord '
                 'WHERE (tests_metricrecord.data->>\'one\' = %(A0)s)'
             )
         )
