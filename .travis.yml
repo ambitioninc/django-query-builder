@@ -1,4 +1,4 @@
-sudo: false
+sudo: true
 language: python
 python:
   - '2.7'
@@ -6,12 +6,22 @@ python:
 env:
   global:
     - DB=postgres
+    - PGVERSION=9.0
+    - PGVERSION=9.1
+    - PGVERSION=9.2
+    - PGVERSION=9.3
+    - PGVERSION=9.4
+    - PGVERSION=9.5
   matrix:
     - DJANGO=">=1.7,<1.8"
     - DJANGO=">=1.8,<1.9"
     - DJANGO=">=1.9,<1.10"
-addons:
-  postgresql: '9.5'
+language: c
+before_install:
+  - wget https://gist.github.com/petere/5893799/raw/apt.postgresql.org.sh
+  - wget https://gist.github.com/petere/6023944/raw/pg-travis-test.sh
+  - sudo sh ./apt.postgresql.org.sh
+script: bash ./pg-travis-test.sh
 install:
   - pip install -q coverage coveralls flake8 Django$DJANGO django-nose>=1.4
 before_script:
