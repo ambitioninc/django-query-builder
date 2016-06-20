@@ -599,6 +599,7 @@ class Query(object):
         self.is_inner = False
         self.with_tables = []
         self._distinct = False
+        self.distinct_ons = []
         self.field_names = []
         self.field_names_pk = None
         self.values = []
@@ -1015,8 +1016,10 @@ class Query(object):
         self._distinct = use_distinct
         return self
 
-    def distinct_on(self):
-        raise NotImplementedError
+    def distinct_on(self, *fields):
+        for field in fields:
+            self.distinct_ons.append(FieldFactory(field))
+        return self
 
     def check_name_collisions(self):
         """
@@ -1330,8 +1333,12 @@ class Query(object):
         return sql
 
     def get_distinct_sql(self):
+        if self._distinct and self.distinct_ons:
+            raise ValueError('Cannot combine distinct and distinct_on')
         if self._distinct:
             return 'DISTINCT '
+        if self.distinct_ons:
+            return 'DISTINCT ON ({0}) '.format(', '.join(f.get_sql() for f in self.distinct_ons))
         return ''
 
     def build_from_table(self):
