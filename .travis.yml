@@ -23,6 +23,7 @@ before_install:
   - sudo sh ./apt.postgresql.org.sh
 script: bash ./pg-travis-test.sh
 install:
+  - pip install pyopenssl ndg-httpsclient pyasn1
   - pip install -q coverage coveralls flake8 Django$DJANGO django-nose>=1.4
 before_script:
   - psql -c 'CREATE DATABASE querybuilder;' -U postgres
