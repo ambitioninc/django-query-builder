@@ -24,7 +24,7 @@ class AggregateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT COUNT(DISTINCT test_table.name) AS name_count FROM test_table'
+        expected_query = 'SELECT COUNT(DISTINCT test_table.name) AS "name_count" FROM test_table'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_count_all(self):
