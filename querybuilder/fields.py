@@ -79,7 +79,6 @@ class Field(with_metaclass(abc.ABCMeta, object)):
         :param distinct: Indicates if a DISTINCT flag should be added during sql generation
         :type cast: bool
         """
-        # TODO: implement distinct
         self.field = field
         self.name = None
         self.table = table
@@ -326,8 +325,9 @@ class AggregateField(MultiField):
         :return: Gets the SELECT field portion for the field without the alias
         :rtype: str
         """
-        return '{0}({1}){2}'.format(
+        return '{0}({1}{2}){3}'.format(
             self.name.upper(),
+            self.get_distinct(),
             self.get_field_identifier(),
             self.get_over(),
         )
@@ -350,6 +350,11 @@ class AggregateField(MultiField):
         """
         if self.over:
             return ' {0}'.format(self.over.get_sql())
+        return ''
+
+    def get_distinct(self):
+        if self.distinct:
+            return 'DISTINCT '
         return ''
 
 

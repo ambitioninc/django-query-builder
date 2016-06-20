@@ -519,3 +519,29 @@ class DistinctTest(QueryTestCase):
         query_str = query.get_sql()
         expected_query = 'SELECT tests_account.* FROM tests_account'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_distinct_on(self):
+        query = Query().from_table(
+            table=Account
+        ).distinct_on('field1')
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT DISTINCT ON (field1) tests_account.* FROM tests_account'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_distinct_on_many_fields(self):
+        query = Query().from_table(
+            table=Account
+        ).distinct_on('field1', 'field2', 'field3')
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT DISTINCT ON (field1, field2, field3) tests_account.* FROM tests_account'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_cannot_mix_distincts(self):
+        query = Query().from_table(
+            table=Account
+        ).distinct_on('field1').distinct()
+
+        with self.assertRaises(ValueError):
+            query.get_sql()

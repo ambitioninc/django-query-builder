@@ -16,6 +16,17 @@ class AggregateTest(QueryTestCase):
         expected_query = 'SELECT COUNT(test_table.id) AS "id_count" FROM test_table'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
+    def test_count_distinct(self):
+        query = Query().from_table(
+            table='test_table',
+            fields=[
+                CountField('name', distinct=True)
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT COUNT(DISTINCT test_table.name) AS name_count FROM test_table'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
     def test_count_all(self):
         query = Query().from_table(
             table='test_table',
