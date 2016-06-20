@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.11.0
+------
+* Fix bulk upsert support and allow for all records to be returned as dicts or models
+
 v0.10.1
 ------
 * Wrap alias in double quotes to preserve case
