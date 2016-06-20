@@ -1,14 +1,19 @@
+import unittest
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
 from querybuilder.fields import JsonField
 from querybuilder.query import Query, JsonQueryset
 from querybuilder.tests.models import MetricRecord
+from querybuilder.tests.utils import get_postgres_version
 
 
 @override_settings(DEBUG=True)
 class JsonFieldTest(TestCase):
 
     def test_one(self):
+        if get_postgres_version() < (9, 4):
+            raise unittest.SkipTest('Invalid Postgres version for test')
+
         metric_record = MetricRecord(data={
             'one': 1,
             'two': 'two',
@@ -71,6 +76,9 @@ class JsonFieldTest(TestCase):
 class JsonQuerysetTest(TestCase):
 
     def test_one(self):
+        if get_postgres_version() < (9, 4):
+            raise unittest.SkipTest('Invalid Postgres version for test')
+
         metric_record = MetricRecord(data={
             'one': 1,
             'two': 'two',
