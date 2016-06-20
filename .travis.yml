@@ -21,10 +21,10 @@ before_install:
   - wget https://gist.github.com/petere/5893799/raw/apt.postgresql.org.sh
   - wget https://gist.github.com/petere/6023944/raw/pg-travis-test.sh
   - sudo sh ./apt.postgresql.org.sh
-script: bash ./pg-travis-test.sh
-install:
   - sudo pip install --upgrade pip
   - sudo pip install setuptools==20.3.1
+script: bash ./pg-travis-test.sh
+install:
   - pip install -q coverage coveralls flake8 Django$DJANGO django-nose>=1.4
 before_script:
   - psql -c 'CREATE DATABASE querybuilder;' -U postgres
