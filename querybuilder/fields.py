@@ -100,8 +100,8 @@ class Field(with_metaclass(abc.ABCMeta, object)):
         alias = self.get_alias()
         if alias:
             if self.cast:
-                return 'CAST({0} AS {1}) AS {2}'.format(self.get_select_sql(), self.cast.upper(), alias)
-            return '{0} AS {1}'.format(self.get_select_sql(), alias)
+                return 'CAST({0} AS {1}) AS "{2}"'.format(self.get_select_sql(), self.cast.upper(), alias)
+            return '{0} AS "{1}"'.format(self.get_select_sql(), alias)
 
         if self.cast:
             return 'CAST({0} AS {1})'.format(self.get_identifier(), self.cast.upper())

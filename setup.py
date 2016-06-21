@@ -50,9 +50,9 @@ setup(
     tests_require=[
         'psycopg2',
         'django-nose>=1.4',
-        'mock==1.0.1',
-        'django-dynamic-fixture',
-        'jsonfield==0.9.20'
+        'django-dynamic-fixture==1.8.5',
+        'jsonfield==0.9.20',
+        'mock==1.0.1'
     ],
     test_suite='run_tests.run_tests',
     include_package_data=True,

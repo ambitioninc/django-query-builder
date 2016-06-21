@@ -33,12 +33,12 @@ class FieldTest(QueryTestCase):
 
         field.auto_alias = 'my_auto_alias'
         query = Query().from_table(table=Order, fields=[field])
-        expected_query = 'SELECT tests_order.revenue AS my_auto_alias FROM tests_order'
+        expected_query = 'SELECT tests_order.revenue AS "my_auto_alias" FROM tests_order'
         self.assertEqual(expected_query, query.get_sql())
 
         field.alias = 'my_alias'
         query = Query().from_table(table=Order, fields=[field])
-        expected_query = 'SELECT tests_order.revenue AS my_alias FROM tests_order'
+        expected_query = 'SELECT tests_order.revenue AS "my_alias" FROM tests_order'
         self.assertEqual(expected_query, query.get_sql())
 
         query = Query().from_table(
@@ -47,7 +47,7 @@ class FieldTest(QueryTestCase):
             prefix_fields=True,
             field_prefix='my_field_prefix',
         )
-        expected_query = 'SELECT tests_order.revenue AS my_field_prefix__my_alias FROM tests_order'
+        expected_query = 'SELECT tests_order.revenue AS "my_field_prefix__my_alias" FROM tests_order'
         self.assertEqual(expected_query, query.get_sql())
 
         field.alias = None
@@ -58,7 +58,7 @@ class FieldTest(QueryTestCase):
             prefix_fields=True,
             field_prefix='my_field_prefix',
         )
-        expected_query = 'SELECT tests_order.revenue AS my_field_prefix__revenue FROM tests_order'
+        expected_query = 'SELECT tests_order.revenue AS "my_field_prefix__revenue" FROM tests_order'
         self.assertEqual(expected_query, query.get_sql())
 
     def lead_lag_difference_test(self):
@@ -73,9 +73,9 @@ class FieldTest(QueryTestCase):
         expected_query = (
             'SELECT tests_order.margin, '
             '((tests_order.margin) - (LAG(tests_order.margin, 1) '
-            'OVER (ORDER BY margin DESC))) AS margin_lag, '
+            'OVER (ORDER BY margin DESC))) AS "margin_lag", '
             '((tests_order.margin) - (LEAD(tests_order.margin, 1) '
-            'OVER (ORDER BY margin DESC))) AS margin_lead '
+            'OVER (ORDER BY margin DESC))) AS "margin_lead" '
             'FROM tests_order'
         )
         self.assertEqual(expected_query, query.get_sql())
@@ -99,8 +99,8 @@ class FieldTest(QueryTestCase):
             ]
         )
         expected_query = (
-            'SELECT CAST(0 AS INT) AS time__epoch, '
-            'SUM(tests_order.margin) AS margin_sum '
+            'SELECT CAST(0 AS INT) AS "time__epoch", '
+            'SUM(tests_order.margin) AS "margin_sum" '
             'FROM tests_order'
         )
         self.assertEqual(expected_query, query.get_sql())
@@ -144,13 +144,13 @@ class FieldTest(QueryTestCase):
             ]
         )
         expected_query = (
-            "SELECT CAST(EXTRACT(year FROM tests_order.time) AS INT) AS time__year, "
-            "CAST(EXTRACT(week FROM tests_order.time) AS INT) AS time__week, "
-            "CAST(EXTRACT(epoch FROM date_trunc('week', tests_order.time)) AS INT) AS time__epoch, "
-            "SUM(tests_order.margin) AS margin_sum "
-            "FROM tests_order "
-            "GROUP BY time__year, time__week, time__epoch "
-            "ORDER BY time__epoch ASC"
+            'SELECT CAST(EXTRACT(year FROM tests_order.time) AS INT) AS "time__year", '
+            'CAST(EXTRACT(week FROM tests_order.time) AS INT) AS "time__week", '
+            'CAST(EXTRACT(epoch FROM date_trunc(\'week\', tests_order.time)) AS INT) AS "time__epoch", '
+            'SUM(tests_order.margin) AS "margin_sum" '
+            'FROM tests_order '
+            'GROUP BY time__year, time__week, time__epoch '
+            'ORDER BY time__epoch ASC'
         )
         self.assertEqual(expected_query, query.get_sql())
         rows = query.select()

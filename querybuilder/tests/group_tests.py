@@ -15,7 +15,7 @@ class GroupByTest(QueryTestCase):
             field='id'
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table GROUP BY id'
+        expected_query = 'SELECT COUNT(test_table.id) AS "num" FROM test_table GROUP BY id'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_group_by_table_id(self):
@@ -29,7 +29,7 @@ class GroupByTest(QueryTestCase):
             table='test_table',
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table GROUP BY test_table.id'
+        expected_query = 'SELECT COUNT(test_table.id) AS "num" FROM test_table GROUP BY test_table.id'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_group_by_many_table_id(self):
@@ -46,5 +46,5 @@ class GroupByTest(QueryTestCase):
             table='test_table',
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table GROUP BY test_table.id, test_table.id2'
+        expected_query = 'SELECT COUNT(test_table.id) AS "num" FROM test_table GROUP BY test_table.id, test_table.id2'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
