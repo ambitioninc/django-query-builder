@@ -1,4 +1,4 @@
-sudo: true
+sudo: false
 language: python
 python:
   - '2.7'
@@ -19,6 +19,6 @@ before_script:
 script:
   - flake8 ./querybuilder
   - coverage run setup.py test
-  - coverage report --fail-under=88
+  - coverage report --fail-under=90
 after_success:
   coveralls
