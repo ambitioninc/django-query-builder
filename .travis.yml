@@ -19,6 +19,6 @@ before_script:
 script:
   - flake8 ./querybuilder
   - coverage run setup.py test
-  - coverage report --fail-under=90
+  - coverage report --fail-under=88
 after_success:
   coveralls
