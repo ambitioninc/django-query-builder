@@ -106,8 +106,8 @@ class SelectTest(QueryTestCase):
         )
         query_str = query.get_sql()
         expected_query = (
-            'SELECT test_table.field_one AS field_alias_one, '
-            'test_table.field_two AS field_alias_two '
+            'SELECT test_table.field_one AS "field_alias_one", '
+            'test_table.field_two AS "field_alias_two" '
             'FROM test_table'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
@@ -125,8 +125,8 @@ class SelectTest(QueryTestCase):
         )
         query_str = query.get_sql()
         expected_query = (
-            'SELECT table_alias.field_one AS field_alias_one, '
-            'table_alias.field_two AS field_alias_two '
+            'SELECT table_alias.field_one AS "field_alias_one", '
+            'table_alias.field_two AS "field_alias_two" '
             'FROM test_table '
             'AS table_alias'
         )
@@ -143,8 +143,8 @@ class SelectTest(QueryTestCase):
         )
         query_str = query.get_sql()
         expected_query = (
-            'SELECT tests_account.field_one AS field_alias_one, '
-            'tests_account.field_two AS field_alias_two '
+            'SELECT tests_account.field_one AS "field_alias_one", '
+            'tests_account.field_two AS "field_alias_two" '
             'FROM tests_account'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
@@ -162,8 +162,8 @@ class SelectTest(QueryTestCase):
         )
         query_str = query.get_sql()
         expected_query = (
-            'SELECT table_alias.field_one AS field_alias_one, '
-            'table_alias.field_two AS field_alias_two '
+            'SELECT table_alias.field_one AS "field_alias_one", '
+            'table_alias.field_two AS "field_alias_two" '
             'FROM tests_account '
             'AS table_alias'
         )
@@ -215,10 +215,10 @@ class SelectTest(QueryTestCase):
         )
         query_str = query.get_sql()
         expected_query = (
-            'SELECT table_one.field_one AS f1, '
-            'table_one.field_two AS f2, '
-            'table_two.field_three AS f3, '
-            'table_two.field_four AS f4 '
+            'SELECT table_one.field_one AS "f1", '
+            'table_one.field_two AS "f2", '
+            'table_two.field_three AS "f3", '
+            'table_two.field_four AS "f4" '
             'FROM tests_account AS table_one, '
             'second_table AS table_two'
         )
@@ -519,3 +519,29 @@ class DistinctTest(QueryTestCase):
         query_str = query.get_sql()
         expected_query = 'SELECT tests_account.* FROM tests_account'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_distinct_on(self):
+        query = Query().from_table(
+            table=Account
+        ).distinct_on('field1')
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT DISTINCT ON (field1) tests_account.* FROM tests_account'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_distinct_on_many_fields(self):
+        query = Query().from_table(
+            table=Account
+        ).distinct_on('field1', 'field2', 'field3')
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT DISTINCT ON (field1, field2, field3) tests_account.* FROM tests_account'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_cannot_mix_distincts(self):
+        query = Query().from_table(
+            table=Account
+        ).distinct_on('field1').distinct()
+
+        with self.assertRaises(ValueError):
+            query.get_sql()

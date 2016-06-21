@@ -210,6 +210,18 @@ class WhereTest(QueryTestCase):
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
         self.assertEqual(query._where.args['A0'], '%some value%', 'Value is not correct')
 
+    def test_where_icontains(self):
+        query = Query().from_table(
+            table='test_table'
+        ).where(Q(
+            field_name__icontains='some value'
+        ))
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table WHERE (field_name ILIKE %(A0)s)'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+        self.assertEqual(query._where.args['A0'], '%some value%', 'Value is not correct')
+
     def test_where_not_contains(self):
         query = Query().from_table(
             table='test_table'
@@ -219,6 +231,18 @@ class WhereTest(QueryTestCase):
 
         query_str = query.get_sql()
         expected_query = 'SELECT test_table.* FROM test_table WHERE ((NOT(field_name LIKE %(A0)s)))'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+        self.assertEqual(query._where.args['A0'], '%some value%', 'Value is not correct')
+
+    def test_where_not_icontains(self):
+        query = Query().from_table(
+            table='test_table'
+        ).where(~Q(
+            field_name__icontains='some value'
+        ))
+
+        query_str = query.get_sql()
+        expected_query = 'SELECT test_table.* FROM test_table WHERE ((NOT(field_name ILIKE %(A0)s)))'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
         self.assertEqual(query._where.args['A0'], '%some value%', 'Value is not correct')
 

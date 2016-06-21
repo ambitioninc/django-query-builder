@@ -13,7 +13,18 @@ class AggregateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT COUNT(test_table.id) AS id_count FROM test_table'
+        expected_query = 'SELECT COUNT(test_table.id) AS "id_count" FROM test_table'
+        self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
+
+    def test_count_distinct(self):
+        query = Query().from_table(
+            table='test_table',
+            fields=[
+                CountField('name', distinct=True)
+            ]
+        )
+        query_str = query.get_sql()
+        expected_query = 'SELECT COUNT(DISTINCT test_table.name) AS "name_count" FROM test_table'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_count_all(self):
@@ -24,7 +35,7 @@ class AggregateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT COUNT(test_table.*) AS all_count FROM test_table'
+        expected_query = 'SELECT COUNT(test_table.*) AS "all_count" FROM test_table'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_count_id_alias(self):
@@ -35,7 +46,7 @@ class AggregateTest(QueryTestCase):
             }]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT COUNT(test_table.id) AS num FROM test_table'
+        expected_query = 'SELECT COUNT(test_table.id) AS "num" FROM test_table'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_avg(self):
@@ -46,7 +57,7 @@ class AggregateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT AVG(tests_order.margin) AS margin_avg FROM tests_order'
+        expected_query = 'SELECT AVG(tests_order.margin) AS "margin_avg" FROM tests_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_max_field(self):
@@ -60,7 +71,7 @@ class AggregateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT MAX(tests_order.margin) AS margin_max FROM tests_order'
+        expected_query = 'SELECT MAX(tests_order.margin) AS "margin_max" FROM tests_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_min_field(self):
@@ -74,7 +85,7 @@ class AggregateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT MIN(tests_order.margin) AS margin_min FROM tests_order'
+        expected_query = 'SELECT MIN(tests_order.margin) AS "margin_min" FROM tests_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_stddev(self):
@@ -85,7 +96,7 @@ class AggregateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT STDDEV(tests_order.margin) AS margin_stddev FROM tests_order'
+        expected_query = 'SELECT STDDEV(tests_order.margin) AS "margin_stddev" FROM tests_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_sum_field(self):
@@ -99,7 +110,7 @@ class AggregateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT SUM(tests_order.margin) AS margin_sum FROM tests_order'
+        expected_query = 'SELECT SUM(tests_order.margin) AS "margin_sum" FROM tests_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_variance(self):
@@ -110,7 +121,7 @@ class AggregateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT VARIANCE(tests_order.margin) AS margin_variance FROM tests_order'
+        expected_query = 'SELECT VARIANCE(tests_order.margin) AS "margin_variance" FROM tests_order'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_count(self):
@@ -128,7 +139,7 @@ class AggregateTest(QueryTestCase):
                 received
             )
         )
-        self.assertEqual(query.get_count_query().get_sql(), 'SELECT COUNT(tests_user.*) AS all_count FROM tests_user')
+        self.assertEqual(query.get_count_query().get_sql(), 'SELECT COUNT(tests_user.*) AS "all_count" FROM tests_user')
 
         # Make sure the copy didn't modify the original
         self.assertEqual(len(query.tables[0].fields), 2)

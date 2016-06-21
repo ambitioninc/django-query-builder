@@ -253,6 +253,7 @@ class Where(object):
         'lt': '<',
         'lte': '<=',
         'contains': 'LIKE',
+        'icontains': 'ILIKE',
         'startswith': 'LIKE',
         'in': 'IN',
     }
@@ -304,7 +305,7 @@ class Where(object):
         :return: the comparison operator from the Where class's comparison_map
         :rtype: str
         """
-        if operator == 'contains':
+        if operator in ('contains', 'icontains'):
             value = '%{0}%'.format(value)
         elif operator == 'startswith':
             value = '{0}%'.format(value)
@@ -599,6 +600,7 @@ class Query(object):
         self.is_inner = False
         self.with_tables = []
         self._distinct = False
+        self.distinct_ons = []
         self.field_names = []
         self.field_names_pk = None
         self.values = []
@@ -1015,8 +1017,10 @@ class Query(object):
         self._distinct = use_distinct
         return self
 
-    def distinct_on(self):
-        raise NotImplementedError
+    def distinct_on(self, *fields):
+        for field in fields:
+            self.distinct_ons.append(FieldFactory(field))
+        return self
 
     def check_name_collisions(self):
         """
@@ -1184,7 +1188,7 @@ class Query(object):
         ModelClass = self.tables[0].model
         all_fields = ModelClass._meta.fields
         pk_name = ModelClass._meta.pk.name
-        all_field_names = [field.name for field in all_fields if field.name != pk_name]
+        all_field_names = [field.column for field in all_fields if field.column != pk_name]
         all_field_names_sql = ', '.join(all_field_names)
         unique_field_names_sql = ', '.join(unique_fields)
         update_fields_sql = ', '.join(['{0} = EXCLUDED.{0}'.format(field_name) for field_name in update_fields])
@@ -1200,13 +1204,24 @@ class Query(object):
             row_values.append('({0})'.format(', '.join(placeholders)))
         row_values_sql = ', '.join(row_values)
 
-        self.sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) DO UPDATE SET {4}'.format(
-            self.tables[0].get_identifier(),
-            all_field_names_sql,
-            row_values_sql,
-            unique_field_names_sql,
-            update_fields_sql
-        )
+        if update_fields:
+            self.sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) DO UPDATE SET {4} RETURNING {5}'.format(
+                self.tables[0].get_identifier(),
+                all_field_names_sql,
+                row_values_sql,
+                unique_field_names_sql,
+                update_fields_sql,
+                '*'
+            )
+        else:
+            self.sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) {4} RETURNING {5}'.format(
+                self.tables[0].get_identifier(),
+                all_field_names_sql,
+                row_values_sql,
+                unique_field_names_sql,
+                'DO UPDATE SET {0}=EXCLUDED.{0}'.format(unique_fields[0]),
+                '*'
+            )
 
         return self.sql, sql_args
 
@@ -1330,8 +1345,12 @@ class Query(object):
         return sql
 
     def get_distinct_sql(self):
+        if self._distinct and self.distinct_ons:
+            raise ValueError('Cannot combine distinct and distinct_on')
         if self._distinct:
             return 'DISTINCT '
+        if self.distinct_ons:
+            return 'DISTINCT ON ({0}) '.format(', '.join(f.get_sql() for f in self.distinct_ons))
         return ''
 
     def build_from_table(self):
@@ -1652,7 +1671,7 @@ class Query(object):
         # execute the query
         cursor.execute(sql, sql_args)
 
-    def upsert(self, rows, unique_fields, update_fields):
+    def upsert(self, rows, unique_fields, update_fields, return_rows=False, return_models=False):
         """
         Performs an upsert on the set of models defined in rows.
         """
@@ -1666,6 +1685,26 @@ class Query(object):
 
         # execute the query
         cursor.execute(sql, sql_args)
+
+        if return_rows:
+            return self._fetch_all_as_dict(cursor)
+
+        if return_models:
+            row_dicts = self._fetch_all_as_dict(cursor)
+            ModelClass = self.tables[0].model
+            model_objects = [
+                ModelClass(**row_dict)
+                for row_dict in row_dicts
+            ]
+
+            # Set the state to indicate the object has been loaded from db
+            for model_object in model_objects:
+                model_object._state.adding = False
+                model_object._state.db = 'default'
+
+            return model_objects
+
+        return []
 
     def sql_delete(self):
         """

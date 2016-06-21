@@ -53,8 +53,8 @@ class JoinTest(QueryTestCase):
 
         query_str = query.get_sql()
         expected_query = (
-            'SELECT other_table.field_one AS other_table__field_one, '
-            'other_table.field_two AS other_table__field_two '
+            'SELECT other_table.field_one AS "other_table__field_one", '
+            'other_table.field_two AS "other_table__field_two" '
             'FROM tests_account '
             'JOIN other_table ON other_table.test_id = tests_account.id'
         )
@@ -142,8 +142,8 @@ class JoinTest(QueryTestCase):
         expected_query = (
             'SELECT tests_account.one, '
             'tests_account.two, '
-            'tests_order.one AS three, '
-            'tests_order.two AS four '
+            'tests_order.one AS "three", '
+            'tests_order.two AS "four" '
             'FROM tests_account '
             'JOIN tests_order ON tests_order.account_id = tests_account.id'
         )
@@ -218,8 +218,8 @@ class JoinTest(QueryTestCase):
 
         expected_query = (
             'SELECT tests_account.*, '
-            'tests_order.id AS order__id, '
-            'tests_order.margin AS order__margin '
+            'tests_order.id AS "order__id", '
+            'tests_order.margin AS "order__margin" '
             'FROM tests_account '
             'JOIN tests_order ON tests_order.account_id = tests_account.id'
         )
