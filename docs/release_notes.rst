@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.11.1
+------
+* get db prep values for upserts and get column name by model property names
+
 v0.11.0
 ------
 * Wrap alias in double quotes to preserve case

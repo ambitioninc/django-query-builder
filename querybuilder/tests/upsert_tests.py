@@ -1,4 +1,5 @@
 from django.test.utils import override_settings
+from django import VERSION
 
 from querybuilder.logger import Logger
 from querybuilder.query import Query
@@ -13,11 +14,29 @@ class TestUpdate(QueryTestCase):
         self.logger = Logger()
         self.logger.start_logging()
 
+    def test_upsert_json_field(self):
+        """
+        Only runs for django 1.9 because the jsonfield project uses an incorrect db prep value
+        """
+        if VERSION[0] != 1 or VERSION[1] < 9:
+            return
+
+        items = [
+            Uniques(field1='1.1', field2='1.2', field3='1.3', field6='1.6', field7='1.7', field8={
+                'one': 'two'
+            }),
+        ]
+
+        Query().from_table(Uniques).upsert(
+            items,
+            unique_fields=['field1'],
+            update_fields=['field3', 'field4', 'field5', 'field8']
+        )
+
     def test_upsert(self):
         """
         Verifies that records get upserted correctly. Skipping this test now until travis-ci supports 9.5 addon.
         """
-        return
         items = [
             Uniques(field1='1.1', field2='1.2', field3='1.3', field6='1.6', field7='1.7'),
         ]
@@ -36,6 +55,7 @@ class TestUpdate(QueryTestCase):
         self.assertEqual(model.field5, None)
         self.assertEqual(model.field6, '1.6')
         self.assertEqual(model.field7, '1.7')
+        self.assertEqual(model.field8, {})
 
         items = [
             Uniques(
