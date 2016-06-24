@@ -1236,7 +1236,7 @@ class Query(object):
                 all_field_names_sql,
                 row_values_sql,
                 unique_field_names_sql,
-                'DO UPDATE SET {0}=EXCLUDED.{0}'.format(unique_fields[0]),
+                'DO UPDATE SET {0}=EXCLUDED.{0}'.format(unique_fields[0].column),
                 '*'
             )
 
