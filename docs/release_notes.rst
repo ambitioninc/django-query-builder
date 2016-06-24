@@ -1,12 +1,16 @@
 Release Notes
 =============
 
+v0.11.2
+-------
+* use correct column name on upsert when existing record updates
+
 v0.11.1
-------
+-------
 * get db prep values for upserts and get column name by model property names
 
 v0.11.0
-------
+-------
 * Wrap alias in double quotes to preserve case
 * Fix bulk upsert column names
 * Add upsert support to return affected records as dicts or models
@@ -16,7 +20,7 @@ v0.11.0
 * Implement DISTINCT for aggregate fields
 
 v0.10.0
-------
+-------
 * Added postgres bulk upsert support
 
 v0.9.0
