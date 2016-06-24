@@ -1186,20 +1186,37 @@ class Query(object):
         ON CONFLICT (unique_field) DO UPDATE SET field2 = EXCLUDED.field2;
         """
         ModelClass = self.tables[0].model
-        all_fields = ModelClass._meta.fields
-        pk_name = ModelClass._meta.pk.name
-        all_field_names = [field.column for field in all_fields if field.column != pk_name]
+        pk_name = ModelClass._meta.pk.column
+        all_fields = [field for field in ModelClass._meta.fields if field.column != pk_name]
+        all_field_names = [field.column for field in all_fields]
         all_field_names_sql = ', '.join(all_field_names)
-        unique_field_names_sql = ', '.join(unique_fields)
-        update_fields_sql = ', '.join(['{0} = EXCLUDED.{0}'.format(field_name) for field_name in update_fields])
+
+        # Convert field names to db column names
+        unique_fields = [
+            ModelClass._meta.get_field(unique_field)
+            for unique_field in unique_fields
+        ]
+        update_fields = [
+            ModelClass._meta.get_field(update_field)
+            for update_field in update_fields
+        ]
+
+        unique_field_names_sql = ', '.join([
+            field.column for field in unique_fields
+        ])
+        update_fields_sql = ', '.join([
+             '{0} = EXCLUDED.{0}'.format(field.column)
+             for field in update_fields
+        ])
 
         row_values = []
         sql_args = []
 
         for row in rows:
             placeholders = []
-            for field_name in all_field_names:
-                sql_args.append(getattr(row, field_name))
+            for field in all_fields:
+                # Convert field value to db value
+                sql_args.append(field.get_prep_value(getattr(row, field_name)))
                 placeholders.append('%s')
             row_values.append('({0})'.format(', '.join(placeholders)))
         row_values_sql = ', '.join(row_values)

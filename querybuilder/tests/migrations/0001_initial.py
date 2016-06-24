@@ -63,6 +63,7 @@ class Migration(migrations.Migration):
                 ('field5', models.CharField(default=None, max_length=16, null=True)),
                 ('field6', models.CharField(max_length=16)),
                 ('field7', models.CharField(max_length=16)),
+                ('field8', json_field),
             ],
         ),
         migrations.CreateModel(

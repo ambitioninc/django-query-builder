@@ -51,6 +51,7 @@ class Uniques(models.Model):
     field5 = models.CharField(max_length=16, null=True, default=None)
     field6 = models.CharField(max_length=16)
     field7 = models.CharField(max_length=16)
+    field8 = JSONField(default={})
 
     class Meta:
         unique_together = ('field6', 'field7')
