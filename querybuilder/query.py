@@ -1205,8 +1205,8 @@ class Query(object):
             field.column for field in unique_fields
         ])
         update_fields_sql = ', '.join([
-             '{0} = EXCLUDED.{0}'.format(field.column)
-             for field in update_fields
+            '{0} = EXCLUDED.{0}'.format(field.column)
+            for field in update_fields
         ])
 
         row_values = []
@@ -1216,7 +1216,7 @@ class Query(object):
             placeholders = []
             for field in all_fields:
                 # Convert field value to db value
-                sql_args.append(field.get_prep_value(getattr(row, field_name)))
+                sql_args.append(field.get_prep_value(getattr(row, field.column)))
                 placeholders.append('%s')
             row_values.append('({0})'.format(', '.join(placeholders)))
         row_values_sql = ', '.join(row_values)
