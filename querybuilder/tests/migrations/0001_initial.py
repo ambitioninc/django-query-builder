@@ -5,14 +5,7 @@ from __future__ import unicode_literals
 from querybuilder.tests.utils import get_postgres_version
 
 # These migrations should only be run during tests and not in your installed app.
-try:
-    if get_postgres_version() < (9, 4):
-        raise ImportError('Invalid Postgres version')
-    import django.contrib.postgres.fields.jsonb
-    json_field = django.contrib.postgres.fields.jsonb.JSONField()
-except ImportError:
-    import jsonfield.fields
-    json_field = jsonfield.fields.JSONField()
+json_field = jsonfield.fields.JSONField()
 from django.db import migrations, models
 import django.db.models.deletion
 

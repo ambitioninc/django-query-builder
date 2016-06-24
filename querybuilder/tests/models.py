@@ -1,7 +1,4 @@
-try:
-    from django.contrib.postgres.fields import JSONField
-except ImportError:
-    from jsonfield import JSONField
+from jsonfield import JSONField
 from django.db import models
 
 
