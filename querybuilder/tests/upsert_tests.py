@@ -55,9 +55,7 @@ class TestUpdate(QueryTestCase):
         self.assertEqual(model.field5, None)
         self.assertEqual(model.field6, '1.6')
         self.assertEqual(model.field7, '1.7')
-        self.assertEqual(model.field8, {
-            'one': 'two'
-        })
+        self.assertEqual(model.field8, {})
 
         items = [
             Uniques(
