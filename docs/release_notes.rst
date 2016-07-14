@@ -1,13 +1,17 @@
 Release Notes
 =============
 
+v0.11.3
+-------
+* Added issubclass check for ModelBase when checking table type
+
 v0.11.2
 -------
-* use correct column name on upsert when existing record updates
+* Use correct column name on upsert when existing record updates
 
 v0.11.1
 -------
-* get db prep values for upserts and get column name by model property names
+* Get db prep values for upserts and get column name by model property names
 
 v0.11.0
 -------
