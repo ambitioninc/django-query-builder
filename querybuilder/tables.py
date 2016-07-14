@@ -33,7 +33,7 @@ class TableFactory(object):
             table_type = type(table)
         if isinstance(table, string_types):
             return SimpleTable(table, **kwargs)
-        elif table_type is ModelBase:
+        elif issubclass(table_type, ModelBase):
             return ModelTable(table, **kwargs)
         elif table_type is querybuilder.query.Query:
             return QueryTable(table, **kwargs)
