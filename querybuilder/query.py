@@ -2024,7 +2024,9 @@ class JsonQueryset(QueryBuilderQuerySet):
             key = key.replace('__exact', '')
             parts = key.split('->')
             if len(parts) == 2:
-                key = '{0}->>\'{1}\''.format(parts[0], parts[1])
+                field_key_parts = parts[1].split('__')
+                key = '{0}->>\'{1}\''.format(parts[0], field_key_parts[0])
+                key = '__'.join([key] + field_key_parts[1:])
                 value = six.u('{0}'.format(value))
             if hasattr(value, 'id'):
                 key = '{0}_id'.format(key)
