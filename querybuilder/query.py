@@ -145,7 +145,11 @@ class Join(object):
             # loop through fields to find the field for this model
 
             # check if this join type is for a related field
-            for field in self.left_table.model._meta.get_all_related_objects():
+            for field in [
+                f for f in self.left_table.model._meta.get_fields()
+                if (f.one_to_many or f.one_to_one)
+                and f.auto_created and not f.concrete
+            ]:
                 related_model = field.model
                 if hasattr(field, 'related_model'):
                     related_model = field.related_model
