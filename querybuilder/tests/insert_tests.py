@@ -47,7 +47,7 @@ class InsertTest(QueryTestCase):
         self.assertEqual(sql_params[2], 'User')
 
         query.insert(rows)
-        sql = self.logger.get_log()[1]['sql']
+        sql = self.logger.get_log()[2]['sql']
         self.assertEqual(sql, "INSERT INTO tests_account (user_id, first_name, last_name) VALUES (1, 'Test', 'User')")
 
     def test_insert_multiple_rows(self):
@@ -82,7 +82,7 @@ class InsertTest(QueryTestCase):
         self.assertEqual(sql_params[5], 'User2')
 
         query.insert(rows)
-        sql = self.logger.get_log()[2]['sql']
+        sql = self.logger.get_log()[4]['sql']
         self.assertEqual(
             sql,
             ("INSERT INTO tests_account (user_id, first_name, last_name) "
