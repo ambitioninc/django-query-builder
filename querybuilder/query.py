@@ -131,6 +131,15 @@ class Join(object):
         if len(self.owner.tables):
             return self.owner.tables[0]
 
+    def get_all_related_objects(self, table):
+        """
+        Fix for django 1.10 to replace deprecated code
+        """
+        return [
+            f for f in table.model._meta.get_fields()
+            if (f.one_to_many or f.one_to_one) and f.auto_created and not f.concrete
+        ]
+
     def set_right_table(self, table):
         """
         Sets the right table for this join clause and try to automatically set the condition
@@ -145,7 +154,7 @@ class Join(object):
             # loop through fields to find the field for this model
 
             # check if this join type is for a related field
-            for field in self.left_table.model._meta.get_all_related_objects():
+            for field in self.get_all_related_objects(self.left_table):
                 related_model = field.model
                 if hasattr(field, 'related_model'):
                     related_model = field.related_model
@@ -181,7 +190,7 @@ class Join(object):
             # loop through fields to find the field for this model
 
             # check if this join type is for a related field
-            for field in self.right_table.model._meta.get_all_related_objects():
+            for field in self.get_all_related_objects(self.right_table):
                 related_model = field.model
                 if hasattr(field, 'related_model'):
                     related_model = field.related_model
