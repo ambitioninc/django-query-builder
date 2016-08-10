@@ -131,6 +131,20 @@ class Join(object):
         if len(self.owner.tables):
             return self.owner.tables[0]
 
+    def get_all_related_objects(self, table):
+        """
+        Fix for django 1.10 to replace deprecated code. Keep support for django 1.7
+        """
+        # Django 1.7 method
+        if hasattr(table.model._meta, 'get_all_related_objects'):
+            return table.model._meta.get_all_related_objects()
+        else:
+            # Django > 1.7
+            return [
+                f for f in table.model._meta.get_fields()
+                if (f.one_to_many or f.one_to_one) and f.auto_created and not f.concrete
+            ]
+
     def set_right_table(self, table):
         """
         Sets the right table for this join clause and try to automatically set the condition
@@ -145,7 +159,7 @@ class Join(object):
             # loop through fields to find the field for this model
 
             # check if this join type is for a related field
-            for field in self.left_table.model._meta.get_all_related_objects():
+            for field in self.get_all_related_objects(self.left_table):
                 related_model = field.model
                 if hasattr(field, 'related_model'):
                     related_model = field.related_model
@@ -181,7 +195,7 @@ class Join(object):
             # loop through fields to find the field for this model
 
             # check if this join type is for a related field
-            for field in self.right_table.model._meta.get_all_related_objects():
+            for field in self.get_all_related_objects(self.right_table):
                 related_model = field.model
                 if hasattr(field, 'related_model'):
                     related_model = field.related_model
@@ -2024,7 +2038,9 @@ class JsonQueryset(QueryBuilderQuerySet):
             key = key.replace('__exact', '')
             parts = key.split('->')
             if len(parts) == 2:
-                key = '{0}->>\'{1}\''.format(parts[0], parts[1])
+                field_key_parts = parts[1].split('__')
+                key = '{0}->>\'{1}\''.format(parts[0], field_key_parts[0])
+                key = '__'.join([key] + field_key_parts[1:])
                 value = six.u('{0}'.format(value))
             if hasattr(value, 'id'):
                 key = '{0}_id'.format(key)

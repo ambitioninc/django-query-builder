@@ -1,8 +1,9 @@
 from django.test.utils import override_settings
+from django_dynamic_fixture import G
 
 from querybuilder.logger import Logger, LogManager
 from querybuilder.query import Query
-from querybuilder.tests.models import Account
+from querybuilder.tests.models import Account, User
 from querybuilder.tests.query_tests import QueryTestCase
 
 
@@ -18,6 +19,8 @@ class InsertTest(QueryTestCase):
         LogManager.loggers = {}
 
     def test_insert_single_row(self):
+        G(User, id=1)
+
         query = Query().from_table(
             table=Account,
             fields=[
@@ -44,10 +47,13 @@ class InsertTest(QueryTestCase):
         self.assertEqual(sql_params[2], 'User')
 
         query.insert(rows)
-        sql = self.logger.get_log()[0]['sql']
+        sql = self.logger.get_log()[2]['sql']
         self.assertEqual(sql, "INSERT INTO tests_account (user_id, first_name, last_name) VALUES (1, 'Test', 'User')")
 
     def test_insert_multiple_rows(self):
+        G(User, id=1)
+        G(User, id=2)
+
         query = Query().from_table(
             table=Account,
             fields=[
@@ -76,7 +82,7 @@ class InsertTest(QueryTestCase):
         self.assertEqual(sql_params[5], 'User2')
 
         query.insert(rows)
-        sql = self.logger.get_log()[0]['sql']
+        sql = self.logger.get_log()[4]['sql']
         self.assertEqual(
             sql,
             ("INSERT INTO tests_account (user_id, first_name, last_name) "
