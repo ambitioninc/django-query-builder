@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+v0.12.0
+-------
+* Run tests with django 1.10
+* Fix bug when filtering json fields with any operator other than equals
+* Fix deprecated method call for django 1.10
+
 v0.11.3
 -------
 * Added issubclass check for ModelBase when checking table type
