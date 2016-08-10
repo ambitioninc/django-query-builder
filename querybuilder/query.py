@@ -133,12 +133,17 @@ class Join(object):
 
     def get_all_related_objects(self, table):
         """
-        Fix for django 1.10 to replace deprecated code
+        Fix for django 1.10 to replace deprecated code. Keep support for django 1.7
         """
-        return [
-            f for f in table.model._meta.get_fields()
-            if (f.one_to_many or f.one_to_one) and f.auto_created and not f.concrete
-        ]
+        # Django 1.7 method
+        if hasattr(table.model._meta, 'get_all_related_objects'):
+            return table.model._meta.get_all_related_objects()
+        else:
+            # Django > 1.7
+            return [
+                f for f in table.model._meta.get_fields()
+                if (f.one_to_many or f.one_to_one) and f.auto_created and not f.concrete
+            ]
 
     def set_right_table(self, table):
         """
