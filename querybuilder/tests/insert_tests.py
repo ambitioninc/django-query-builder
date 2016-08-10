@@ -1,4 +1,5 @@
 from django.test.utils import override_settings
+from django_dynamic_fixture import G
 
 from querybuilder.logger import Logger, LogManager
 from querybuilder.query import Query
@@ -19,7 +20,7 @@ class InsertTest(QueryTestCase):
 
     def test_insert_single_row(self):
         G(User, id=1)
-        
+
         query = Query().from_table(
             table=Account,
             fields=[
