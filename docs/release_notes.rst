@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+v0.13.0
+-------
+* Add paginator class for json queryset
+* No longer change '__' to '.' in filters. Just use a '.' where needed and use django 1.9's json field support for querying json fields
+
 v0.12.0
 -------
 * Run tests with django 1.10

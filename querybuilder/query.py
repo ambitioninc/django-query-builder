@@ -352,7 +352,6 @@ class Where(object):
                 operator = '='
 
                 # break apart the field name on double underscores
-                # TODO: do not convert the first double underscore to a .
                 field_parts = field_name.split('__')
                 if len(field_parts) > 1:
                     # get the operator based on the last element split from the double underscores
@@ -360,14 +359,9 @@ class Where(object):
                     operator = self.get_condition_operator(operator_str)
                     if operator is None:
                         operator = '='
-                        field_name = '.'.join(field_parts)
+                        field_name = '__'.join(field_parts)
                     else:
-                        field_name = '.'.join(field_parts[:-1])
-
-                    # if there is more than one double underscore, make the first one a dot
-                    trimmed_field_parts = field_name.split('.')
-                    if len(trimmed_field_parts) > 2:
-                        field_name = '{0}.{1}'.format(trimmed_field_parts[0], '__'.join(trimmed_field_parts[1:]))
+                        field_name = '__'.join(field_parts[:-1])
 
                 # check if we are comparing to null
                 if value is None:
@@ -2039,8 +2033,12 @@ class JsonQueryset(QueryBuilderQuerySet):
             parts = key.split('->')
             if len(parts) == 2:
                 field_key_parts = parts[1].split('__')
-                key = '{0}->>\'{1}\''.format(parts[0], field_key_parts[0])
-                key = '__'.join([key] + field_key_parts[1:])
+
+                if len(field_key_parts) == 1:
+                    key = '{0}->>\'{1}\''.format(parts[0], field_key_parts[0])
+                else:
+                    key = '{0}->>\'{1}\''.format(parts[0], '__'.join(field_key_parts[0:-1]))
+                    key = '__'.join([key, field_key_parts[-1]])
                 value = six.u('{0}'.format(value))
             if hasattr(value, 'id'):
                 key = '{0}_id'.format(key)
