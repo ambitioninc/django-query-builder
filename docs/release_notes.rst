@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.13.1
+-------
+* Drop support for django 1.7, add official support for python 3.5
+
 v0.13.0
 -------
 * Add paginator class for json queryset
