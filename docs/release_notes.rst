@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-v0.13.1
+v0.14.0
 -------
 * Drop support for django 1.7, add official support for python 3.5
 
