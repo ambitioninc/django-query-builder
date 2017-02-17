@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.14.1
+-------
+* Fix upsert to handle case when the uniqueness constraint is the pk field
+
 v0.14.0
 -------
 * Drop support for django 1.7, add official support for python 3.5

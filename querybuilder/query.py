@@ -1187,7 +1187,7 @@ class Query(object):
 
     def get_upsert_sql(self, rows, unique_fields, update_fields):
         """
-        Performs postgres upsert with multiple rows
+        Generates the postgres specific sql necessary to perform an upsert (ON CONFLICT)
 
         INSERT INTO table_name (field1, field2)
         VALUES (1, 'two')
@@ -1195,7 +1195,13 @@ class Query(object):
         """
         ModelClass = self.tables[0].model
         pk_name = ModelClass._meta.pk.column
+
+        # Use all fields except pk unless the uniqueness constraint is the pk field. Null pk field rows will be
+        # excluded in the upsert method before calling this method
         all_fields = [field for field in ModelClass._meta.fields if field.column != pk_name]
+        if len(unique_fields) == 1 and unique_fields[0] == pk_name:
+            all_fields = [field for field in ModelClass._meta.fields]
+
         all_field_names = [field.column for field in all_fields]
         all_field_names_sql = ', '.join(all_field_names)
 
@@ -1698,21 +1704,39 @@ class Query(object):
 
     def upsert(self, rows, unique_fields, update_fields, return_rows=False, return_models=False):
         """
-        Performs an upsert on the set of models defined in rows.
+        Performs an upsert with the set of models defined in rows. If the unique field which is meant
+        to cause a conflict is an auto increment field, then the field should be excluded when its value is null.
+        In this case, an upsert will be performed followed by a bulk_create
         """
         if len(rows) == 0:
             return
+
+        ModelClass = self.tables[0].model
+        pk_name = ModelClass._meta.pk.column
+
+        rows_without_pk = []
+        if len(unique_fields) == 1 and unique_fields[0] == pk_name:
+            rows_without_pk = [row for row in rows if getattr(row, pk_name) is None]
+            rows = [row for row in rows if getattr(row, pk_name) is not None]
 
         sql, sql_args = self.get_upsert_sql(rows, unique_fields, update_fields)
 
         # get the cursor to execute the query
         cursor = self.get_cursor()
 
-        # execute the query
+        # execute the upsert query
         cursor.execute(sql, sql_args)
 
+        # execute the bulk create query if needed
+        bulk_created_records = []
+        if rows_without_pk:
+            bulk_created_records = ModelClass.objects.bulk_create(rows_without_pk)
+
         if return_rows:
-            return self._fetch_all_as_dict(cursor)
+            return self._fetch_all_as_dict(cursor) + [
+                record.__dict__
+                for record in bulk_created_records
+            ]
 
         if return_models:
             row_dicts = self._fetch_all_as_dict(cursor)
@@ -1727,7 +1751,7 @@ class Query(object):
                 model_object._state.adding = False
                 model_object._state.db = 'default'
 
-            return model_objects
+            return model_objects + bulk_created_records
 
         return []
 

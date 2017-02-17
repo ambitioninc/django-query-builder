@@ -1,14 +1,15 @@
 from django.test.utils import override_settings
 from django import VERSION
+from django_dynamic_fixture import G
 
 from querybuilder.logger import Logger
 from querybuilder.query import Query
-from querybuilder.tests.models import Uniques
+from querybuilder.tests.models import Uniques, User
 from querybuilder.tests.query_tests import QueryTestCase
 
 
 @override_settings(DEBUG=True)
-class TestUpdate(QueryTestCase):
+class TestUpsert(QueryTestCase):
 
     def setUp(self):
         self.logger = Logger()
@@ -123,3 +124,95 @@ class TestUpdate(QueryTestCase):
         self.assertEqual(models[1].field5, 'not null')
         self.assertEqual(models[1].field6, '2.6')
         self.assertEqual(models[1].field7, '2.7')
+
+    def test_upsert_pk(self):
+        """
+        Makes sure upserting is possible when the only uniqueness constraint is the pk.
+        """
+        user1 = G(User, email='user1')
+        user1.email = 'user1change'
+        user2 = User(email='user2')
+        user3 = User(email='user3')
+
+        self.assertEqual(User.objects.count(), 1)
+        Query().from_table(User).upsert(
+            [user1, user2, user3],
+            unique_fields=['id'],
+            update_fields=['email'],
+        )
+        self.assertEqual(User.objects.count(), 3)
+
+        users = list(User.objects.order_by('id'))
+
+        self.assertEqual(users[0].email, 'user1change')
+        self.assertEqual(users[1].email, 'user2')
+        self.assertEqual(users[2].email, 'user3')
+
+    def test_upsert_pk_return_dicts(self):
+        """
+        Makes sure upserting is possible when the only uniqueness constraint is the pk. Should return dicts.
+        """
+        user1 = G(User, email='user1')
+        user1.email = 'user1change'
+        user2 = User(email='user2')
+        user3 = User(email='user3')
+
+        self.assertEqual(User.objects.count(), 1)
+        rows = Query().from_table(User).upsert(
+            [user1, user2, user3],
+            unique_fields=['id'],
+            update_fields=['email'],
+            return_rows=True,
+        )
+        self.assertEqual(User.objects.count(), 3)
+        self.assertEqual(len(rows), 3)
+
+        # Check ids
+        for row in rows:
+            self.assertIsNotNone(row['id'])
+
+        # Check emails
+        email_set = {
+            row['email'] for row in rows
+        }
+        self.assertEqual(email_set, {'user1change', 'user2', 'user3'})
+
+        # Check fields from db
+        users = list(User.objects.order_by('id'))
+        self.assertEqual(users[0].email, 'user1change')
+        self.assertEqual(users[1].email, 'user2')
+        self.assertEqual(users[2].email, 'user3')
+
+    def test_upsert_pk_return_models(self):
+        """
+        Makes sure upserting is possible when the only uniqueness constraint is the pk. Should return models.
+        """
+        user1 = G(User, email='user1')
+        user1.email = 'user1change'
+        user2 = User(email='user2')
+        user3 = User(email='user3')
+
+        self.assertEqual(User.objects.count(), 1)
+        records = Query().from_table(User).upsert(
+            [user1, user2, user3],
+            unique_fields=['id'],
+            update_fields=['email'],
+            return_models=True,
+        )
+        self.assertEqual(len(records), 3)
+
+        # Check ids
+        for record in records:
+            self.assertIsNotNone(record.id)
+
+        # Check emails
+        email_set = {
+            record.email for record in records
+        }
+        self.assertEqual(email_set, {'user1change', 'user2', 'user3'})
+
+        # Check fields from db
+        users = list(User.objects.order_by('id'))
+        self.assertEqual(users[0].email, 'user1change')
+        self.assertEqual(users[1].email, 'user2')
+        self.assertEqual(users[2].email, 'user3')
