@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from django.db import connection as default_django_connection
-from django.db.models import Q
+from django.db.models import Q, AutoField
 from django.db.models.query import QuerySet
 from django.db.models.constants import LOOKUP_SEP
 try:
@@ -1712,12 +1712,21 @@ class Query(object):
             return
 
         ModelClass = self.tables[0].model
-        pk_name = ModelClass._meta.pk.column
 
-        rows_without_pk = []
-        if len(unique_fields) == 1 and unique_fields[0] == pk_name:
-            rows_without_pk = [row for row in rows if getattr(row, pk_name) is None]
-            rows = [row for row in rows if getattr(row, pk_name) is not None]
+        rows_with_null_auto_field_value = []
+
+        # Get auto field name (a model can only have one AutoField)
+        auto_field_name = None
+        for field in ModelClass._meta.fields:
+            if isinstance(field, AutoField):
+                auto_field_name = field.column
+                break
+
+        # Check if unique fields list contains an auto field
+        if auto_field_name in set(unique_fields):
+            # Separate the rows that need to be inserted vs the rows that need to be upserted
+            rows_with_null_auto_field_value = [row for row in rows if getattr(row, auto_field_name) is None]
+            rows = [row for row in rows if getattr(row, auto_field_name) is not None]
 
         sql, sql_args = self.get_upsert_sql(rows, unique_fields, update_fields)
 
@@ -1729,8 +1738,8 @@ class Query(object):
 
         # execute the bulk create query if needed
         bulk_created_records = []
-        if rows_without_pk:
-            bulk_created_records = ModelClass.objects.bulk_create(rows_without_pk)
+        if rows_with_null_auto_field_value:
+            bulk_created_records = ModelClass.objects.bulk_create(rows_with_null_auto_field_value)
 
         if return_rows:
             return self._fetch_all_as_dict(cursor) + [
