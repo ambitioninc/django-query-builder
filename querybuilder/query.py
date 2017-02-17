@@ -1185,7 +1185,7 @@ class Query(object):
 
         return self.sql, sql_args
 
-    def get_upsert_sql(self, rows, unique_fields, update_fields):
+    def get_upsert_sql(self, rows, unique_fields, update_fields, auto_field_name=None):
         """
         Generates the postgres specific sql necessary to perform an upsert (ON CONFLICT)
 
@@ -1194,12 +1194,11 @@ class Query(object):
         ON CONFLICT (unique_field) DO UPDATE SET field2 = EXCLUDED.field2;
         """
         ModelClass = self.tables[0].model
-        pk_name = ModelClass._meta.pk.column
 
         # Use all fields except pk unless the uniqueness constraint is the pk field. Null pk field rows will be
         # excluded in the upsert method before calling this method
-        all_fields = [field for field in ModelClass._meta.fields if field.column != pk_name]
-        if len(unique_fields) == 1 and unique_fields[0] == pk_name:
+        all_fields = [field for field in ModelClass._meta.fields if field.column != auto_field_name]
+        if auto_field_name in unique_fields:
             all_fields = [field for field in ModelClass._meta.fields]
 
         all_field_names = [field.column for field in all_fields]
@@ -1702,6 +1701,17 @@ class Query(object):
         # execute the query
         cursor.execute(sql, sql_args)
 
+    def get_auto_field_name(self, model_class):
+        """
+        If one of the unique_fields is the model's AutoField, return the field name, otherwise return None
+        """
+        # Get auto field name (a model can only have one AutoField)
+        for field in model_class._meta.fields:
+            if isinstance(field, AutoField):
+                return field.column
+
+        return None
+
     def upsert(self, rows, unique_fields, update_fields, return_rows=False, return_models=False):
         """
         Performs an upsert with the set of models defined in rows. If the unique field which is meant
@@ -1716,25 +1726,22 @@ class Query(object):
         rows_with_null_auto_field_value = []
 
         # Get auto field name (a model can only have one AutoField)
-        auto_field_name = None
-        for field in ModelClass._meta.fields:
-            if isinstance(field, AutoField):
-                auto_field_name = field.column
-                break
+        auto_field_name = self.get_auto_field_name(ModelClass)
 
         # Check if unique fields list contains an auto field
-        if auto_field_name in set(unique_fields):
+        if auto_field_name in unique_fields:
             # Separate the rows that need to be inserted vs the rows that need to be upserted
             rows_with_null_auto_field_value = [row for row in rows if getattr(row, auto_field_name) is None]
             rows = [row for row in rows if getattr(row, auto_field_name) is not None]
 
-        sql, sql_args = self.get_upsert_sql(rows, unique_fields, update_fields)
+        if rows:
+            sql, sql_args = self.get_upsert_sql(rows, unique_fields, update_fields, auto_field_name)
 
-        # get the cursor to execute the query
-        cursor = self.get_cursor()
+            # get the cursor to execute the query
+            cursor = self.get_cursor()
 
-        # execute the upsert query
-        cursor.execute(sql, sql_args)
+            # execute the upsert query
+            cursor.execute(sql, sql_args)
 
         # execute the bulk create query if needed
         bulk_created_records = []
@@ -1742,13 +1749,14 @@ class Query(object):
             bulk_created_records = ModelClass.objects.bulk_create(rows_with_null_auto_field_value)
 
         if return_rows:
-            return self._fetch_all_as_dict(cursor) + [
+            upserted_rows = self._fetch_all_as_dict(cursor) if rows else []
+            return upserted_rows + [
                 record.__dict__
                 for record in bulk_created_records
             ]
 
         if return_models:
-            row_dicts = self._fetch_all_as_dict(cursor)
+            row_dicts = self._fetch_all_as_dict(cursor) if rows else []
             ModelClass = self.tables[0].model
             model_objects = [
                 ModelClass(**row_dict)
