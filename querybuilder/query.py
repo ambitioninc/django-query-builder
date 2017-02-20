@@ -1778,6 +1778,8 @@ class Query(object):
                 model_object._state.adding = False
                 model_object._state.db = 'default'
 
+            return_value = model_objects
+
         return return_value
 
     def sql_delete(self):
