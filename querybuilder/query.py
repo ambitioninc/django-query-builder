@@ -1185,7 +1185,7 @@ class Query(object):
 
         return self.sql, sql_args
 
-    def get_upsert_sql(self, rows, unique_fields, update_fields, auto_field_name=None):
+    def get_upsert_sql(self, rows, unique_fields, update_fields, auto_field_name=None, only_insert=False):
         """
         Generates the postgres specific sql necessary to perform an upsert (ON CONFLICT)
 
@@ -1198,7 +1198,7 @@ class Query(object):
         # Use all fields except pk unless the uniqueness constraint is the pk field. Null pk field rows will be
         # excluded in the upsert method before calling this method
         all_fields = [field for field in ModelClass._meta.fields if field.column != auto_field_name]
-        if auto_field_name in unique_fields:
+        if auto_field_name in unique_fields and not only_insert:
             all_fields = [field for field in ModelClass._meta.fields]
 
         all_field_names = [field.column for field in all_fields]
@@ -1734,8 +1734,10 @@ class Query(object):
             rows_with_null_auto_field_value = [row for row in rows if getattr(row, auto_field_name) is None]
             rows = [row for row in rows if getattr(row, auto_field_name) is not None]
 
+        return_value = []
+
         if rows:
-            sql, sql_args = self.get_upsert_sql(rows, unique_fields, update_fields, auto_field_name)
+            sql, sql_args = self.get_upsert_sql(rows, unique_fields, update_fields, auto_field_name=auto_field_name)
 
             # get the cursor to execute the query
             cursor = self.get_cursor()
@@ -1743,24 +1745,32 @@ class Query(object):
             # execute the upsert query
             cursor.execute(sql, sql_args)
 
-        # execute the bulk create query if needed
-        bulk_created_records = []
-        if rows_with_null_auto_field_value:
-            bulk_created_records = ModelClass.objects.bulk_create(rows_with_null_auto_field_value)
+            if return_rows or return_models:
+                return_value.extend(self._fetch_all_as_dict(cursor))
 
-        if return_rows:
-            upserted_rows = self._fetch_all_as_dict(cursor) if rows else []
-            return upserted_rows + [
-                record.__dict__
-                for record in bulk_created_records
-            ]
+        if rows_with_null_auto_field_value:
+            sql, sql_args = self.get_upsert_sql(
+                rows_with_null_auto_field_value,
+                unique_fields,
+                update_fields,
+                auto_field_name=auto_field_name,
+                only_insert=True,
+            )
+
+            # get the cursor to execute the query
+            cursor = self.get_cursor()
+
+            # execute the upsert query
+            cursor.execute(sql, sql_args)
+
+            if return_rows or return_models:
+                return_value.extend(self._fetch_all_as_dict(cursor))
 
         if return_models:
-            row_dicts = self._fetch_all_as_dict(cursor) if rows else []
             ModelClass = self.tables[0].model
             model_objects = [
                 ModelClass(**row_dict)
-                for row_dict in row_dicts
+                for row_dict in return_value
             ]
 
             # Set the state to indicate the object has been loaded from db
@@ -1768,9 +1778,7 @@ class Query(object):
                 model_object._state.adding = False
                 model_object._state.db = 'default'
 
-            return model_objects + bulk_created_records
-
-        return []
+        return return_value
 
     def sql_delete(self):
         """
