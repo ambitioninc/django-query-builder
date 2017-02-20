@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 from django.db import connection as default_django_connection
-from django.db.models import Q
+from django.db.models import Q, AutoField
 from django.db.models.query import QuerySet
 from django.db.models.constants import LOOKUP_SEP
 try:
@@ -1185,17 +1185,22 @@ class Query(object):
 
         return self.sql, sql_args
 
-    def get_upsert_sql(self, rows, unique_fields, update_fields):
+    def get_upsert_sql(self, rows, unique_fields, update_fields, auto_field_name=None, only_insert=False):
         """
-        Performs postgres upsert with multiple rows
+        Generates the postgres specific sql necessary to perform an upsert (ON CONFLICT)
 
         INSERT INTO table_name (field1, field2)
         VALUES (1, 'two')
         ON CONFLICT (unique_field) DO UPDATE SET field2 = EXCLUDED.field2;
         """
         ModelClass = self.tables[0].model
-        pk_name = ModelClass._meta.pk.column
-        all_fields = [field for field in ModelClass._meta.fields if field.column != pk_name]
+
+        # Use all fields except pk unless the uniqueness constraint is the pk field. Null pk field rows will be
+        # excluded in the upsert method before calling this method
+        all_fields = [field for field in ModelClass._meta.fields if field.column != auto_field_name]
+        if auto_field_name in unique_fields and not only_insert:
+            all_fields = [field for field in ModelClass._meta.fields]
+
         all_field_names = [field.column for field in all_fields]
         all_field_names_sql = ', '.join(all_field_names)
 
@@ -1696,30 +1701,76 @@ class Query(object):
         # execute the query
         cursor.execute(sql, sql_args)
 
+    def get_auto_field_name(self, model_class):
+        """
+        If one of the unique_fields is the model's AutoField, return the field name, otherwise return None
+        """
+        # Get auto field name (a model can only have one AutoField)
+        for field in model_class._meta.fields:
+            if isinstance(field, AutoField):
+                return field.column
+
+        return None
+
     def upsert(self, rows, unique_fields, update_fields, return_rows=False, return_models=False):
         """
-        Performs an upsert on the set of models defined in rows.
+        Performs an upsert with the set of models defined in rows. If the unique field which is meant
+        to cause a conflict is an auto increment field, then the field should be excluded when its value is null.
+        In this case, an upsert will be performed followed by a bulk_create
         """
         if len(rows) == 0:
             return
 
-        sql, sql_args = self.get_upsert_sql(rows, unique_fields, update_fields)
+        ModelClass = self.tables[0].model
 
-        # get the cursor to execute the query
-        cursor = self.get_cursor()
+        rows_with_null_auto_field_value = []
 
-        # execute the query
-        cursor.execute(sql, sql_args)
+        # Get auto field name (a model can only have one AutoField)
+        auto_field_name = self.get_auto_field_name(ModelClass)
 
-        if return_rows:
-            return self._fetch_all_as_dict(cursor)
+        # Check if unique fields list contains an auto field
+        if auto_field_name in unique_fields:
+            # Separate the rows that need to be inserted vs the rows that need to be upserted
+            rows_with_null_auto_field_value = [row for row in rows if getattr(row, auto_field_name) is None]
+            rows = [row for row in rows if getattr(row, auto_field_name) is not None]
+
+        return_value = []
+
+        if rows:
+            sql, sql_args = self.get_upsert_sql(rows, unique_fields, update_fields, auto_field_name=auto_field_name)
+
+            # get the cursor to execute the query
+            cursor = self.get_cursor()
+
+            # execute the upsert query
+            cursor.execute(sql, sql_args)
+
+            if return_rows or return_models:
+                return_value.extend(self._fetch_all_as_dict(cursor))
+
+        if rows_with_null_auto_field_value:
+            sql, sql_args = self.get_upsert_sql(
+                rows_with_null_auto_field_value,
+                unique_fields,
+                update_fields,
+                auto_field_name=auto_field_name,
+                only_insert=True,
+            )
+
+            # get the cursor to execute the query
+            cursor = self.get_cursor()
+
+            # execute the upsert query
+            cursor.execute(sql, sql_args)
+
+            if return_rows or return_models:
+                return_value.extend(self._fetch_all_as_dict(cursor))
 
         if return_models:
-            row_dicts = self._fetch_all_as_dict(cursor)
             ModelClass = self.tables[0].model
             model_objects = [
                 ModelClass(**row_dict)
-                for row_dict in row_dicts
+                for row_dict in return_value
             ]
 
             # Set the state to indicate the object has been loaded from db
@@ -1727,9 +1778,9 @@ class Query(object):
                 model_object._state.adding = False
                 model_object._state.db = 'default'
 
-            return model_objects
+            return_value = model_objects
 
-        return []
+        return return_value
 
     def sql_delete(self):
         """
