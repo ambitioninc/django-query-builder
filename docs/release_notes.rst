@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.14.2
+-------
+* Fix upsert to use the proper prepare method on django fields
+
 v0.14.1
 -------
 * Fix upsert to handle case when the uniqueness constraint is the pk field
