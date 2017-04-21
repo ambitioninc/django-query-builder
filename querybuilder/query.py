@@ -1185,7 +1185,15 @@ class Query(object):
 
         return self.sql, sql_args
 
-    def get_upsert_sql(self, rows, unique_fields, update_fields, auto_field_name=None, only_insert=False):
+    def get_upsert_sql(
+        self,
+        rows,
+        unique_fields,
+        update_fields,
+        auto_field_name=None,
+        only_insert=False,
+        return_rows=True
+    ):
         """
         Generates the postgres specific sql necessary to perform an upsert (ON CONFLICT)
 
@@ -1235,22 +1243,22 @@ class Query(object):
         row_values_sql = ', '.join(row_values)
 
         if update_fields:
-            self.sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) DO UPDATE SET {4} RETURNING {5}'.format(
+            self.sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) DO UPDATE SET {4} {5}'.format(
                 self.tables[0].get_identifier(),
                 all_field_names_sql,
                 row_values_sql,
                 unique_field_names_sql,
                 update_fields_sql,
-                '*'
+                'RETURNING *' if return_rows else ''
             )
         else:
-            self.sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) {4} RETURNING {5}'.format(
+            self.sql = 'INSERT INTO {0} ({1}) VALUES {2} ON CONFLICT ({3}) {4} {5}'.format(
                 self.tables[0].get_identifier(),
                 all_field_names_sql,
                 row_values_sql,
                 unique_field_names_sql,
                 'DO UPDATE SET {0}=EXCLUDED.{0}'.format(unique_fields[0].column),
-                '*'
+                'RETURNING *' if return_rows else ''
             )
 
         return self.sql, sql_args
@@ -1737,7 +1745,13 @@ class Query(object):
         return_value = []
 
         if rows:
-            sql, sql_args = self.get_upsert_sql(rows, unique_fields, update_fields, auto_field_name=auto_field_name)
+            sql, sql_args = self.get_upsert_sql(
+                rows,
+                unique_fields,
+                update_fields,
+                auto_field_name=auto_field_name,
+                return_rows=return_rows or return_models
+            )
 
             # get the cursor to execute the query
             cursor = self.get_cursor()
@@ -1755,6 +1769,7 @@ class Query(object):
                 update_fields,
                 auto_field_name=auto_field_name,
                 only_insert=True,
+                return_rows=return_rows or return_models
             )
 
             # get the cursor to execute the query
