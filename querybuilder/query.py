@@ -1750,7 +1750,7 @@ class Query(object):
                 unique_fields,
                 update_fields,
                 auto_field_name=auto_field_name,
-                return_rows=return_models
+                return_rows=return_rows or return_models
             )
 
             # get the cursor to execute the query
@@ -1769,7 +1769,7 @@ class Query(object):
                 update_fields,
                 auto_field_name=auto_field_name,
                 only_insert=True,
-                return_rows=return_models
+                return_rows=return_rows or return_models
             )
 
             # get the cursor to execute the query
