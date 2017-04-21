@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v0.14.3
+-------
+* Respect return_models in upsert method when building upsert sql
+
 v0.14.2
 -------
 * Fix upsert to use the proper prepare method on django fields
