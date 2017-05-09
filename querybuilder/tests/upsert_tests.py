@@ -216,3 +216,20 @@ class TestUpsert(QueryTestCase):
         self.assertEqual(users[0].email, 'user1change')
         self.assertEqual(users[1].email, 'user2')
         self.assertEqual(users[2].email, 'user3')
+
+    def test_upsert_custom_db_column(self):
+        """
+        Makes sure upserting a model containing a field with a custom db_column name works.
+        """
+
+        model = Uniques(field1='1', _field_custom_db_column='test')
+
+        Query().from_table(Uniques).upsert(
+            [model],
+            unique_fields=['field1'],
+            update_fields=[]
+        )
+
+        saved_model = Uniques.objects.get(field1='1')
+
+        self.assertEqual(saved_model._field_custom_db_column, 'test')
