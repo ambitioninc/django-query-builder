@@ -1237,7 +1237,8 @@ class Query(object):
             placeholders = []
             for field in all_fields:
                 # Convert field value to db value
-                sql_args.append(field.get_db_prep_save(getattr(row, field.column), self.connection))
+                # Use attname here to support fields with custom db_column names
+                sql_args.append(field.get_db_prep_save(getattr(row, field.attname), self.connection))
                 placeholders.append('%s')
             row_values.append('({0})'.format(', '.join(placeholders)))
         row_values_sql = ', '.join(row_values)
