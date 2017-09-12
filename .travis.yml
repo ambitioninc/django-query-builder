@@ -4,13 +4,14 @@ python:
   - '2.7'
   - '3.4'
   - '3.5'
+  - '3.6'
 env:
   global:
     - DB=postgres
   matrix:
-    - DJANGO=">=1.8,<1.9"
     - DJANGO=">=1.9,<1.10"
     - DJANGO=">=1.10,<1.11"
+    - DJANGO=">=1.11,<2.0"
 before_install:
   - sudo /etc/init.d/postgresql stop
   - sudo apt-get -y remove --purge postgresql-9.1
