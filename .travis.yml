@@ -17,6 +17,7 @@ addons:
 install:
   - pip install -q coverage coveralls flake8 Django$DJANGO django-nose>=1.4
 before_script:
+  - psql -U postgres -c "create extension postgis"
   - psql -c 'CREATE DATABASE querybuilder;' -U postgres
 script:
   - flake8 ./querybuilder
