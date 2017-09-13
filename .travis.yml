@@ -13,12 +13,12 @@ env:
     - DJANGO=">=1.10,<1.11"
     - DJANGO=">=1.11,<2.0"
 addons:
-  postgresql: "9.5"
+  postgresql: "9.6"
 install:
   - pip install -q coverage coveralls flake8 Django$DJANGO django-nose>=1.4
 before_script:
   - psql -c 'CREATE DATABASE querybuilder;' -U postgres
-  - psql -U postgres -c "create extension postgis"
+  - psql -U postgres -c "create extension postgis;"
 script:
   - flake8 ./querybuilder
   - coverage run setup.py test
