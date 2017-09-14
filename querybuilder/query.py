@@ -176,7 +176,7 @@ class Join(object):
                     field.get_internal_type() == 'OneToOneField' or
                     field.get_internal_type() == 'ForeignKey'
                 ):
-                    if field.rel.to == self.right_table.model:
+                    if field.remote_field.model == self.right_table.model:
                         if self.right_table.field_prefix is None:
                             self.right_table.field_prefix = field.name
                         return
@@ -216,7 +216,7 @@ class Join(object):
                     field.get_internal_type() == 'OneToOneField' or
                     field.get_internal_type() == 'ForeignKey'
                 ):
-                    if field.rel.to == self.left_table.model:
+                    if field.remote_field.model == self.left_table.model:
                         table_join_field = field.column
                         # self.table_join_name = field.name
                         condition = '{0}.{1} = {2}.{3}'.format(
@@ -1237,7 +1237,8 @@ class Query(object):
             placeholders = []
             for field in all_fields:
                 # Convert field value to db value
-                sql_args.append(field.get_db_prep_save(getattr(row, field.column), self.connection))
+                # Use attname here to support fields with custom db_column names
+                sql_args.append(field.get_db_prep_save(getattr(row, field.attname), self.connection))
                 placeholders.append('%s')
             row_values.append('({0})'.format(', '.join(placeholders)))
         row_values_sql = ', '.join(row_values)

@@ -32,18 +32,19 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Framework :: Django',
-        'Framework :: Django :: 1.8',
         'Framework :: Django :: 1.9',
         'Framework :: Django :: 1.10',
+        'Framework :: Django :: 1.11',
         'Development Status :: 5 - Production/Stable',
     ],
     license='MIT',
     install_requires=[
-        'django>=1.8',
+        'Django>=1.9',
         'pytz>=2015.6',
         'fleming>=0.4.4',
         'six',
@@ -51,9 +52,9 @@ setup(
     tests_require=[
         'psycopg2',
         'django-nose>=1.4',
-        'django-dynamic-fixture==1.8.5',
+        'django-dynamic-fixture',
         'jsonfield==0.9.20',
-        'mock==1.0.1'
+        'mock'
     ],
     test_suite='run_tests.run_tests',
     include_package_data=True,
