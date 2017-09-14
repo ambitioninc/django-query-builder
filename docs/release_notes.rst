@@ -1,6 +1,14 @@
 Release Notes
 =============
 
+v0.15.0
+-------
+* Handle custom db column names
+* Drop Django 1.8
+* Support Django 1.10
+* Support Django 1.11
+* Support Python 3.6
+
 v0.14.3
 -------
 * Respect return_models in upsert method when building upsert sql
