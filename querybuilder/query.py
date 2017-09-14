@@ -176,7 +176,7 @@ class Join(object):
                     field.get_internal_type() == 'OneToOneField' or
                     field.get_internal_type() == 'ForeignKey'
                 ):
-                    if field.rel.to == self.right_table.model:
+                    if field.remote_field.model == self.right_table.model:
                         if self.right_table.field_prefix is None:
                             self.right_table.field_prefix = field.name
                         return
@@ -216,7 +216,7 @@ class Join(object):
                     field.get_internal_type() == 'OneToOneField' or
                     field.get_internal_type() == 'ForeignKey'
                 ):
-                    if field.rel.to == self.left_table.model:
+                    if field.remote_field.model == self.left_table.model:
                         table_join_field = field.column
                         # self.table_join_name = field.name
                         condition = '{0}.{1} = {2}.{3}'.format(

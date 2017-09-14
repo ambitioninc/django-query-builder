@@ -16,7 +16,7 @@ class Account(models.Model):
     """
     Account model
     """
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=64)
     last_name = models.CharField(max_length=64)
 
@@ -25,7 +25,7 @@ class Order(models.Model):
     """
     Order model
     """
-    account = models.ForeignKey(Account)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
     revenue = models.FloatField(null=True)
     margin = models.FloatField()
     margin_percent = models.FloatField()
