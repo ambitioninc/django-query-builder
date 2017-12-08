@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+v1.0.0
+------
+* Drop Django 1.9
+* Drop Django 1.10
+* Drop Django 1.11
+* Add Django 2.0
+* Drop python 2.7
+* Drop python 3.4
+
 v0.15.0
 -------
 * Handle custom db column names
