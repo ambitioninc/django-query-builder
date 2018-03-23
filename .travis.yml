@@ -43,6 +43,7 @@ env:
     - DJANGO=master
     global:
         - DB=postgres
+# hello?
 
 addons:
   postgresql: '9.5'
