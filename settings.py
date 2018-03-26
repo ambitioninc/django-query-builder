@@ -9,6 +9,10 @@ def configure_settings():
     """
     if not settings.configured:
         # Determine the database settings depending on if a test_db var is set in CI mode or not
+        print('-' * 20)
+        print('os environ')
+        print(os.environ)
+        print(os.environ.get('DB'))
         test_db = os.environ.get('DB', None)
         if test_db is None:
             db_config = {
