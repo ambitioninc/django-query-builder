@@ -27,28 +27,33 @@
 #
 
 language: python
-cache: pip
+#cache: pip
 
 python:
-    - "2.7"
-    - "3.4"
-    - "3.5"
-    - "3.6"
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
 
 sudo: false
 
 env:
-    - DJANGO=1.10
-    - DJANGO=1.11
-    - DJANGO=2.0
-    - DJANGO=master
+  - DJANGO=1.10
+  - DJANGO=1.11
+  - DJANGO=2.0
+  - DJANGO=master
+
+
 #    global:
 #        - DB=postgres
 
 addons:
   postgresql: '9.5'
 
-#matrix:
+matrix:
+  include:
+    - { python: 3.6, env: TOXENV=flake8 }
+
 #    fast_finish: true
 #    include:
 #      - { python: "3.6", env: DJANGO=master }
@@ -78,7 +83,7 @@ addons:
 #      - env: DJANGO=master
 
 install:
-    - pip install tox tox-travis
+    - pip install tox-travis
 
 before_script:
   - psql -c 'CREATE DATABASE querybuilder;' -U postgres
