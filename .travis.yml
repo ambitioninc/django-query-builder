@@ -1,35 +1,12 @@
-sudo: true
-#language: python
-#python:
-#  - '3.5'
-#  - '3.6'
-#env:
-#  global:
-#    - DB=postgres
-#  matrix:
-#    - DJANGO=">=1.11,<2.0"
-#    - DJANGO=">=2.0,<2.1"
-#addons:
-#  postgresql: '9.5'
-#install:
-#  - pip install -q coverage coveralls flake8 Django$DJANGO django-nose>=1.4
-#before_script:
-#  - psql -c 'CREATE DATABASE querybuilder;' -U postgres
-#script:
-#  - flake8 ./querybuilder
-#  - coverage run setup.py test
-#  - coverage report --fail-under=90
-
 language: python
-#cache: pip
+
+sudo: false
 
 python:
   - "2.7"
   - "3.4"
   - "3.5"
   - "3.6"
-
-#sudo: false
 
 env:
   matrix:
@@ -44,7 +21,6 @@ addons:
 matrix:
   include:
     - { python: "3.6", env: TOXENV=flake8 }
-#    - { python: "3.6", env: TOXENV=docs }
 
   exclude:
     - { python: "2.7", env: DJANGO=master }
