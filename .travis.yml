@@ -37,9 +37,6 @@ python:
 
 sudo: false
 
-services:
-  - postgresql
-
 env:
   global:
     - DB=postgres
