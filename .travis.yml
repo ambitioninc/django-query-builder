@@ -38,8 +38,6 @@ python:
 #sudo: false
 
 env:
-  global:
-    - DB=postgres
   matrix:
     - DJANGO=1.10
     - DJANGO=1.11
