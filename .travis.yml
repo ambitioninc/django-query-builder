@@ -80,7 +80,7 @@ matrix:
 #      - env: DJANGO=master
 
 install:
-    - pip install tox-travis
+    - pip install tox
 
 before_script:
   - psql -c 'CREATE DATABASE querybuilder;' -U postgres
