@@ -3,10 +3,16 @@ import os
 from django.conf import settings
 
 
+print('this is the settings file')
+print(os.environ)
+
+
 def configure_settings():
     """
     Configures settings for manage.py and for run_tests.py.
     """
+    print('this is the configure settings')
+    print(os.environ)
     if not settings.configured:
         # Determine the database settings depending on if a test_db var is set in CI mode or not
         print('-' * 20)
