@@ -37,8 +37,10 @@ python:
 
 sudo: false
 
+services:
+  - postgresql
+
 env:
-  - DB=postgres
   - DJANGO=1.10
   - DJANGO=1.11
   - DJANGO=2.0
