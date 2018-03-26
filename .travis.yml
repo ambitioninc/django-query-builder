@@ -19,12 +19,6 @@ sudo: true
 #  - flake8 ./querybuilder
 #  - coverage run setup.py test
 #  - coverage report --fail-under=90
-#after_success:
-#  coveralls
-#
-#
-#
-#
 
 language: python
 #cache: pip
@@ -49,35 +43,17 @@ addons:
 
 matrix:
   include:
-    - { python: 3.6, env: TOXENV=flake8 }
+    - { python: "3.6", env: TOXENV=flake8 }
+#    - { python: "3.6", env: TOXENV=docs }
 
-#    fast_finish: true
-#    include:
-#      - { python: "3.6", env: DJANGO=master }
-#      - { python: "3.6", env: DJANGO=1.11 }
-#      - { python: "3.6", env: DJANGO=2.0 }
-#      - { python: "2.7", env: TOXENV=lint }
-#      - { python: "2.7", env: TOXENV=docs }
+  exclude:
+    - { python: "2.7", env: DJANGO=master }
+    - { python: "2.7", env: DJANGO=2.0 }
+    - { python: "3.4", env: DJANGO=master }
+    - { python: "3.6", env: DJANGO=1.10 }
 
-#      - python: "3.6"
-#        env: TOXENV=dist
-#        script:
-#          - python setup.py bdist_wheel
-#          - tox --installpkg ./dist/djangorestframework-*.whl
-#          - tox  # test sdist
-#
-#      - python: "3.6"
-#        env: TOXENV=readme
-#        addons:
-#          apt_packages: pandoc
-
-#    exclude:
-#      - { python: "2.7", env: DJANGO=master }
-#      - { python: "2.7", env: DJANGO=2.0 }
-#      - { python: "3.4", env: DJANGO=master }
-
-#    allow_failures:
-#      - env: DJANGO=master
+  allow_failures:
+    - env: DJANGO=master
 
 install:
     - pip install tox-travis
@@ -88,9 +64,8 @@ before_script:
 script:
     - tox
 
-#after_success:
-#    - pip install codecov
-#    - codecov -e TOXENV,DJANGO
+after_success:
+  coveralls
 
 notifications:
     email: false

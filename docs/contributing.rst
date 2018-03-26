@@ -67,7 +67,10 @@ Before a new release, please go through the following checklist:
 * Upload to pypi::
 
     pip install wheel
-    python setup.py sdist bdist_wheel upload
+    pip install twine
+    python setup.py clean --all
+    python setup.py register sdist bdist_wheel
+    twine upload dist/*
 
 Vulnerability Reporting
 -----------------------
