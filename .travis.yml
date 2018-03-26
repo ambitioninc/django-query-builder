@@ -37,14 +37,14 @@ python:
 
 sudo: false
 
-global:
-  - DB=postgres
-
 env:
-  - DJANGO=1.10
-  - DJANGO=1.11
-  - DJANGO=2.0
-  - DJANGO=master
+  global:
+    - DB=postgres
+  matrix:
+    - DJANGO=1.10
+    - DJANGO=1.11
+    - DJANGO=2.0
+    - DJANGO=master
 
 addons:
   postgresql: '9.5'
