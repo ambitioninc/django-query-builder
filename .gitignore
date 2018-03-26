@@ -36,3 +36,5 @@ docs/_build/
 
 # Test database
 test_ambition_dev
+
+.tox/
