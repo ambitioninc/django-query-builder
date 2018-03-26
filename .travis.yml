@@ -41,14 +41,12 @@ services:
   - postgresql
 
 env:
+  global:
+    - DB=postgres
   - DJANGO=1.10
   - DJANGO=1.11
   - DJANGO=2.0
   - DJANGO=master
-
-
-#    global:
-#        - DB=postgres
 
 addons:
   postgresql: '9.5'
