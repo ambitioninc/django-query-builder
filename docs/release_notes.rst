@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v1.1.0
+------
+* Use tox to support more versions
+
 v1.0.0
 ------
 * Drop Django 1.9
