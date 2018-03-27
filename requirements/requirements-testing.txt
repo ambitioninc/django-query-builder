@@ -1,0 +1,10 @@
+pytz
+fleming
+six
+psycopg2
+django-nose>=1.4
+django-dynamic-fixture
+jsonfield==0.9.20
+mock
+coverage
+coveralls

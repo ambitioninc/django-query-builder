@@ -1,23 +1,47 @@
-sudo: true
 language: python
+
+sudo: false
+
 python:
-  - '3.5'
-  - '3.6'
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+
 env:
-  global:
-    - DB=postgres
   matrix:
-    - DJANGO=">=1.11,<2.0"
-    - DJANGO=">=2.0,<2.1"
+    - DJANGO=1.10
+    - DJANGO=1.11
+    - DJANGO=2.0
+    - DJANGO=master
+
 addons:
   postgresql: '9.5'
+
+matrix:
+  include:
+    - { python: "3.6", env: TOXENV=flake8 }
+
+  exclude:
+    - { python: "2.7", env: DJANGO=master }
+    - { python: "2.7", env: DJANGO=2.0 }
+    - { python: "3.4", env: DJANGO=master }
+    - { python: "3.6", env: DJANGO=1.10 }
+
+  allow_failures:
+    - env: DJANGO=master
+
 install:
-  - pip install -q coverage coveralls flake8 Django$DJANGO django-nose>=1.4
+    - pip install tox-travis
+
 before_script:
   - psql -c 'CREATE DATABASE querybuilder;' -U postgres
+
 script:
-  - flake8 ./querybuilder
-  - coverage run setup.py test
-  - coverage report --fail-under=90
+    - tox
+
 after_success:
   coveralls
+
+notifications:
+    email: false
