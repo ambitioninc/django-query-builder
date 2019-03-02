@@ -1,9 +1,11 @@
+import json
+
 from django.test.utils import override_settings
 from django_dynamic_fixture import G
 
 from querybuilder.logger import Logger
 from querybuilder.query import Query
-from querybuilder.tests.models import Account, Order
+from querybuilder.tests.models import Account, Order, MetricRecord
 from querybuilder.tests.query_tests import QueryTestCase
 
 
@@ -34,13 +36,13 @@ class TestUpdate(QueryTestCase):
         self.assertEqual(
             sql,
             (
-                'UPDATE tests_account '
+                'UPDATE querybuilder_tests_account '
                 'SET user_id = new_values.user_id, '
                 'first_name = new_values.first_name, '
                 'last_name = new_values.last_name '
-                'FROM (VALUES (%s, %s, %s, %s)) '
+                'FROM (VALUES (%s, %s::integer, %s::varchar(64), %s::varchar(64))) '
                 'AS new_values (id, user_id, first_name, last_name) '
-                'WHERE tests_account.id = new_values.id'
+                'WHERE querybuilder_tests_account.id = new_values.id'
             )
         )
 
@@ -54,15 +56,39 @@ class TestUpdate(QueryTestCase):
         self.assertEqual(
             sql,
             (
-                "UPDATE tests_account "
+                "UPDATE querybuilder_tests_account "
                 "SET user_id = new_values.user_id, "
                 "first_name = new_values.first_name, "
                 "last_name = new_values.last_name "
-                "FROM (VALUES (1, 1, 'Test''s', '\"User\"')) "
+                "FROM (VALUES (1, 1::integer, 'Test''s'::varchar(64), '\"User\"'::varchar(64))) "
                 "AS new_values (id, user_id, first_name, last_name) "
-                "WHERE tests_account.id = new_values.id"
+                "WHERE querybuilder_tests_account.id = new_values.id"
             )
         )
+
+    def test_update_json_field(self):
+        MetricRecord.objects.create(data={'default1': 'd1'})
+        MetricRecord.objects.create(data={'default2': 'd2'})
+
+        query = Query().from_table(
+            table=MetricRecord,
+            fields=[
+                'id',
+                'data',
+            ]
+        )
+
+        # Manually prep the values for db query
+        rows = [
+            [1, json.dumps({'first': '111'})],
+            [2, json.dumps({'second': '222'})],
+        ]
+
+        query.update(rows)
+
+        records = list(MetricRecord.objects.order_by('id'))
+        self.assertEqual(records[0].data, {'first': '111'})
+        self.assertEqual(records[1].data, {'second': '222'})
 
     def test_update_multiple_rows(self):
         query = Query().from_table(
@@ -85,13 +111,13 @@ class TestUpdate(QueryTestCase):
         self.assertEqual(
             sql,
             (
-                'UPDATE tests_account '
+                'UPDATE querybuilder_tests_account '
                 'SET user_id = new_values.user_id, '
                 'first_name = new_values.first_name, '
                 'last_name = new_values.last_name '
-                'FROM (VALUES (%s, %s, %s, %s), (%s, %s, %s, %s)) '
+                'FROM (VALUES (%s, %s::integer, %s::varchar(64), %s::varchar(64)), (%s, %s, %s, %s)) '
                 'AS new_values (id, user_id, first_name, last_name) '
-                'WHERE tests_account.id = new_values.id'
+                'WHERE querybuilder_tests_account.id = new_values.id'
             )
         )
         self.assertEqual(sql_params[0], 1)
@@ -108,13 +134,14 @@ class TestUpdate(QueryTestCase):
         self.assertEqual(
             sql,
             (
-                "UPDATE tests_account "
+                "UPDATE querybuilder_tests_account "
                 "SET user_id = new_values.user_id, "
                 "first_name = new_values.first_name, "
                 "last_name = new_values.last_name "
-                "FROM (VALUES (1, 1, 'Test', 'User'), (2, 2, 'Test2', 'User2')) "
+                "FROM (VALUES (1, 1::integer, 'Test'::varchar(64), 'User'::varchar(64)), "
+                "(2, 2, 'Test2', 'User2')) "
                 "AS new_values (id, user_id, first_name, last_name) "
-                "WHERE tests_account.id = new_values.id"
+                "WHERE querybuilder_tests_account.id = new_values.id"
             )
         )
 
