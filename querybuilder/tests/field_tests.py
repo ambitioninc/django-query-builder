@@ -16,7 +16,7 @@ class FieldTest(QueryTestCase):
             table=Order,
             fields=[SimpleField(field='revenue', cast='INT')]
         ).order_by('revenue').limit(1)
-        expected_query = 'SELECT CAST(tests_order.revenue AS INT) FROM tests_order ORDER BY revenue ASC LIMIT 1'
+        expected_query = 'SELECT CAST(querybuilder_tests_order.revenue AS INT) FROM querybuilder_tests_order ORDER BY revenue ASC LIMIT 1'
         self.assertEqual(expected_query, query.get_sql())
         rows = query.select()
         self.assertEqual(1, len(rows))
@@ -28,17 +28,17 @@ class FieldTest(QueryTestCase):
         """
         field = SimpleField(field='revenue')
         query = Query().from_table(table=Order, fields=[field])
-        expected_query = 'SELECT tests_order.revenue FROM tests_order'
+        expected_query = 'SELECT querybuilder_tests_order.revenue FROM querybuilder_tests_order'
         self.assertEqual(expected_query, query.get_sql())
 
         field.auto_alias = 'my_auto_alias'
         query = Query().from_table(table=Order, fields=[field])
-        expected_query = 'SELECT tests_order.revenue AS "my_auto_alias" FROM tests_order'
+        expected_query = 'SELECT querybuilder_tests_order.revenue AS "my_auto_alias" FROM querybuilder_tests_order'
         self.assertEqual(expected_query, query.get_sql())
 
         field.alias = 'my_alias'
         query = Query().from_table(table=Order, fields=[field])
-        expected_query = 'SELECT tests_order.revenue AS "my_alias" FROM tests_order'
+        expected_query = 'SELECT querybuilder_tests_order.revenue AS "my_alias" FROM querybuilder_tests_order'
         self.assertEqual(expected_query, query.get_sql())
 
         query = Query().from_table(
@@ -47,7 +47,7 @@ class FieldTest(QueryTestCase):
             prefix_fields=True,
             field_prefix='my_field_prefix',
         )
-        expected_query = 'SELECT tests_order.revenue AS "my_field_prefix__my_alias" FROM tests_order'
+        expected_query = 'SELECT querybuilder_tests_order.revenue AS "my_field_prefix__my_alias" FROM querybuilder_tests_order'
         self.assertEqual(expected_query, query.get_sql())
 
         field.alias = None
@@ -58,7 +58,7 @@ class FieldTest(QueryTestCase):
             prefix_fields=True,
             field_prefix='my_field_prefix',
         )
-        expected_query = 'SELECT tests_order.revenue AS "my_field_prefix__revenue" FROM tests_order'
+        expected_query = 'SELECT querybuilder_tests_order.revenue AS "my_field_prefix__revenue" FROM querybuilder_tests_order'
         self.assertEqual(expected_query, query.get_sql())
 
     def lead_lag_difference_test(self):
@@ -71,12 +71,12 @@ class FieldTest(QueryTestCase):
             ]
         )
         expected_query = (
-            'SELECT tests_order.margin, '
-            '((tests_order.margin) - (LAG(tests_order.margin, 1) '
+            'SELECT querybuilder_tests_order.margin, '
+            '((querybuilder_tests_order.margin) - (LAG(querybuilder_tests_order.margin, 1) '
             'OVER (ORDER BY margin DESC))) AS "margin_lag", '
-            '((tests_order.margin) - (LEAD(tests_order.margin, 1) '
+            '((querybuilder_tests_order.margin) - (LEAD(querybuilder_tests_order.margin, 1) '
             'OVER (ORDER BY margin DESC))) AS "margin_lead" '
-            'FROM tests_order'
+            'FROM querybuilder_tests_order'
         )
         self.assertEqual(expected_query, query.get_sql())
         rows = query.select()
@@ -100,8 +100,8 @@ class FieldTest(QueryTestCase):
         )
         expected_query = (
             'SELECT CAST(0 AS INT) AS "time__epoch", '
-            'SUM(tests_order.margin) AS "margin_sum" '
-            'FROM tests_order'
+            'SUM(querybuilder_tests_order.margin) AS "margin_sum" '
+            'FROM querybuilder_tests_order'
         )
         self.assertEqual(expected_query, query.get_sql())
         rows = query.select()
@@ -122,8 +122,8 @@ class FieldTest(QueryTestCase):
     #     )
     #     expected_query = (
     #         'SELECT CAST(0 AS FLOAT) AS time__epoch, '
-    #         'SUM(tests_order.margin) AS margin_sum '
-    #         'FROM tests_order'
+    #         'SUM(querybuilder_tests_order.margin) AS margin_sum '
+    #         'FROM querybuilder_tests_order'
     #     )
     #     self.assertEqual(expected_query, query.get_sql())
     #     rows = query.select()
@@ -144,11 +144,11 @@ class FieldTest(QueryTestCase):
             ]
         )
         expected_query = (
-            'SELECT CAST(EXTRACT(year FROM tests_order.time) AS INT) AS "time__year", '
-            'CAST(EXTRACT(week FROM tests_order.time) AS INT) AS "time__week", '
-            'CAST(EXTRACT(epoch FROM date_trunc(\'week\', tests_order.time)) AS INT) AS "time__epoch", '
-            'SUM(tests_order.margin) AS "margin_sum" '
-            'FROM tests_order '
+            'SELECT CAST(EXTRACT(year FROM querybuilder_tests_order.time) AS INT) AS "time__year", '
+            'CAST(EXTRACT(week FROM querybuilder_tests_order.time) AS INT) AS "time__week", '
+            'CAST(EXTRACT(epoch FROM date_trunc(\'week\', querybuilder_tests_order.time)) AS INT) AS "time__epoch", '
+            'SUM(querybuilder_tests_order.margin) AS "margin_sum" '
+            'FROM querybuilder_tests_order '
             'GROUP BY time__year, time__week, time__epoch '
             'ORDER BY time__epoch ASC'
         )

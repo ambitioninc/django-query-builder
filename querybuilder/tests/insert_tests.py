@@ -39,7 +39,7 @@ class InsertTest(QueryTestCase):
         self.assertEqual(
             sql,
             (
-                'INSERT INTO tests_account (user_id, first_name, last_name) VALUES (%s, %s, %s)'
+                'INSERT INTO querybuilder_tests_account (user_id, first_name, last_name) VALUES (%s, %s, %s)'
             )
         )
         self.assertEqual(sql_params[0], 1)
@@ -48,7 +48,7 @@ class InsertTest(QueryTestCase):
 
         query.insert(rows)
         sql = self.logger.get_log()[2]['sql']
-        self.assertEqual(sql, "INSERT INTO tests_account (user_id, first_name, last_name) VALUES (1, 'Test', 'User')")
+        self.assertEqual(sql, "INSERT INTO querybuilder_tests_account (user_id, first_name, last_name) VALUES (1, 'Test', 'User')")
 
     def test_insert_multiple_rows(self):
         G(User, id=1)
@@ -72,7 +72,7 @@ class InsertTest(QueryTestCase):
 
         self.assertEqual(
             sql,
-            'INSERT INTO tests_account (user_id, first_name, last_name) VALUES (%s, %s, %s), (%s, %s, %s)'
+            'INSERT INTO querybuilder_tests_account (user_id, first_name, last_name) VALUES (%s, %s, %s), (%s, %s, %s)'
         )
         self.assertEqual(sql_params[0], 1)
         self.assertEqual(sql_params[1], 'Test')
@@ -85,6 +85,6 @@ class InsertTest(QueryTestCase):
         sql = self.logger.get_log()[4]['sql']
         self.assertEqual(
             sql,
-            ("INSERT INTO tests_account (user_id, first_name, last_name) "
+            ("INSERT INTO querybuilder_tests_account (user_id, first_name, last_name) "
              "VALUES (1, 'Test', 'User'), (2, 'Test2', 'User2')")
         )

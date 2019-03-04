@@ -26,14 +26,14 @@ class JoinTest(QueryTestCase):
             table=Account
         ).join(
             'other_table',
-            condition='other_table.test_id = tests_account.id'
+            condition='other_table.test_id = querybuilder_tests_account.id'
         )
 
         query_str = query.get_sql()
         expected_query = (
-            'SELECT tests_account.* '
-            'FROM tests_account '
-            'JOIN other_table ON other_table.test_id = tests_account.id'
+            'SELECT querybuilder_tests_account.* '
+            'FROM querybuilder_tests_account '
+            'JOIN other_table ON other_table.test_id = querybuilder_tests_account.id'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -48,15 +48,15 @@ class JoinTest(QueryTestCase):
                 'field_two'
             ],
             prefix_fields=True,
-            condition='other_table.test_id = tests_account.id'
+            condition='other_table.test_id = querybuilder_tests_account.id'
         )
 
         query_str = query.get_sql()
         expected_query = (
             'SELECT other_table.field_one AS "other_table__field_one", '
             'other_table.field_two AS "other_table__field_two" '
-            'FROM tests_account '
-            'JOIN other_table ON other_table.test_id = tests_account.id'
+            'FROM querybuilder_tests_account '
+            'JOIN other_table ON other_table.test_id = querybuilder_tests_account.id'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -71,9 +71,9 @@ class JoinTest(QueryTestCase):
 
         query_str = query.get_sql()
         expected_query = (
-            'SELECT tests_account.* '
-            'FROM tests_account '
-            'JOIN tests_order ON tests_order.account_id = tests_account.id'
+            'SELECT querybuilder_tests_account.* '
+            'FROM querybuilder_tests_account '
+            'JOIN querybuilder_tests_order ON querybuilder_tests_order.account_id = querybuilder_tests_account.id'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -86,9 +86,9 @@ class JoinTest(QueryTestCase):
 
         query_str = query.get_sql()
         expected_query = (
-            'SELECT tests_order.* '
-            'FROM tests_order '
-            'JOIN tests_account ON tests_account.id = tests_order.account_id'
+            'SELECT querybuilder_tests_order.* '
+            'FROM querybuilder_tests_order '
+            'JOIN querybuilder_tests_account ON querybuilder_tests_account.id = querybuilder_tests_order.account_id'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -101,9 +101,9 @@ class JoinTest(QueryTestCase):
 
         query_str = query.get_sql()
         expected_query = (
-            'SELECT tests_account.* '
-            'FROM tests_account '
-            'JOIN tests_user ON tests_user.id = tests_account.user_id'
+            'SELECT querybuilder_tests_account.* '
+            'FROM querybuilder_tests_account '
+            'JOIN querybuilder_tests_user ON querybuilder_tests_user.id = querybuilder_tests_account.user_id'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -116,9 +116,9 @@ class JoinTest(QueryTestCase):
 
         query_str = query.get_sql()
         expected_query = (
-            'SELECT tests_user.* '
-            'FROM tests_user '
-            'JOIN tests_account ON tests_account.user_id = tests_user.id'
+            'SELECT querybuilder_tests_user.* '
+            'FROM querybuilder_tests_user '
+            'JOIN querybuilder_tests_account ON querybuilder_tests_account.user_id = querybuilder_tests_user.id'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -140,12 +140,12 @@ class JoinTest(QueryTestCase):
 
         query_str = query.get_sql()
         expected_query = (
-            'SELECT tests_account.one, '
-            'tests_account.two, '
-            'tests_order.one AS "three", '
-            'tests_order.two AS "four" '
-            'FROM tests_account '
-            'JOIN tests_order ON tests_order.account_id = tests_account.id'
+            'SELECT querybuilder_tests_account.one, '
+            'querybuilder_tests_account.two, '
+            'querybuilder_tests_order.one AS "three", '
+            'querybuilder_tests_order.two AS "four" '
+            'FROM querybuilder_tests_account '
+            'JOIN querybuilder_tests_order ON querybuilder_tests_order.account_id = querybuilder_tests_account.id'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -165,10 +165,10 @@ class JoinTest(QueryTestCase):
 
         query_str = query.get_sql()
         expected_query = (
-            'SELECT tests_account.*, '
-            'tests_order.* '
-            'FROM tests_account '
-            'JOIN tests_order ON tests_order.account_id = tests_account.id'
+            'SELECT querybuilder_tests_account.*, '
+            'querybuilder_tests_order.* '
+            'FROM querybuilder_tests_account '
+            'JOIN querybuilder_tests_order ON querybuilder_tests_order.account_id = querybuilder_tests_account.id'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -187,15 +187,15 @@ class JoinTest(QueryTestCase):
 
         query_str = query.get_sql()
         expected_query = (
-            'SELECT tests_account.*, '
-            'tests_order.id, '
-            'tests_order.account_id, '
-            'tests_order.revenue, '
-            'tests_order.margin, '
-            'tests_order.margin_percent, '
-            'tests_order.time '
-            'FROM tests_account '
-            'JOIN tests_order ON tests_order.account_id = tests_account.id'
+            'SELECT querybuilder_tests_account.*, '
+            'querybuilder_tests_order.id, '
+            'querybuilder_tests_order.account_id, '
+            'querybuilder_tests_order.revenue, '
+            'querybuilder_tests_order.margin, '
+            'querybuilder_tests_order.margin_percent, '
+            'querybuilder_tests_order.time '
+            'FROM querybuilder_tests_account '
+            'JOIN querybuilder_tests_order ON querybuilder_tests_order.account_id = querybuilder_tests_account.id'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -217,10 +217,10 @@ class JoinTest(QueryTestCase):
         query_str = query.get_sql()
 
         expected_query = (
-            'SELECT tests_account.*, '
-            'tests_order.id AS "order__id", '
-            'tests_order.margin AS "order__margin" '
-            'FROM tests_account '
-            'JOIN tests_order ON tests_order.account_id = tests_account.id'
+            'SELECT querybuilder_tests_account.*, '
+            'querybuilder_tests_order.id AS "order__id", '
+            'querybuilder_tests_order.margin AS "order__margin" '
+            'FROM querybuilder_tests_account '
+            'JOIN querybuilder_tests_order ON querybuilder_tests_order.account_id = querybuilder_tests_account.id'
         )
         self.assertEqual(query_str, expected_query)
