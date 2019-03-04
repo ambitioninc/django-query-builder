@@ -29,8 +29,8 @@ class JsonFieldTest(TestCase):
         self.assertEqual(
             query.get_sql(),
             (
-                'SELECT querybuilder_tests_metric_record.data->\'two\' AS "my_two_alias" FROM querybuilder_tests_metric_record '
-                'WHERE (querybuilder_tests_metric_record.data->>\'two\' = %(A0)s)'
+                'SELECT querybuilder_tests_metricrecord.data->\'two\' AS "my_two_alias" FROM querybuilder_tests_metricrecord '
+                'WHERE (querybuilder_tests_metricrecord.data->>\'two\' = %(A0)s)'
             )
         )
         self.assertEqual(query.select(), [])
@@ -41,8 +41,8 @@ class JsonFieldTest(TestCase):
         self.assertEqual(
             query.get_sql(),
             (
-                'SELECT querybuilder_tests_metric_record.data->\'two\' AS "my_two_alias" FROM querybuilder_tests_metric_record '
-                'WHERE (querybuilder_tests_metric_record.data->>\'two\' = %(A0)s)'
+                'SELECT querybuilder_tests_metricrecord.data->\'two\' AS "my_two_alias" FROM querybuilder_tests_metricrecord '
+                'WHERE (querybuilder_tests_metricrecord.data->>\'two\' = %(A0)s)'
             )
         )
         self.assertEqual(query.select(), [{'my_two_alias': 'two'}])
@@ -53,8 +53,8 @@ class JsonFieldTest(TestCase):
         self.assertEqual(
             query.get_sql(),
             (
-                'SELECT querybuilder_tests_metric_record.data->\'one\' AS "my_one_alias" FROM querybuilder_tests_metric_record '
-                'WHERE (querybuilder_tests_metric_record.data->>\'one\' = %(A0)s)'
+                'SELECT querybuilder_tests_metricrecord.data->\'one\' AS "my_one_alias" FROM querybuilder_tests_metricrecord '
+                'WHERE (querybuilder_tests_metricrecord.data->>\'one\' = %(A0)s)'
             )
         )
         self.assertEqual(query.select(), [{'my_one_alias': 1}])
@@ -65,8 +65,8 @@ class JsonFieldTest(TestCase):
         self.assertEqual(
             query.get_sql(),
             (
-                'SELECT querybuilder_tests_metric_record.data->\'one\' AS "my_one_alias" FROM querybuilder_tests_metric_record '
-                'WHERE (querybuilder_tests_metric_record.data->>\'one\' = %(A0)s)'
+                'SELECT querybuilder_tests_metricrecord.data->\'one\' AS "my_one_alias" FROM querybuilder_tests_metricrecord '
+                'WHERE (querybuilder_tests_metricrecord.data->>\'one\' = %(A0)s)'
             )
         )
         self.assertEqual(query.select(), [])
