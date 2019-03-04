@@ -67,8 +67,8 @@ class TestUpdate(QueryTestCase):
         )
 
     def test_update_json_field(self):
-        MetricRecord.objects.create(data={'default1': 'd1'})
-        MetricRecord.objects.create(data={'default2': 'd2'})
+        MetricRecord.objects.create(id=10, data={'default1': 'd1'})
+        MetricRecord.objects.create(id=11, data={'default2': 'd2'})
 
         query = Query().from_table(
             table=MetricRecord,
@@ -80,8 +80,8 @@ class TestUpdate(QueryTestCase):
 
         # Manually prep the values for db query
         rows = [
-            [1, json.dumps({'first': '111'})],
-            [2, json.dumps({'second': '222'})],
+            [10, json.dumps({'first': '111'})],
+            [11, json.dumps({'second': '222'})],
         ]
 
         query.update(rows)
