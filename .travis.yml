@@ -1,32 +1,28 @@
+dist: xenial
 language: python
-
 sudo: false
 
 python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
   - "3.6"
+  - "3.7"
 
 env:
   matrix:
-    - DJANGO=1.10
     - DJANGO=1.11
     - DJANGO=2.0
+    - DJANGO=2.1
+    - DJANGO=2.2
     - DJANGO=master
 
 addons:
-  postgresql: '9.5'
+  postgresql: '9.6'
 
 matrix:
+  exclude:
+    - { python: "3.7", env: DJANGO=2.0 }
+
   include:
     - { python: "3.6", env: TOXENV=flake8 }
-
-  exclude:
-    - { python: "2.7", env: DJANGO=master }
-    - { python: "2.7", env: DJANGO=2.0 }
-    - { python: "3.4", env: DJANGO=master }
-    - { python: "3.6", env: DJANGO=1.10 }
 
   allow_failures:
     - env: DJANGO=master

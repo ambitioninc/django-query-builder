@@ -1,6 +1,16 @@
 Release Notes
 =============
 
+v1.2.0
+------
+* Add Django 2.1
+* Add Django 2.2
+* Add python 3.7
+* Drop python 2.7
+* Drop python 3.4
+* Drop python 3.5
+* Drop Django 1.10
+
 v1.1.0
 ------
 * Use tox to support more versions
