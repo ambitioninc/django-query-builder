@@ -15,6 +15,8 @@ def get_comparison_str(item1, item2):
 
 
 class QueryConstructorTests(TestCase):
+    databases = ['default', 'mock-second-database']
+
     def test_init_with_connection(self):
         """
         Test passing in a connection object works
