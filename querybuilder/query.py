@@ -173,8 +173,7 @@ class Join(object):
             # check if this join type is for a foreign key
             for field in self.left_table.model._meta.fields:
                 if (
-                    field.get_internal_type() == 'OneToOneField'
-                    or field.get_internal_type() == 'ForeignKey'
+                    field.get_internal_type() == 'OneToOneField' or field.get_internal_type() == 'ForeignKey'
                 ):
                     if field.remote_field.model == self.right_table.model:
                         if self.right_table.field_prefix is None:
@@ -213,8 +212,7 @@ class Join(object):
             # check if this join type is for a foreign key
             for field in self.right_table.model._meta.fields:
                 if (
-                    field.get_internal_type() == 'OneToOneField'
-                    or field.get_internal_type() == 'ForeignKey'
+                    field.get_internal_type() == 'OneToOneField' or field.get_internal_type() == 'ForeignKey'
                 ):
                     if field.remote_field.model == self.left_table.model:
                         table_join_field = field.column
