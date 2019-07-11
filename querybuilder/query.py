@@ -173,8 +173,7 @@ class Join(object):
             # check if this join type is for a foreign key
             for field in self.left_table.model._meta.fields:
                 if (
-                    field.get_internal_type() == 'OneToOneField' or
-                    field.get_internal_type() == 'ForeignKey'
+                    field.get_internal_type() == 'OneToOneField' or field.get_internal_type() == 'ForeignKey'
                 ):
                     if field.remote_field.model == self.right_table.model:
                         if self.right_table.field_prefix is None:
@@ -213,8 +212,7 @@ class Join(object):
             # check if this join type is for a foreign key
             for field in self.right_table.model._meta.fields:
                 if (
-                    field.get_internal_type() == 'OneToOneField' or
-                    field.get_internal_type() == 'ForeignKey'
+                    field.get_internal_type() == 'OneToOneField' or field.get_internal_type() == 'ForeignKey'
                 ):
                     if field.remote_field.model == self.left_table.model:
                         table_join_field = field.column
@@ -1159,11 +1157,32 @@ class Query(object):
         row_values = []
         sql_args = []
 
-        for row in rows:
+        # Loop over each row and put the %s placeholder for each field
+        for i, row in enumerate(rows):
+
+            # Build a list of each field's placeholder
             placeholders = []
-            for value in row:
-                sql_args.append(value)
-                placeholders.append('%s')
+
+            # If this is the first row, add casting information so the db knows the field types
+            if i == 0 and hasattr(self.tables[0], 'model'):
+                for field_index, value in enumerate(row):
+                    # Append the value
+                    sql_args.append(value)
+
+                    # Figure out how to cast it
+                    field_object = self.tables[0].model._meta.get_field(field_names[field_index])
+                    db_type = field_object.db_type(self.connection)
+
+                    # Don't cast the pk
+                    if db_type == 'serial':
+                        placeholders.append('%s')
+                    else:
+                        # Cast the placeholder to the data type
+                        placeholders.append('%s::{0}'.format(db_type))
+            else:
+                for value in row:
+                    sql_args.append(value)
+                    placeholders.append('%s')
             row_values.append('({0})'.format(', '.join(placeholders)))
         row_values_sql = ', '.join(row_values)
 

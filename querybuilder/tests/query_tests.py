@@ -15,6 +15,8 @@ def get_comparison_str(item1, item2):
 
 
 class QueryConstructorTests(TestCase):
+    databases = ['default', 'mock-second-database']
+
     def test_init_with_connection(self):
         """
         Test passing in a connection object works
@@ -81,7 +83,7 @@ class QueryTest(QueryTestCase):
         self.assertIsNotNone(table, 'Table not found')
 
         result = table.get_identifier()
-        expected = 'tests_account'
+        expected = 'querybuilder_tests_account'
         self.assertEqual(result, expected, get_comparison_str(result, expected))
 
     def test_find_table_alias(self):
@@ -113,7 +115,7 @@ class QueryTest(QueryTestCase):
         self.assertIsNotNone(table, 'Table not found')
 
         result = table.get_identifier()
-        expected = 'tests_order'
+        expected = 'querybuilder_tests_order'
         self.assertEqual(result, expected, get_comparison_str(result, expected))
 
     def test_wrap(self):
@@ -122,7 +124,7 @@ class QueryTest(QueryTestCase):
         ).wrap().wrap().wrap().wrap()
         query_str = query.get_sql()
         expected_query = (
-            'WITH T0T0T0T0 AS (SELECT tests_account.* FROM tests_account), '
+            'WITH T0T0T0T0 AS (SELECT querybuilder_tests_account.* FROM querybuilder_tests_account), '
             'T0T0T0 AS (SELECT T0T0T0T0.* FROM T0T0T0T0), '
             'T0T0 AS (SELECT T0T0T0.* FROM T0T0T0), '
             'T0 AS (SELECT T0T0.* FROM T0T0) '
@@ -132,7 +134,7 @@ class QueryTest(QueryTestCase):
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_sql(self):
-        sql = 'SELECT id FROM tests_account ORDER BY id LIMIT 1'
+        sql = 'SELECT id FROM querybuilder_tests_account ORDER BY id LIMIT 1'
         rows = Query().select(sql=sql)
         received = rows[0]['id']
         expected = User.objects.all().order_by('id')[0].id
@@ -146,7 +148,7 @@ class QueryTest(QueryTestCase):
         )
 
     def test_select_sql_args(self):
-        sql = 'SELECT id FROM tests_account WHERE id = %(my_id)s'
+        sql = 'SELECT id FROM querybuilder_tests_account WHERE id = %(my_id)s'
         sql_args = {
             'my_id': 2
         }
@@ -163,7 +165,7 @@ class QueryTest(QueryTestCase):
         )
 
     def test_explain(self):
-        sql = 'SELECT id FROM tests_account WHERE id = %(my_id)s'
+        sql = 'SELECT id FROM querybuilder_tests_account WHERE id = %(my_id)s'
         sql_args = {
             'my_id': 2
         }
@@ -190,7 +192,7 @@ class TableTest(QueryTestCase):
         self.assertIsNotNone(field, 'Field not found')
 
         result = field.get_identifier()
-        expected = 'tests_account.id'
+        expected = 'querybuilder_tests_account.id'
         self.assertEqual(result, expected, get_comparison_str(result, expected))
 
     def test_find_field_alias(self):
@@ -232,7 +234,9 @@ class FieldTest(QueryTestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(COUNT(tests_account.id) AS FLOAT) AS "count" FROM tests_account'
+        expected_query = (
+            'SELECT CAST(COUNT(querybuilder_tests_account.id) AS FLOAT) AS "count" FROM querybuilder_tests_account'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
         received = query.select()[0]['count']
