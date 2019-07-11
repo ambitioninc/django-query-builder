@@ -173,7 +173,7 @@ class WhereTest(QueryTestCase):
         ))
 
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_account.* FROM tests_account WHERE (id IN (%(A0)s))'
+        expected_query = 'SELECT querybuilder_tests_account.* FROM querybuilder_tests_account WHERE (id IN (%(A0)s))'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_in_csv(self):
@@ -184,7 +184,9 @@ class WhereTest(QueryTestCase):
         ))
 
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_account.* FROM tests_account WHERE (id IN (%(A0)s,%(A1)s,%(A2)s))'
+        expected_query = (
+            'SELECT querybuilder_tests_account.* FROM querybuilder_tests_account WHERE (id IN (%(A0)s,%(A1)s,%(A2)s))'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_in_list(self):
@@ -195,7 +197,9 @@ class WhereTest(QueryTestCase):
         ))
 
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_account.* FROM tests_account WHERE (id IN (%(A0)s,%(A1)s,%(A2)s))'
+        expected_query = (
+            'SELECT querybuilder_tests_account.* FROM querybuilder_tests_account WHERE (id IN (%(A0)s,%(A1)s,%(A2)s))'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_where_contains(self):

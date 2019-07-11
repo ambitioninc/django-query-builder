@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
                 ('margin', models.FloatField()),
                 ('margin_percent', models.FloatField()),
                 ('time', models.DateTimeField()),
-                ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tests.Account')),
+                ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='querybuilder_tests.Account')),
             ],
         ),
         migrations.CreateModel(
@@ -81,6 +81,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='account',
             name='user',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='tests.User'),
+            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='querybuilder_tests.User'),
         ),
     ]

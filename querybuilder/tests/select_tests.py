@@ -30,7 +30,7 @@ class SelectTest(QueryTestCase):
             table=Account
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_account.* FROM tests_account'
+        expected_query = 'SELECT querybuilder_tests_account.* FROM querybuilder_tests_account'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_all_from_model_alias(self):
@@ -40,7 +40,7 @@ class SelectTest(QueryTestCase):
             }
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT table_alias.* FROM tests_account AS table_alias'
+        expected_query = 'SELECT table_alias.* FROM querybuilder_tests_account AS table_alias'
         self.assertEqual(query_str, expected_query, '{0}\n!=\n{1}'.format(query_str, expected_query))
 
     def test_select_fields_from_string(self):
@@ -78,7 +78,10 @@ class SelectTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_account.field_one, tests_account.field_two FROM tests_account'
+        expected_query = (
+            'SELECT querybuilder_tests_account.field_one, querybuilder_tests_account.field_two FROM '
+            'querybuilder_tests_account'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_from_model_alias(self):
@@ -92,7 +95,9 @@ class SelectTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT table_alias.field_one, table_alias.field_two FROM tests_account AS table_alias'
+        expected_query = (
+            'SELECT table_alias.field_one, table_alias.field_two FROM querybuilder_tests_account AS table_alias'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_select_fields_alias_from_string(self):
@@ -143,9 +148,9 @@ class SelectTest(QueryTestCase):
         )
         query_str = query.get_sql()
         expected_query = (
-            'SELECT tests_account.field_one AS "field_alias_one", '
-            'tests_account.field_two AS "field_alias_two" '
-            'FROM tests_account'
+            'SELECT querybuilder_tests_account.field_one AS "field_alias_one", '
+            'querybuilder_tests_account.field_two AS "field_alias_two" '
+            'FROM querybuilder_tests_account'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -164,7 +169,7 @@ class SelectTest(QueryTestCase):
         expected_query = (
             'SELECT table_alias.field_one AS "field_alias_one", '
             'table_alias.field_two AS "field_alias_two" '
-            'FROM tests_account '
+            'FROM querybuilder_tests_account '
             'AS table_alias'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
@@ -185,11 +190,11 @@ class SelectTest(QueryTestCase):
         )
         query_str = query.get_sql()
         expected_query = (
-            'SELECT tests_account.field_one, '
-            'tests_account.field_two, '
+            'SELECT querybuilder_tests_account.field_one, '
+            'querybuilder_tests_account.field_two, '
             'second_table.field_three, '
             'second_table.field_four '
-            'FROM tests_account, second_table'
+            'FROM querybuilder_tests_account, second_table'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
@@ -219,7 +224,7 @@ class SelectTest(QueryTestCase):
             'table_one.field_two AS "f2", '
             'table_two.field_three AS "f3", '
             'table_two.field_four AS "f4" '
-            'FROM tests_account AS table_one, '
+            'FROM querybuilder_tests_account AS table_one, '
             'second_table AS table_two'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
@@ -240,11 +245,11 @@ class SelectTest(QueryTestCase):
         )
         query_str = query.get_sql()
         expected_query = (
-            'SELECT tests_account.field_one, '
-            'tests_account.field_two, '
+            'SELECT querybuilder_tests_account.field_one, '
+            'querybuilder_tests_account.field_two, '
             'T1.field_three, '
             'T1.field_four '
-            'FROM tests_account, tests_account AS T1'
+            'FROM querybuilder_tests_account, querybuilder_tests_account AS T1'
         )
         self.assertEqual(query_str, expected_query, '\n{0}\n!=\n{1}'.format(query_str, expected_query))
 
@@ -259,7 +264,9 @@ class InnerQueryTest(QueryTestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'WITH T0 AS (SELECT tests_account.* FROM tests_account) SELECT T0.* FROM T0'
+        expected_query = (
+            'WITH T0 AS (SELECT querybuilder_tests_account.* FROM querybuilder_tests_account) SELECT T0.* FROM T0'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
         inner_query = Query().from_table(
@@ -268,7 +275,9 @@ class InnerQueryTest(QueryTestCase):
 
         query = Query().with_query(inner_query, 's3').from_table('s3')
         query_str = query.get_sql()
-        expected_query = 'WITH s3 AS (SELECT tests_account.* FROM tests_account) SELECT s3.* FROM s3'
+        expected_query = (
+            'WITH s3 AS (SELECT querybuilder_tests_account.* FROM querybuilder_tests_account) SELECT s3.* FROM s3'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_inner_alias(self):
@@ -280,7 +289,9 @@ class InnerQueryTest(QueryTestCase):
         })
 
         query_str = query.get_sql()
-        expected_query = 'WITH Q0 AS (SELECT tests_account.* FROM tests_account) SELECT Q0.* FROM Q0'
+        expected_query = (
+            'WITH Q0 AS (SELECT querybuilder_tests_account.* FROM querybuilder_tests_account) SELECT Q0.* FROM Q0'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_inner_args(self):
@@ -296,7 +307,8 @@ class InnerQueryTest(QueryTestCase):
         query_str = query.get_sql()
         expected_query = (
             'WITH T0 AS '
-            '(SELECT tests_account.* FROM tests_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) '
+            '(SELECT querybuilder_tests_account.* FROM querybuilder_tests_account '
+            'WHERE (id > %(T0A0)s AND id < %(T0A1)s)) '
             'SELECT T0.* FROM T0'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
@@ -316,7 +328,8 @@ class InnerQueryTest(QueryTestCase):
         query_str = query.get_sql()
         expected_query = (
             'WITH T0 AS '
-            '(SELECT tests_account.* FROM tests_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) '
+            '(SELECT querybuilder_tests_account.* FROM querybuilder_tests_account '
+            'WHERE (id > %(T0A0)s AND id < %(T0A1)s)) '
             'SELECT T0.* FROM T0 WHERE ((NOT(id = %(A0)s)))'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
@@ -345,10 +358,11 @@ class InnerQueryTest(QueryTestCase):
         query_str = query.get_sql()
         expected_query = (
             'WITH T1 AS '
-            '(SELECT tests_account.* FROM tests_account WHERE (id > %(T1A0)s AND id < %(T1A1)s)), '
+            '(SELECT querybuilder_tests_account.* FROM querybuilder_tests_account '
+            'WHERE (id > %(T1A0)s AND id < %(T1A1)s)), '
             'T0 AS ('
-            'SELECT tests_account.* '
-            'FROM tests_account '
+            'SELECT querybuilder_tests_account.* '
+            'FROM querybuilder_tests_account '
             'WHERE (id > %(T0A0)s AND id < %(T0A1)s)) '
             'SELECT T0.*, T1.* '
             'FROM T0, T1 '
@@ -392,10 +406,13 @@ class InnerQueryTest(QueryTestCase):
         )
         query_str = query.get_sql()
         expected_query = (
-            'WITH T1T1 AS (SELECT tests_account.* FROM tests_account WHERE (id > %(T1T1A0)s AND id < %(T1T1A1)s)), '
-            'T1T0 AS (SELECT tests_account.* FROM tests_account WHERE (id > %(T1T0A0)s AND id < %(T1T0A1)s)), '
+            'WITH T1T1 AS (SELECT querybuilder_tests_account.* FROM querybuilder_tests_account '
+            'WHERE (id > %(T1T1A0)s AND id < %(T1T1A1)s)), '
+            'T1T0 AS (SELECT querybuilder_tests_account.* FROM querybuilder_tests_account '
+            'WHERE (id > %(T1T0A0)s AND id < %(T1T0A1)s)), '
             'T1 AS (SELECT T1T0.*, T1T1.* FROM T1T0, T1T1 WHERE (id > %(T1A0)s AND id < %(T1A1)s)), '
-            'T0 AS (SELECT tests_account.* FROM tests_account WHERE (id > %(T0A0)s AND id < %(T0A1)s)) '
+            'T0 AS (SELECT querybuilder_tests_account.* FROM querybuilder_tests_account '
+            'WHERE (id > %(T0A0)s AND id < %(T0A1)s)) '
             'SELECT T0.*, T1.* FROM T0, T1 WHERE ((NOT(id = %(A0)s)))'
         )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
@@ -511,13 +528,13 @@ class DistinctTest(QueryTestCase):
         ).distinct()
 
         query_str = query.get_sql()
-        expected_query = 'SELECT DISTINCT tests_account.* FROM tests_account'
+        expected_query = 'SELECT DISTINCT querybuilder_tests_account.* FROM querybuilder_tests_account'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
         query.distinct(use_distinct=False)
 
         query_str = query.get_sql()
-        expected_query = 'SELECT tests_account.* FROM tests_account'
+        expected_query = 'SELECT querybuilder_tests_account.* FROM querybuilder_tests_account'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_distinct_on(self):
@@ -526,7 +543,7 @@ class DistinctTest(QueryTestCase):
         ).distinct_on('field1')
 
         query_str = query.get_sql()
-        expected_query = 'SELECT DISTINCT ON (field1) tests_account.* FROM tests_account'
+        expected_query = 'SELECT DISTINCT ON (field1) querybuilder_tests_account.* FROM querybuilder_tests_account'
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_distinct_on_many_fields(self):
@@ -535,7 +552,9 @@ class DistinctTest(QueryTestCase):
         ).distinct_on('field1', 'field2', 'field3')
 
         query_str = query.get_sql()
-        expected_query = 'SELECT DISTINCT ON (field1, field2, field3) tests_account.* FROM tests_account'
+        expected_query = (
+            'SELECT DISTINCT ON (field1, field2, field3) querybuilder_tests_account.* FROM querybuilder_tests_account'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_cannot_mix_distincts(self):
