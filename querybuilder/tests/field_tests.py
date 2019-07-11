@@ -16,7 +16,10 @@ class FieldTest(QueryTestCase):
             table=Order,
             fields=[SimpleField(field='revenue', cast='INT')]
         ).order_by('revenue').limit(1)
-        expected_query = 'SELECT CAST(querybuilder_tests_order.revenue AS INT) FROM querybuilder_tests_order ORDER BY revenue ASC LIMIT 1'
+        expected_query = (
+            'SELECT CAST(querybuilder_tests_order.revenue AS INT) FROM querybuilder_tests_order '
+            'ORDER BY revenue ASC LIMIT 1'
+        )
         self.assertEqual(expected_query, query.get_sql())
         rows = query.select()
         self.assertEqual(1, len(rows))
@@ -47,7 +50,9 @@ class FieldTest(QueryTestCase):
             prefix_fields=True,
             field_prefix='my_field_prefix',
         )
-        expected_query = 'SELECT querybuilder_tests_order.revenue AS "my_field_prefix__my_alias" FROM querybuilder_tests_order'
+        expected_query = (
+            'SELECT querybuilder_tests_order.revenue AS "my_field_prefix__my_alias" FROM querybuilder_tests_order'
+        )
         self.assertEqual(expected_query, query.get_sql())
 
         field.alias = None
@@ -58,7 +63,9 @@ class FieldTest(QueryTestCase):
             prefix_fields=True,
             field_prefix='my_field_prefix',
         )
-        expected_query = 'SELECT querybuilder_tests_order.revenue AS "my_field_prefix__revenue" FROM querybuilder_tests_order'
+        expected_query = (
+            'SELECT querybuilder_tests_order.revenue AS "my_field_prefix__revenue" FROM querybuilder_tests_order'
+        )
         self.assertEqual(expected_query, query.get_sql())
 
     def lead_lag_difference_test(self):

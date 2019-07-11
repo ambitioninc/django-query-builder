@@ -234,7 +234,9 @@ class FieldTest(QueryTestCase):
         )
 
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(COUNT(querybuilder_tests_account.id) AS FLOAT) AS "count" FROM querybuilder_tests_account'
+        expected_query = (
+            'SELECT CAST(COUNT(querybuilder_tests_account.id) AS FLOAT) AS "count" FROM querybuilder_tests_account'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
         received = query.select()[0]['count']

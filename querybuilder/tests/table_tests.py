@@ -188,4 +188,7 @@ class QueryTableTest(TestCase):
         """
         inner_query = Query().from_table(Account)
         query = Query().from_table(inner_query)
-        self.assertEqual('(SELECT querybuilder_tests_account.* FROM querybuilder_tests_account)', query.tables[0].get_from_name())
+        self.assertEqual(
+            '(SELECT querybuilder_tests_account.* FROM querybuilder_tests_account)',
+            query.tables[0].get_from_name()
+        )

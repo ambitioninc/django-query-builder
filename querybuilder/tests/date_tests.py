@@ -13,7 +13,10 @@ class DateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT CAST(EXTRACT(year FROM querybuilder_tests_order.time) AS INT) AS "time__year" FROM querybuilder_tests_order'
+        expected_query = (
+            'SELECT CAST(EXTRACT(year FROM querybuilder_tests_order.time) AS INT) AS "time__year" '
+            'FROM querybuilder_tests_order'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_year_auto(self):

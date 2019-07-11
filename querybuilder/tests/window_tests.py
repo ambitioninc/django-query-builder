@@ -89,7 +89,9 @@ class WindowFunctionTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT querybuilder_tests_order.id, RANK() OVER (ORDER BY id ASC) AS "rank" FROM querybuilder_tests_order'
+        expected_query = (
+            'SELECT querybuilder_tests_order.id, RANK() OVER (ORDER BY id ASC) AS "rank" FROM querybuilder_tests_order'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_rank_over_partition(self):
@@ -105,7 +107,10 @@ class WindowFunctionTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT querybuilder_tests_order.id, RANK() OVER (PARTITION BY account_id) AS "rank" FROM querybuilder_tests_order'
+        expected_query = (
+            'SELECT querybuilder_tests_order.id, RANK() OVER (PARTITION BY account_id) AS "rank" FROM '
+            'querybuilder_tests_order'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_row_number(self):

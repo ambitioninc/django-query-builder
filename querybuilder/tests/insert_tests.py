@@ -48,7 +48,10 @@ class InsertTest(QueryTestCase):
 
         query.insert(rows)
         sql = self.logger.get_log()[2]['sql']
-        self.assertEqual(sql, "INSERT INTO querybuilder_tests_account (user_id, first_name, last_name) VALUES (1, 'Test', 'User')")
+        self.assertEqual(
+            sql,
+            "INSERT INTO querybuilder_tests_account (user_id, first_name, last_name) VALUES (1, 'Test', 'User')"
+        )
 
     def test_insert_multiple_rows(self):
         G(User, id=1)

@@ -96,7 +96,9 @@ class AggregateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT STDDEV(querybuilder_tests_order.margin) AS "margin_stddev" FROM querybuilder_tests_order'
+        expected_query = (
+            'SELECT STDDEV(querybuilder_tests_order.margin) AS "margin_stddev" FROM querybuilder_tests_order'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_sum_field(self):
@@ -121,7 +123,9 @@ class AggregateTest(QueryTestCase):
             ]
         )
         query_str = query.get_sql()
-        expected_query = 'SELECT VARIANCE(querybuilder_tests_order.margin) AS "margin_variance" FROM querybuilder_tests_order'
+        expected_query = (
+            'SELECT VARIANCE(querybuilder_tests_order.margin) AS "margin_variance" FROM querybuilder_tests_order'
+        )
         self.assertEqual(query_str, expected_query, get_comparison_str(query_str, expected_query))
 
     def test_count(self):
@@ -139,7 +143,10 @@ class AggregateTest(QueryTestCase):
                 received
             )
         )
-        self.assertEqual(query.get_count_query().get_sql(), 'SELECT COUNT(querybuilder_tests_user.*) AS "all_count" FROM querybuilder_tests_user')
+        self.assertEqual(
+            query.get_count_query().get_sql(),
+            'SELECT COUNT(querybuilder_tests_user.*) AS "all_count" FROM querybuilder_tests_user'
+        )
 
         # Make sure the copy didn't modify the original
         self.assertEqual(len(query.tables[0].fields), 2)
