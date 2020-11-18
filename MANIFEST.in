@@ -1,2 +1,6 @@
 include README.rst
 include LICENSE
+include *.py
+include tox.ini
+recursive-include docs *.py
+recursive-include requirements *.txt
