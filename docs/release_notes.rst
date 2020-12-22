@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+v2.0.0
+------
+* Add support Django 3.0, 3.1
+* Add support for python 3.8
+* Drop support for Django 2.1
+
 v1.2.0
 ------
 * Add Django 2.1
