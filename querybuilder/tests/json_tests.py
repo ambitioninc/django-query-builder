@@ -94,6 +94,8 @@ class JsonQuerysetTest(TestCase):
         self.assertIsNone(record)
 
         record = JsonQueryset(model=MetricRecord).filter(**{'data->two': 'two'}).first()
+        print('checking record', record.__dict__)
+        print(type(record.data))
         self.assertEqual(record.data['two'], 'two')
 
         record = JsonQueryset(model=MetricRecord).filter(**{'data->one': '1'}).first()
