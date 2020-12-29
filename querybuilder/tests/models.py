@@ -1,7 +1,10 @@
 try:
-    from django.contrib.postgres.fields import JSONField
+    from django.db.models import JSONField
 except ImportError:
-    from jsonfield import JSONField
+    try:
+        from django.contrib.postgres.fields import JSONField
+    except ImportError:
+        from jsonfield import JSONField
 from django.db import models
 
 
