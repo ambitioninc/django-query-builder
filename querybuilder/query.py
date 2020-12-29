@@ -4,14 +4,18 @@ from django.db import connection as default_django_connection
 from django.db.models import Q, AutoField
 from django.db.models.query import QuerySet
 from django.db.models.constants import LOOKUP_SEP
-try:
-    # Django 1.9
-    from django.apps import apps
-    get_model = apps.get_model
-except ImportError:  # pragma: no cover
-    # Django < 1.9
-    from django.db.models import get_model
+from django.apps import apps
+get_model = apps.get_model
 import six
+import json
+
+try:
+    from django.db.models import JSONField
+except ImportError:
+    try:
+        from django.contrib.postgres.fields import JSONField
+    except ImportError:
+        from jsonfield import JSONField
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath
@@ -2095,6 +2099,13 @@ class JsonQueryset(QueryBuilderQuerySet):
         self.json_query = Query().from_table(self.model)
 
     def get_model_queryset(self, queryset, offset, limit):
+        for fields in self.json_query.limit(limit, offset).select():
+            for field, value in fields.items():
+                if isinstance(self.model._meta.get_field(field), JSONField) and type(value) is str:
+                    try:
+                        fields[field] = json.loads(value)
+                    except Exception:
+                        pass
         return [self.model(**fields) for fields in self.json_query.limit(limit, offset).select()]
 
     def count(self):
