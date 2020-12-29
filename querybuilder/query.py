@@ -7,15 +7,7 @@ from django.db.models.constants import LOOKUP_SEP
 from django.apps import apps
 get_model = apps.get_model
 import six
-import json
 
-try:
-    from django.db.models import JSONField
-except ImportError:
-    try:
-        from django.contrib.postgres.fields import JSONField
-    except ImportError:
-        from jsonfield import JSONField
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath
@@ -2099,28 +2091,7 @@ class JsonQueryset(QueryBuilderQuerySet):
         self.json_query = Query().from_table(self.model)
 
     def get_model_queryset(self, queryset, offset, limit):
-        print('is there any way to detect it here')
-        print('--------------------')
-        model_list = []
-        for fields in self.json_query.limit(limit, offset).select():
-            print(fields)
-            for field, value in fields.items():
-                print('')
-                print('Field', type(field), field)
-                print(self.model._meta.get_field(field))
-                print('type of value', value, type(value))
-                if isinstance(self.model._meta.get_field(field), JSONField) and type(value) is str:
-                    try:
-                        print('convert it')
-                        fields[field] = json.loads(value)
-                    except Exception as e:
-                        print('exception', e)
-                else:
-                    print('Not jsonfield + string')
-
-            model_list.append(self.model(**fields))
-
-        return model_list
+        return [self.model(**fields) for fields in self.json_query.limit(limit, offset).select()]
 
     def count(self):
         return self.json_query.count()

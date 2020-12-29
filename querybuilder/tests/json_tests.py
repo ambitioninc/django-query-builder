@@ -1,4 +1,5 @@
 import unittest
+from django import VERSION
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
 from querybuilder.fields import JsonField
@@ -45,7 +46,12 @@ class JsonFieldTest(TestCase):
                 'querybuilder_tests_metricrecord WHERE (querybuilder_tests_metricrecord.data->>\'two\' = %(A0)s)'
             )
         )
-        self.assertEqual(query.select(), [{'my_two_alias': 'two'}])
+
+        # Django 3.1 changes the raw queryset behavior so querybuilder isn't going to change that behavior
+        if VERSION[0] == 3 and VERSION[1] == 1:
+            self.assertEqual(query.select(), [{'my_two_alias': '"two"'}])
+        else:
+            self.assertEqual(query.select(), [{'my_two_alias': 'two'}])
 
         query = Query().from_table(MetricRecord, fields=[one_field]).where(**{
             one_field.get_where_key(): '1'
@@ -94,9 +100,12 @@ class JsonQuerysetTest(TestCase):
         self.assertIsNone(record)
 
         record = JsonQueryset(model=MetricRecord).filter(**{'data->two': 'two'}).first()
-        print('checking record', record.__dict__)
-        print(type(record.data))
-        self.assertEqual(record.data['two'], 'two')
+
+        # Django 3.1 changes the raw queryset behavior so querybuilder isn't going to change that behavior
+        if VERSION[0] == 3 and VERSION[1] == 1:
+            self.assertEqual(record.data['two'], '"two"')
+        else:
+            self.assertEqual(record.data['two'], 'two')
 
         record = JsonQueryset(model=MetricRecord).filter(**{'data->one': '1'}).first()
         self.assertEqual(record.data['one'], 1)
