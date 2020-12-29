@@ -2101,6 +2101,7 @@ class JsonQueryset(QueryBuilderQuerySet):
     def get_model_queryset(self, queryset, offset, limit):
         print('is there any way to detect it here')
         print('--------------------')
+        model_list = []
         for fields in self.json_query.limit(limit, offset).select():
             print(fields)
             for field, value in fields.items():
@@ -2117,7 +2118,9 @@ class JsonQueryset(QueryBuilderQuerySet):
                 else:
                     print('Not jsonfield + string')
 
-        return [self.model(**fields) for fields in self.json_query.limit(limit, offset).select()]
+            model_list.append(self.model(**fields))
+
+        return model_list
 
     def count(self):
         return self.json_query.count()
