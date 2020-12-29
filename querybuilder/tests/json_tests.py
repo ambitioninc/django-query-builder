@@ -1,5 +1,4 @@
 import unittest
-import json
 from django import VERSION
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
