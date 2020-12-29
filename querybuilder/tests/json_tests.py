@@ -1,4 +1,5 @@
 import unittest
+import json
 from django import VERSION
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
@@ -63,7 +64,12 @@ class JsonFieldTest(TestCase):
                 'querybuilder_tests_metricrecord WHERE (querybuilder_tests_metricrecord.data->>\'one\' = %(A0)s)'
             )
         )
-        self.assertEqual(query.select(), [{'my_one_alias': 1}])
+
+        # Django 3.1 changes the raw queryset behavior so querybuilder isn't going to change that behavior
+        if VERSION[0] == 3 and VERSION[1] == 1:
+            self.assertEqual(query.select(), [{'my_one_alias': '1'}])
+        else:
+            self.assertEqual(query.select(), [{'my_one_alias': 1}])
 
         query = Query().from_table(MetricRecord, fields=[one_field]).where(**{
             one_field.get_where_key(): '2'
@@ -103,7 +109,7 @@ class JsonQuerysetTest(TestCase):
 
         # Django 3.1 changes the raw queryset behavior so querybuilder isn't going to change that behavior
         if VERSION[0] == 3 and VERSION[1] == 1:
-            self.assertEqual(record.data['two'], '"two"')
+            self.assertEqual(json.loads(record.data)['two'], 'two')
         else:
             self.assertEqual(record.data['two'], 'two')
 
