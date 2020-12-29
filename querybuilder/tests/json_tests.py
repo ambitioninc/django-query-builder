@@ -114,11 +114,21 @@ class JsonQuerysetTest(TestCase):
             self.assertEqual(record.data['two'], 'two')
 
         record = JsonQueryset(model=MetricRecord).filter(**{'data->one': '1'}).first()
-        self.assertEqual(record.data['one'], 1)
+
+        # Django 3.1 changes the raw queryset behavior so querybuilder isn't going to change that behavior
+        if VERSION[0] == 3 and VERSION[1] == 1:
+            self.assertEqual(json.loads(record.data)['one'], 1)
+        else:
+            self.assertEqual(record.data['one'], 1)
 
         record = JsonQueryset(model=MetricRecord).filter(**{'data->one': '2'}).first()
         self.assertIsNone(record)
 
         records = list(JsonQueryset(model=MetricRecord).order_by('data->one'))
-        self.assertEqual(records[0].data['one'], 1)
-        self.assertEqual(records[1].data['one'], 5)
+        # Django 3.1 changes the raw queryset behavior so querybuilder isn't going to change that behavior
+        if VERSION[0] == 3 and VERSION[1] == 1:
+            self.assertEqual(json.loads(records[0].data)['one'], 1)
+            self.assertEqual(json.loads(records[1].data)['one'], 5)
+        else:
+            self.assertEqual(records[0].data['one'], 1)
+            self.assertEqual(records[1].data['one'], 5)
