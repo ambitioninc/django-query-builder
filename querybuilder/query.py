@@ -2099,13 +2099,24 @@ class JsonQueryset(QueryBuilderQuerySet):
         self.json_query = Query().from_table(self.model)
 
     def get_model_queryset(self, queryset, offset, limit):
+        print('is there any way to detect it here')
+        print('--------------------')
         for fields in self.json_query.limit(limit, offset).select():
+            print(fields)
             for field, value in fields.items():
+                print('')
+                print('Field', type(field), field)
+                print(self.model._meta.get_field(field))
+                print('type of value', value, type(value))
                 if isinstance(self.model._meta.get_field(field), JSONField) and type(value) is str:
                     try:
+                        print('convert it')
                         fields[field] = json.loads(value)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print('exception', e)
+                else:
+                    print('Not jsonfield + string')
+
         return [self.model(**fields) for fields in self.json_query.limit(limit, offset).select()]
 
     def count(self):
