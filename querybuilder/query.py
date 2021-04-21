@@ -15,6 +15,7 @@ from querybuilder.tables import TableFactory, ModelTable, QueryTable
 
 SERIAL_DTYPES = ['serial', 'bigserial']
 
+
 class Join(object):
     """
     Represents the JOIN clauses of a Query. The join can be of any join type.
