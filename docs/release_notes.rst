@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v2.0.1
+------
+* BUG: 'bigserial' dtype should not be a cast type - NickHilton
+
 v2.0.0
 ------
 * Add support Django 3.0, 3.1

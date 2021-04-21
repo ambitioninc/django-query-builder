@@ -13,6 +13,8 @@ from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, Su
 from querybuilder.helpers import set_value_for_keypath
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
 
+SERIAL_DTYPES = ['serial', 'bigserial']
+
 
 class Join(object):
     """
@@ -1170,7 +1172,7 @@ class Query(object):
                     db_type = field_object.db_type(self.connection)
 
                     # Don't cast the pk
-                    if db_type == 'serial':
+                    if db_type in SERIAL_DTYPES:
                         placeholders.append('%s')
                     else:
                         # Cast the placeholder to the data type
