@@ -12,17 +12,23 @@ def configure_settings():
         test_db = os.environ.get('DB', None)
         if test_db is None:
             db_config = {
-                'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'NAME': 'ambition',
-                'USER': 'ambition',
-                'PASSWORD': 'ambition',
-                'HOST': 'db'
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': 'ambition_test',
+                'USER': 'postgres',
+                'PASSWORD': '',
+                'HOST': 'db',
             }
         elif test_db == 'postgres':
             db_config = {
-                'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'USER': 'postgres',
+                'ENGINE': 'django.db.backends.postgresql',
                 'NAME': 'querybuilder',
+                'USER': 'travis',
+                'PORT': '5433',
+            }
+        elif test_db == 'sqlite':
+            db_config = {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': 'regex_field',
             }
         else:
             raise RuntimeError('Unsupported test DB {0}'.format(test_db))
