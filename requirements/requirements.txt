@@ -1,4 +1,4 @@
-Django>=3.0
+Django>=2.2
 pytz>=2015.6
 fleming>=0.6.0
 six
