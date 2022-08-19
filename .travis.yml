@@ -6,9 +6,9 @@ services:
   - postgresql
 
 python:
-#  - "3.7"
+  - "3.7"
   - "3.8"
-#  - "3.9"
+  - "3.9"
 
 env:
   global:
@@ -16,12 +16,12 @@ env:
     - PGUSER=travis
   matrix:
     - DJANGO=2.2
-#    - DJANGO=3.0
-#    - DJANGO=3.1
-#    - DJANGO=3.2
-#    - DJANGO=4.0
-#    - DJANGO=4.1
-#    - DJANGO=master
+    - DJANGO=3.0
+    - DJANGO=3.1
+    - DJANGO=3.2
+    - DJANGO=4.0
+    - DJANGO=4.1
+    - DJANGO=master
 
 addons:
   postgresql: '13'
