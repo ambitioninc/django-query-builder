@@ -1,3 +1,4 @@
+import copy
 import os
 
 from django.conf import settings
@@ -40,7 +41,7 @@ def configure_settings():
         else:
             raise RuntimeError('Unsupported test DB {0}'.format(test_db))
 
-        db_config2 = db_config.copy()
+        db_config2 = copy.copy(db_config)
         db_config2['name'] = f'{db_config2["name"]}2'
         db_config2['TEST_MIRROR'] = 'default'
 
