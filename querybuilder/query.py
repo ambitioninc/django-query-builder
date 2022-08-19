@@ -10,7 +10,7 @@ import six
 
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
-from querybuilder.helpers import set_value_for_keypath
+from querybuilder.helpers import set_value_for_keypath, copy_instance
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
 
 
@@ -1534,7 +1534,7 @@ class Query(object):
         :return: The wrapped query
         """
         field_names = self.get_field_names()
-        query = Query(self.connection).from_table(deepcopy(self), alias=alias)
+        query = Query(self.connection).from_table(copy_instance(self), alias=alias)
         self.__dict__.update(query.__dict__)
 
         # set explicit field names

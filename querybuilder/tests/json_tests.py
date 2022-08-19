@@ -47,7 +47,11 @@ class JsonFieldTest(TestCase):
             )
         )
 
-        self.assertEqual(query.select(), [{'my_two_alias': '"two"'}])
+        # Django 3.0 changes the raw queryset behavior so querybuilder isn't going to change that behavior
+        if VERSION[0] >= 3:
+            self.assertEqual(query.select(), [{'my_two_alias': '"two"'}])
+        else:
+            self.assertEqual(query.select(), [{'my_two_alias': 'two'}])
 
         query = Query().from_table(MetricRecord, fields=[one_field]).where(**{
             one_field.get_where_key(): '1'
@@ -60,7 +64,11 @@ class JsonFieldTest(TestCase):
             )
         )
 
-        self.assertEqual(query.select(), [{'my_one_alias': '1'}])
+        # Django 3.0 changes the raw queryset behavior so querybuilder isn't going to change that behavior
+        if VERSION[0] >= 3:
+            self.assertEqual(query.select(), [{'my_one_alias': '1'}])
+        else:
+            self.assertEqual(query.select(), [{'my_one_alias': 1}])
 
         query = Query().from_table(MetricRecord, fields=[one_field]).where(**{
             one_field.get_where_key(): '2'
