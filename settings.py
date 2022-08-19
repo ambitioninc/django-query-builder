@@ -19,6 +19,13 @@ def configure_settings():
                 'HOST': 'db',
             }
         elif test_db == 'postgres':
+            # db_config = {
+            #     'ENGINE': 'django.db.backends.postgresql',
+            #     'NAME': 'querybuilder',
+            #     'USER': 'postgres',
+            #     'PASSWORD': '',
+            #     'HOST': 'db',
+            # }
             db_config = {
                 'ENGINE': 'django.db.backends.postgresql',
                 'NAME': 'querybuilder',
@@ -33,16 +40,17 @@ def configure_settings():
         else:
             raise RuntimeError('Unsupported test DB {0}'.format(test_db))
 
+        db_config2 = db_config.copy()
+        db_config2.name = f'{db_config2.name}2'
+        db_config2.TEST_MIRROR = 'default'
+
         settings.configure(
             TEST_RUNNER='django_nose.NoseTestSuiteRunner',
             NOSE_ARGS=['--nocapture', '--nologcapture', '--verbosity=1'],
             MIDDLEWARE_CLASSES=(),
             DATABASES={
                 'default': db_config,
-                'mock-second-database': {
-                    'ENGINE': 'django.db.backends.sqlite3',
-                    'TEST_MIRROR': 'default',
-                },
+                'mock-second-database': db_config2,
             },
             INSTALLED_APPS=(
                 'django.contrib.auth',
