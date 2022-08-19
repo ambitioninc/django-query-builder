@@ -3,6 +3,7 @@ from querybuilder.tests.query_tests import QueryTestCase, get_comparison_str
 
 
 class OrderByTest(QueryTestCase):
+
     def test_order_by_single_asc(self):
         query = Query().from_table(
             table='test_table'

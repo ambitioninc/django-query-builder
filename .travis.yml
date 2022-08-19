@@ -39,14 +39,12 @@ matrix:
 
 install:
     - pip install tox-travis
-    # needed to fix setup.py error
-    - pip install importlib-metadata==4.12.0
 
 before_script:
   - psql -c 'CREATE DATABASE querybuilder;' -U travis
 
 script:
-    - tox -r
+    - tox
 
 after_success:
   coveralls
