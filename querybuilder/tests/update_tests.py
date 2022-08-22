@@ -19,7 +19,7 @@ class TestUpdate(QueryTestCase):
 
         # Starting on Django 4, the id field adds ::integer automatically
         self.integer_cast_string = ''
-        if VERSION[0] >= 4:
+        if (VERSION[0] == 4 and VERSION[1] >= 1) or VERSION[0] >= 5:
             self.integer_cast_string = '::integer'
 
     def test_update_single_row(self):
