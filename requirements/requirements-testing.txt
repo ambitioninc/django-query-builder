@@ -7,3 +7,4 @@ django-dynamic-fixture
 jsonfield==0.9.20
 mock
 coverage
+flake8
