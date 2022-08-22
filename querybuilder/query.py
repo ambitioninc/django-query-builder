@@ -1129,7 +1129,7 @@ class Query(object):
         if db_type in SERIAL_DTYPES:
             return True
         if (VERSION[0] == 4 and VERSION[1] >= 1) or VERSION[0] >= 5:
-            if getattr(field_object, 'primary_key', None) and getattr(field_object, 'serialized', None) is False:
+            if getattr(field_object, 'primary_key', None) and getattr(field_object, 'serialize', None) is False:
                 return True
         return False
 
