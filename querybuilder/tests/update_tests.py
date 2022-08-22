@@ -1,6 +1,5 @@
 import json
 
-from django import VERSION
 from django.test.utils import override_settings
 from django_dynamic_fixture import G
 
@@ -16,11 +15,6 @@ class TestUpdate(QueryTestCase):
     def setUp(self):
         self.logger = Logger()
         self.logger.start_logging()
-
-        # Starting on Django 4, the id field adds ::integer automatically
-        # self.integer_cast_string = ''
-        # if (VERSION[0] == 4 and VERSION[1] >= 1) or VERSION[0] >= 5:
-        #     self.integer_cast_string = '::integer'
 
     def test_update_single_row(self):
         query = Query().from_table(

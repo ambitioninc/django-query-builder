@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+from django import VERSION
 from django.db import connection as default_django_connection
 from django.db.models import Q, AutoField
 from django.db.models.query import QuerySet
@@ -1119,6 +1120,17 @@ class Query(object):
 
         return self.sql, sql_args
 
+    def should_not_cast_value(self, db_type):
+        """
+        In Django 4.1 on PostgreSQL, AutoField, BigAutoField, and SmallAutoField are now created as identity
+        columns rather than serial columns with sequences.
+        """
+        if db_type in SERIAL_DTYPES:
+            return True
+        if (VERSION[0] == 4 and VERSION[1] >= 1) or VERSION[0] >= 5:
+            return True
+        return False
+
     def get_update_sql(self, rows):
         """
         Returns SQL UPDATE for rows ``rows``
@@ -1171,12 +1183,8 @@ class Query(object):
                     field_object = self.tables[0].model._meta.get_field(field_names[field_index])
                     db_type = field_object.db_type(self.connection)
 
-                    print('---------')
-                    print('---------')
-                    print('---------')
-                    print('this is casting', db_type)
-                    # Don't cast the pk
-                    if db_type in SERIAL_DTYPES:
+                    # Don't cast serial types
+                    if self.should_not_cast_value(db_type):
                         placeholders.append('%s')
                     else:
                         # Cast the placeholder to the data type
