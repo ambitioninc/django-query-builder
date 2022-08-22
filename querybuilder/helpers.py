@@ -51,3 +51,15 @@ def set_value_for_keypath(item, keypath, value, create_if_needed=False, delimete
         return item
     else:
         return None
+
+
+class Empty:
+    pass
+
+
+def copy_instance(instance):
+    obj = Empty()
+    obj.__class__ = instance.__class__
+    # Copy references to everything.
+    obj.__dict__ = instance.__dict__.copy()
+    return obj

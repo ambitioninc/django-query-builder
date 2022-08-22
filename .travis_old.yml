@@ -2,24 +2,37 @@ dist: xenial
 language: python
 sudo: false
 
+services:
+  - postgresql
+
 python:
-  - "3.6"
   - "3.7"
   - "3.8"
+  - "3.9"
 
 env:
+  global:
+    - PGPORT=5433
+    - PGUSER=travis
   matrix:
     - DJANGO=2.2
     - DJANGO=3.0
     - DJANGO=3.1
+    - DJANGO=3.2
+    - DJANGO=4.0
+    - DJANGO=4.1
     - DJANGO=master
 
 addons:
-  postgresql: '9.6'
+  postgresql: '13'
+  apt:
+    packages:
+      - postgresql-13
+      - postgresql-client-13
 
 matrix:
   include:
-    - { python: "3.6", env: TOXENV=flake8 }
+    - { python: "3.7", env: TOXENV=flake8 }
 
   allow_failures:
     - env: DJANGO=master
@@ -28,7 +41,7 @@ install:
     - pip install tox-travis
 
 before_script:
-  - psql -c 'CREATE DATABASE querybuilder;' -U postgres
+  - psql -c 'CREATE DATABASE querybuilder;' -U travis
 
 script:
     - tox

@@ -1,12 +1,12 @@
 import datetime
 
 from django.db import connections
-from django.test import TestCase
 from django_dynamic_fixture import G
 import six
 
 from querybuilder.fields import CountField
 from querybuilder.query import Query
+from querybuilder.tests.base import QuerybuilderTestCase
 from querybuilder.tests.models import User, Account, Order
 
 
@@ -14,8 +14,7 @@ def get_comparison_str(item1, item2):
     return 'Items are not equal.\nGot:\n{0}\nExpected:\n{1}'.format(item1, item2)
 
 
-class QueryConstructorTests(TestCase):
-    databases = ['default', 'mock-second-database']
+class QueryConstructorTests(QuerybuilderTestCase):
 
     def test_init_with_connection(self):
         """
@@ -47,7 +46,7 @@ class QueryConstructorTests(TestCase):
         self.assertEqual(query3.get_cursor().db, connections['default'])
 
 
-class QueryTestCase(TestCase):
+class QueryTestCase(QuerybuilderTestCase):
 
     def setUp(self):
         super(QueryTestCase, self).setUp()
@@ -221,6 +220,7 @@ class TableTest(QueryTestCase):
 
 
 class FieldTest(QueryTestCase):
+
     def test_cast(self):
         query = Query().from_table(
             table=Account,
