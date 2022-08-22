@@ -66,7 +66,8 @@ class TestUpdate(QueryTestCase):
                 "SET user_id = new_values.user_id, "
                 "first_name = new_values.first_name, "
                 "last_name = new_values.last_name "
-                f"FROM (VALUES (1{self.integer_cast_string}, 1::integer, 'Test''s'::varchar(64), '\"User\"'::varchar(64))) "
+                f"FROM (VALUES (1{self.integer_cast_string}, 1::integer, "
+                "'Test''s'::varchar(64), '\"User\"'::varchar(64))) "
                 "AS new_values (id, user_id, first_name, last_name) "
                 "WHERE querybuilder_tests_account.id = new_values.id"
             )
@@ -121,7 +122,8 @@ class TestUpdate(QueryTestCase):
                 'SET user_id = new_values.user_id, '
                 'first_name = new_values.first_name, '
                 'last_name = new_values.last_name '
-                f'FROM (VALUES (%s{self.integer_cast_string}, %s::integer, %s::varchar(64), %s::varchar(64)), (%s, %s, %s, %s)) '
+                f'FROM (VALUES (%s{self.integer_cast_string}, %s::integer, %s::varchar(64), %s::varchar(64)), '
+                '(%s, %s, %s, %s)) '
                 'AS new_values (id, user_id, first_name, last_name) '
                 'WHERE querybuilder_tests_account.id = new_values.id'
             )
