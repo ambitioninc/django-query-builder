@@ -1171,6 +1171,10 @@ class Query(object):
                     field_object = self.tables[0].model._meta.get_field(field_names[field_index])
                     db_type = field_object.db_type(self.connection)
 
+                    print('---------')
+                    print('---------')
+                    print('---------')
+                    print('this is casting', db_type)
                     # Don't cast the pk
                     if db_type in SERIAL_DTYPES:
                         placeholders.append('%s')

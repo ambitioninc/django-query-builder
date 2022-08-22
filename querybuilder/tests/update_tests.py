@@ -18,9 +18,9 @@ class TestUpdate(QueryTestCase):
         self.logger.start_logging()
 
         # Starting on Django 4, the id field adds ::integer automatically
-        self.integer_cast_string = ''
-        if (VERSION[0] == 4 and VERSION[1] >= 1) or VERSION[0] >= 5:
-            self.integer_cast_string = '::integer'
+        # self.integer_cast_string = ''
+        # if (VERSION[0] == 4 and VERSION[1] >= 1) or VERSION[0] >= 5:
+        #     self.integer_cast_string = '::integer'
 
     def test_update_single_row(self):
         query = Query().from_table(
@@ -46,7 +46,7 @@ class TestUpdate(QueryTestCase):
                 'SET user_id = new_values.user_id, '
                 'first_name = new_values.first_name, '
                 'last_name = new_values.last_name '
-                f'FROM (VALUES (%s{self.integer_cast_string}, %s::integer, %s::varchar(64), %s::varchar(64))) '
+                f'FROM (VALUES (%s, %s::integer, %s::varchar(64), %s::varchar(64))) '
                 'AS new_values (id, user_id, first_name, last_name) '
                 'WHERE querybuilder_tests_account.id = new_values.id'
             )
@@ -66,7 +66,7 @@ class TestUpdate(QueryTestCase):
                 "SET user_id = new_values.user_id, "
                 "first_name = new_values.first_name, "
                 "last_name = new_values.last_name "
-                f"FROM (VALUES (1{self.integer_cast_string}, 1::integer, "
+                f"FROM (VALUES (1, 1::integer, "
                 "'Test''s'::varchar(64), '\"User\"'::varchar(64))) "
                 "AS new_values (id, user_id, first_name, last_name) "
                 "WHERE querybuilder_tests_account.id = new_values.id"
@@ -122,7 +122,7 @@ class TestUpdate(QueryTestCase):
                 'SET user_id = new_values.user_id, '
                 'first_name = new_values.first_name, '
                 'last_name = new_values.last_name '
-                f'FROM (VALUES (%s{self.integer_cast_string}, %s::integer, %s::varchar(64), %s::varchar(64)), '
+                f'FROM (VALUES (%s, %s::integer, %s::varchar(64), %s::varchar(64)), '
                 '(%s, %s, %s, %s)) '
                 'AS new_values (id, user_id, first_name, last_name) '
                 'WHERE querybuilder_tests_account.id = new_values.id'
@@ -146,7 +146,7 @@ class TestUpdate(QueryTestCase):
                 "SET user_id = new_values.user_id, "
                 "first_name = new_values.first_name, "
                 "last_name = new_values.last_name "
-                f"FROM (VALUES (1{self.integer_cast_string}, 1::integer, 'Test'::varchar(64), 'User'::varchar(64)), "
+                f"FROM (VALUES (1, 1::integer, 'Test'::varchar(64), 'User'::varchar(64)), "
                 "(2, 2, 'Test2', 'User2')) "
                 "AS new_values (id, user_id, first_name, last_name) "
                 "WHERE querybuilder_tests_account.id = new_values.id"

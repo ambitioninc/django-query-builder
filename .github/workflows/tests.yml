@@ -12,32 +12,33 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.7', '3.8', '3.9']
+        python: ['3.9']
+#        python: ['3.7', '3.8', '3.9']
         # Time to switch to pytest or nose2?
         # nosetests is broken on 3.10
         # AttributeError: module 'collections' has no attribute 'Callable'
         # https://github.com/nose-devs/nose/issues/1099
         django:
-        - 'Django~=2.2.0'
-        - 'Django~=3.0.0'
-        - 'Django~=3.1.0'
-        - 'Django~=3.2.0'
-        - 'Django~=4.0.0'
+#        - 'Django~=2.2.0'
+#        - 'Django~=3.0.0'
+#        - 'Django~=3.1.0'
+#        - 'Django~=3.2.0'
+#        - 'Django~=4.0.0'
         - 'Django~=4.1.0'
         experimental: [false]
-        include:
-        - python: '3.9'
-          django: 'https://github.com/django/django/archive/refs/heads/main.zip#egg=Django'
-          experimental: true
-          # NOTE this job will appear to pass even when it fails because of
-          # `continue-on-error: true`. Github Actions apparently does not
-          # have this feature, similar to Travis' allow-failure, yet.
-          # https://github.com/actions/toolkit/issues/399
-        exclude:
-        - python: '3.7'
-          django: 'Django~=4.0.0'
-        - python: '3.7'
-          django: 'Django~=4.1.0'
+#        include:
+#        - python: '3.9'
+#          django: 'https://github.com/django/django/archive/refs/heads/main.zip#egg=Django'
+#          experimental: true
+#          # NOTE this job will appear to pass even when it fails because of
+#          # `continue-on-error: true`. Github Actions apparently does not
+#          # have this feature, similar to Travis' allow-failure, yet.
+#          # https://github.com/actions/toolkit/issues/399
+#        exclude:
+#        - python: '3.7'
+#          django: 'Django~=4.0.0'
+#        - python: '3.7'
+#          django: 'Django~=4.1.0'
     services:
       postgres:
         image: postgres:latest
