@@ -1,11 +1,12 @@
-from django.test import TestCase
 from querybuilder.helpers import value_for_keypath, set_value_for_keypath
+from querybuilder.tests.base import QuerybuilderTestCase
 
 
-class HelperTest(TestCase):
+class HelperTest(QuerybuilderTestCase):
     """
     Tests the helper functions
     """
+
     def test_value_for_keypath(self):
         """
         Tests all cases of value_for_keypath

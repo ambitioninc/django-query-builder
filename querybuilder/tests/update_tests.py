@@ -115,7 +115,8 @@ class TestUpdate(QueryTestCase):
                 'SET user_id = new_values.user_id, '
                 'first_name = new_values.first_name, '
                 'last_name = new_values.last_name '
-                'FROM (VALUES (%s, %s::integer, %s::varchar(64), %s::varchar(64)), (%s, %s, %s, %s)) '
+                'FROM (VALUES (%s, %s::integer, %s::varchar(64), %s::varchar(64)), '
+                '(%s, %s, %s, %s)) '
                 'AS new_values (id, user_id, first_name, last_name) '
                 'WHERE querybuilder_tests_account.id = new_values.id'
             )

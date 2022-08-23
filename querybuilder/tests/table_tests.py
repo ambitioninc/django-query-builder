@@ -1,11 +1,11 @@
-from django.test import TestCase
 from querybuilder.fields import Field
 from querybuilder.query import Query
 from querybuilder.tables import TableFactory, SimpleTable, ModelTable, QueryTable
+from querybuilder.tests.base import QuerybuilderTestCase
 from querybuilder.tests.models import Account
 
 
-class TableFactoryTest(TestCase):
+class TableFactoryTest(QuerybuilderTestCase):
     """
     Tests the functionality of the table factory
     """
@@ -68,7 +68,7 @@ class TableFactoryTest(TestCase):
         self.assertEqual('test_alias', table.alias)
 
 
-class TableTest(TestCase):
+class TableTest(QuerybuilderTestCase):
     """
     Tests functionality of the Table class
     """
@@ -178,7 +178,7 @@ class TableTest(TestCase):
         self.assertIsNone(field)
 
 
-class QueryTableTest(TestCase):
+class QueryTableTest(QuerybuilderTestCase):
     """
     Tests the QueryTable object
     """
