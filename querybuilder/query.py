@@ -9,6 +9,8 @@ from django.apps import apps
 get_model = apps.get_model
 import six
 
+import json
+import psycopg2
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath, copy_instance
@@ -648,8 +650,20 @@ class Query(object):
         # for a select, but it should not cause any issues for other cursors, so no reason not to always use
         # the json_cursor. If there were, I'd be looking to add an option to get_cursor to specify to use
         # the json-capable version.
-        json_capable_cursor = json_cursor(self.connection)
-        return json_capable_cursor
+
+        # jared's code:
+        # with django_database_connection.cursor() as cursor:
+        #     psycopg2.extras.register_default_jsonb(conn_or_curs=cursor.cursor, loads=json.loads)
+        #     yield cursor
+
+        # this does not work for me:
+        # json_capable_cursor = json_cursor(self.connection)
+        # return json_capable_cursor
+
+        # so I'm trying this:
+        cursor = self.connection.cursor()
+        psycopg2.extras.register_default_jsonb(conn_or_curs=cursor.cursor, loads=json.loads)
+        return cursor
 
     def from_table(self, table=None, fields='*', schema=None, **kwargs):
         """
