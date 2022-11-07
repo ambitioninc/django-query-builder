@@ -8,14 +8,12 @@ from django.db.models.constants import LOOKUP_SEP
 from django.apps import apps
 get_model = apps.get_model
 import six
-
 import json
 import psycopg2
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath, copy_instance
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
-from querybuilder.cursor import json_cursor
 
 SERIAL_DTYPES = ['serial', 'bigserial']
 
@@ -643,24 +641,11 @@ class Query(object):
         :rtype: :class:`CursorDebugWrapper <django:django.db.backends.util.CursorDebugWrapper>`
         :returns: A database cursor
         """
-        # return self.connection.cursor()
+
         # From Django 3.1 forward, json columns in raw select statements return a string of json instead of a
-        # json type such as a dict or list. The json_cursor function goes into the psycopg2 layer to put the
+        # json type such as a dict or list. But we can tell psycopg2 to put the
         # json.loads() call back in place. Technically we would only need this addition for cursors being used
-        # for a select, but it should not cause any issues for other cursors, so no reason not to always use
-        # the json_cursor. If there were, I'd be looking to add an option to get_cursor to specify to use
-        # the json-capable version.
-
-        # jared's code:
-        # with django_database_connection.cursor() as cursor:
-        #     psycopg2.extras.register_default_jsonb(conn_or_curs=cursor.cursor, loads=json.loads)
-        #     yield cursor
-
-        # this does not work for me:
-        # json_capable_cursor = json_cursor(self.connection)
-        # return json_capable_cursor
-
-        # so I'm trying this:
+        # for a SELECT, but it should not cause any issues for other operations.
         cursor = self.connection.cursor()
         psycopg2.extras.register_default_jsonb(conn_or_curs=cursor.cursor, loads=json.loads)
         return cursor
