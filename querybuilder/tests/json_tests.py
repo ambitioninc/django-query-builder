@@ -1,5 +1,4 @@
 import unittest
-from django import VERSION
 from django.test.utils import override_settings
 from querybuilder.fields import JsonField
 from querybuilder.query import Query, JsonQueryset
@@ -75,6 +74,7 @@ class JsonFieldTest(QuerybuilderTestCase):
         self.assertEqual(query.select(), [])
 
     # Currently unused (but maybe again sometime) function to check django version for test results
+    # from django import VERSION
     # def is_31_or_above(self):
     #     if VERSION[0] == 3 and VERSION[1] >= 1:
     #         return True
