@@ -1,5 +1,4 @@
 import unittest
-from django import VERSION
 from django.test.utils import override_settings
 from querybuilder.fields import JsonField
 from querybuilder.query import Query, JsonQueryset
@@ -47,11 +46,7 @@ class JsonFieldTest(QuerybuilderTestCase):
             )
         )
 
-        # Django 3.1 changes the raw queryset behavior so querybuilder isn't going to change that behavior
-        if self.is_31_or_above():
-            self.assertEqual(query.select(), [{'my_two_alias': '"two"'}])
-        else:
-            self.assertEqual(query.select(), [{'my_two_alias': 'two'}])
+        self.assertEqual(query.select(), [{'my_two_alias': 'two'}])
 
         query = Query().from_table(MetricRecord, fields=[one_field]).where(**{
             one_field.get_where_key(): '1'
@@ -64,11 +59,7 @@ class JsonFieldTest(QuerybuilderTestCase):
             )
         )
 
-        # Django 3.1 changes the raw queryset behavior so querybuilder isn't going to change that behavior
-        if self.is_31_or_above():
-            self.assertEqual(query.select(), [{'my_one_alias': '1'}])
-        else:
-            self.assertEqual(query.select(), [{'my_one_alias': 1}])
+        self.assertEqual(query.select(), [{'my_one_alias': 1}])
 
         query = Query().from_table(MetricRecord, fields=[one_field]).where(**{
             one_field.get_where_key(): '2'
@@ -82,12 +73,14 @@ class JsonFieldTest(QuerybuilderTestCase):
         )
         self.assertEqual(query.select(), [])
 
-    def is_31_or_above(self):
-        if VERSION[0] == 3 and VERSION[1] >= 1:
-            return True
-        elif VERSION[0] > 3:
-            return True
-        return False
+    # Currently unused (but maybe again sometime) function to check django version for test results
+    # from django import VERSION
+    # def is_31_or_above(self):
+    #     if VERSION[0] == 3 and VERSION[1] >= 1:
+    #         return True
+    #     elif VERSION[0] > 3:
+    #         return True
+    #     return False
 
 
 @override_settings(DEBUG=True)
