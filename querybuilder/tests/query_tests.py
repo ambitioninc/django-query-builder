@@ -52,8 +52,10 @@ class QueryTestCase(QuerybuilderTestCase):
         super(QueryTestCase, self).setUp()
         user1 = G(User, id=1, email='wes.okes@gmail.com')
         user2 = G(User, id=2, email='two+wes.okes@gmail.com')
+        # user3 = G(User, id=3, email='g.e.o.p.h.p.h.r.i.e@gmail.com')
         account1 = G(Account, id=1, user=user1, first_name='Wes', last_name='Okes')
         account2 = G(Account, id=2, user=user2, first_name='Wesley', last_name='Okes')
+        # G(Account, id=3, user=user3, first_name='Geophphrie', last_name='Scors', meta_data={'state': 'TN', 'pets': 1})
 
         G(
             Order, account=account1, revenue=200, margin=100, margin_percent=0.5, time=datetime.datetime(2012, 10, 19))
@@ -145,7 +147,20 @@ class QueryTest(QueryTestCase):
                 received
             )
         )
-
+    # def test_select_sql_with_json(self):
+    #     sql = 'SELECT id, meta_data FROM querybuilder_tests_account ORDER BY id DESC LIMIT 2'
+    #     rows = Query().select(sql=sql)
+    #     received = rows[0]['meta_data']
+    #     expected = Account.objects.all().order_by('-id')[0].meta_data
+    #     self.assert(received instanceOf dict)
+    #     self.assertEqual(
+    #         received,
+    #         expected,
+    #         'Expected {0} but received {1}'.format(
+    #             expected,
+    #             received
+    #         )
+    #     )
     def test_select_sql_args(self):
         sql = 'SELECT id FROM querybuilder_tests_account WHERE id = %(my_id)s'
         sql_args = {
