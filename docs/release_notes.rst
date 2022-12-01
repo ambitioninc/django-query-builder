@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v3.0.2
+------
+* Add `json_cursor` to handle django no longer automatically parsing json fields
+
 v3.0.1
 ------
 * Switch to github actions
