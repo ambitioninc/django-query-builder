@@ -3,7 +3,8 @@ Release Notes
 
 v3.0.2
 ------
-* Add `json_cursor` to handle django no longer automatically parsing json fields
+* Add `json_cursor` context to handle Django3.1.1+ no longer automatically parsing json fields
+* Adjusted query functionality also to handle jsonb columns correctly
 
 v3.0.1
 ------
