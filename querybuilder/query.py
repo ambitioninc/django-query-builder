@@ -642,7 +642,7 @@ class Query(object):
         :returns: A database cursor
         """
 
-        # From Django 3.1 forward, json columns in raw select statements return a string of json instead of a
+        # From Django 3.1.1 forward, json columns in raw select statements return a string of json instead of a
         # json type such as a dict or list. But we can tell psycopg2 to put the
         # json.loads() call back in place. Technically we would only need this addition for cursors being used
         # for a SELECT, but it should not cause any issues for other operations.
