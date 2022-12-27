@@ -8,12 +8,11 @@ from django.db.models.constants import LOOKUP_SEP
 from django.apps import apps
 get_model = apps.get_model
 import six
-import json
-import psycopg2
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath, copy_instance
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
+from querybuilder.cursor import jsonify_cursor
 
 SERIAL_DTYPES = ['serial', 'bigserial']
 
@@ -641,13 +640,8 @@ class Query(object):
         :rtype: :class:`CursorDebugWrapper <django:django.db.backends.util.CursorDebugWrapper>`
         :returns: A database cursor
         """
-
-        # From Django 3.1.1 forward, json columns in raw select statements return a string of json instead of a
-        # json type such as a dict or list. But we can tell psycopg2 to put the
-        # json.loads() call back in place. Technically we would only need this addition for cursors being used
-        # for a SELECT, but it should not cause any issues for other operations.
         cursor = self.connection.cursor()
-        psycopg2.extras.register_default_jsonb(conn_or_curs=cursor.cursor, loads=json.loads)
+        jsonify_cursor(cursor)
         return cursor
 
     def from_table(self, table=None, fields='*', schema=None, **kwargs):
