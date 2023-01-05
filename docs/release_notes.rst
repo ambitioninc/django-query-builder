@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v3.0.3
+------
+* Addressed bug in `json_cursor` if Django cursor has extra wrappers
+
 v3.0.2
 ------
 * Add `json_cursor` context to handle Django3.1.1+ no longer automatically parsing json fields
