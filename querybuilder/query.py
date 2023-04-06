@@ -641,6 +641,8 @@ class Query(object):
         :returns: A database cursor
         """
         cursor = self.connection.cursor()
+        # Do not set up the cursor in psycopg2 to run json.loads on jsonb columns here. Do it
+        # right before we run a select, and then set it back after that.
         # jsonify_cursor(cursor)
         return cursor
 

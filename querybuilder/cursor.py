@@ -41,6 +41,7 @@ def jsonify_cursor(django_cursor):
     except TypeError as e:
         raise Exception(f'jsonify_cursor: conn_or_curs was actually a {type(inner_cursor)}: {e}')
 
+
 def dejsonify_cursor(django_cursor):
     """
     Re-adjust a cursor that was "jsonified" so it no longer performs the json.loads.
