@@ -41,6 +41,23 @@ def jsonify_cursor(django_cursor):
     except TypeError as e:
         raise Exception(f'jsonify_cursor: conn_or_curs was actually a {type(inner_cursor)}: {e}')
 
+def dejsonify_cursor(django_cursor):
+    """
+    Re-adjust a cursor that was "jsonified" so it no longer performs the json.loads.
+    """
+
+    inner_cursor = django_cursor
+
+    while hasattr(inner_cursor, 'cursor'):
+        inner_cursor = inner_cursor.cursor
+
+    # Hopefully we have the right thing now, but try/catch so we can get a little better info
+    # if it is not. Another option might be an isinstance, or another function that tests the cursor?
+    try:
+        psycopg2.extras.register_default_jsonb(conn_or_curs=inner_cursor, loads=str)
+    except TypeError as e:
+        raise Exception(f'jsonify_cursor: conn_or_curs was actually a {type(inner_cursor)}: {e}')
+
 
 @contextlib.contextmanager
 def json_cursor(django_database_connection):
@@ -53,3 +70,4 @@ def json_cursor(django_database_connection):
     with django_database_connection.cursor() as cursor:
         jsonify_cursor(cursor)
         yield cursor
+        dejsonify_cursor(cursor)

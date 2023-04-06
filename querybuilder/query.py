@@ -12,7 +12,7 @@ import six
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath, copy_instance
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
-from querybuilder.cursor import jsonify_cursor
+from querybuilder.cursor import jsonify_cursor, dejsonify_cursor
 
 SERIAL_DTYPES = ['serial', 'bigserial']
 
@@ -641,7 +641,7 @@ class Query(object):
         :returns: A database cursor
         """
         cursor = self.connection.cursor()
-        jsonify_cursor(cursor)
+        # jsonify_cursor(cursor)
         return cursor
 
     def from_table(self, table=None, fields='*', schema=None, **kwargs):
@@ -1658,12 +1658,14 @@ class Query(object):
 
         # get the cursor to execute the query
         cursor = self.get_cursor()
+        jsonify_cursor(cursor)
 
         # execute the query
         cursor.execute(sql, sql_args)
 
         # get the results as a list of dictionaries
         rows = self._fetch_all_as_dict(cursor)
+        dejsonify_cursor(cursor)
 
         # check if models should be returned instead of dictionaries
         if return_models:
