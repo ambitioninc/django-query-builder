@@ -8,6 +8,7 @@ from django.db.models.constants import LOOKUP_SEP
 from django.apps import apps
 get_model = apps.get_model
 import six
+import json
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath, copy_instance
@@ -1660,14 +1661,12 @@ class Query(object):
 
         # get the cursor to execute the query
         cursor = self.get_cursor()
-        jsonify_cursor(cursor)
 
         # execute the query
         cursor.execute(sql, sql_args)
 
         # get the results as a list of dictionaries
         rows = self._fetch_all_as_dict(cursor)
-        dejsonify_cursor(cursor)
 
         # check if models should be returned instead of dictionaries
         if return_models:
@@ -1935,6 +1934,8 @@ class Query(object):
         rows = q.select(bypass_safe_limit=True)
         return list(rows[0].values())[0]
 
+    JSONB_OID = 3802
+
     def _fetch_all_as_dict(self, cursor):
         """
         Iterates over the result set and converts each row to a dictionary
@@ -1942,11 +1943,35 @@ class Query(object):
         :return: A list of dictionaries where each row is a dictionary
         :rtype: list of dict
         """
-        desc = cursor.description
-        return [
-            dict(zip([col[0] for col in desc], row))
-            for row in cursor.fetchall()
-        ]
+
+        colnames = [col.name for col in cursor.description]
+        coltypes = [col.type_code for col in cursor.description]
+        # Identify any jsonb columns in the query, by column index
+        jsonbcols = [i for i, x in enumerate(coltypes) if x == JSONB_OID]
+
+        # This block is not technically necessary - this is the original method.
+        # On the basis that it could be a little more efficient, though, go ahead
+        # and do it this way if we know there are no jsonb columns to handle.
+        if not jsonbcols:
+            return [
+                dict(zip(colnames, row))
+                for row in cursor.fetchall()
+            ]
+
+        # If there are jsonb columns, intercept the result rows and run a json.loads() on any jsonb
+        # columns that are presenting as strings.
+        # In Django 3.1.0 they would already be a json type (e.g. dict or list) but in Django 3.1.1 it changes
+        # and raw sql queries return strings for jsonb columns.
+        # https://docs.djangoproject.com/en/4.0/releases/3.1.1/
+        results = []
+
+        for row in cursor.fetchall():
+            rowvals = list(row)
+            for colindex in jsonbcols:
+                if type(rowvals[colindex]) is str:  # need to check every row to avoid attempting to jsonify a None
+                    rowvals[colindex] = json.loads(rowvals[colindex])
+            results.append(dict(zip(colnames, rowvals)))
+        return results
 
 
 class QueryWindow(Query):
