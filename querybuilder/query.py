@@ -1970,7 +1970,13 @@ class Query(object):
             rowvals = list(row)
             for colindex in jsonbcols:
                 if type(rowvals[colindex]) is str:  # need to check every row to avoid attempting to jsonify a None
-                    rowvals[colindex] = json.loads(rowvals[colindex])
+                    try:
+                        rowvals[colindex] = json.loads(rowvals[colindex])
+                    # It is possible that we are selecting a sub-value from the json in the column. I.e.
+                    # we got here because it IS a jsonb column, but what we selected is not json and will
+                    # fail to parse. In that case, we already have the value we want in place.
+                    except json.JSONDecodeError:
+                        pass
             results.append(dict(zip(colnames, rowvals)))
         return results
 
