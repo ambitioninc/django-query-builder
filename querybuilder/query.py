@@ -13,7 +13,7 @@ import json
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath, copy_instance
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
-from querybuilder.cursor import jsonify_cursor, dejsonify_cursor
+
 
 SERIAL_DTYPES = ['serial', 'bigserial']
 # This is the postgres column type number for jsonb columns.
@@ -1935,7 +1935,6 @@ class Query(object):
         ])
         rows = q.select(bypass_safe_limit=True)
         return list(rows[0].values())[0]
-
 
     def _fetch_all_as_dict(self, cursor):
         """
