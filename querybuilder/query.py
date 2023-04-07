@@ -16,6 +16,8 @@ from querybuilder.tables import TableFactory, ModelTable, QueryTable
 from querybuilder.cursor import jsonify_cursor, dejsonify_cursor
 
 SERIAL_DTYPES = ['serial', 'bigserial']
+# This is the postgres column type number for jsonb columns.
+JSONB_OID = 3802
 
 
 class Join(object):
@@ -1934,7 +1936,6 @@ class Query(object):
         rows = q.select(bypass_safe_limit=True)
         return list(rows[0].values())[0]
 
-    JSONB_OID = 3802
 
     def _fetch_all_as_dict(self, cursor):
         """
