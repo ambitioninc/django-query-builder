@@ -1941,7 +1941,6 @@ class Query(object):
         :return: A list of dictionaries where each row is a dictionary
         :rtype: list of dict
         """
-
         return json_fetch_all_as_dict(cursor)
 
 
