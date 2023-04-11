@@ -16,8 +16,6 @@ from querybuilder.cursor import json_fetch_all_as_dict
 
 
 SERIAL_DTYPES = ['serial', 'bigserial']
-# This is the postgres column type number for jsonb columns.
-JSONB_OID = 3802
 
 
 class Join(object):
