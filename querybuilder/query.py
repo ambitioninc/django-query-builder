@@ -8,11 +8,11 @@ from django.db.models.constants import LOOKUP_SEP
 from django.apps import apps
 get_model = apps.get_model
 import six
-import json
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath, copy_instance
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
+from querybuilder.cursor import json_fetch_all_as_dict
 
 
 SERIAL_DTYPES = ['serial', 'bigserial']
@@ -1944,40 +1944,7 @@ class Query(object):
         :rtype: list of dict
         """
 
-        colnames = [col.name for col in cursor.description]
-        coltypes = [col.type_code for col in cursor.description]
-        # Identify any jsonb columns in the query, by column index
-        jsonbcols = [i for i, x in enumerate(coltypes) if x == JSONB_OID]
-
-        # This block is not technically necessary - this is the original method.
-        # On the basis that it could be a little more efficient, though, go ahead
-        # and do it this way if we know there are no jsonb columns to handle.
-        if not jsonbcols:
-            return [
-                dict(zip(colnames, row))
-                for row in cursor.fetchall()
-            ]
-
-        # If there are jsonb columns, intercept the result rows and run a json.loads() on any jsonb
-        # columns that are presenting as strings.
-        # In Django 3.1.0 they would already be a json type (e.g. dict or list) but in Django 3.1.1 it changes
-        # and raw sql queries return strings for jsonb columns.
-        # https://docs.djangoproject.com/en/4.0/releases/3.1.1/
-        results = []
-
-        for row in cursor.fetchall():
-            rowvals = list(row)
-            for colindex in jsonbcols:
-                if type(rowvals[colindex]) is str:  # need to check every row to avoid attempting to jsonify a None
-                    try:
-                        rowvals[colindex] = json.loads(rowvals[colindex])
-                    # It is possible that we are selecting a sub-value from the json in the column. I.e.
-                    # we got here because it IS a jsonb column, but what we selected is not json and will
-                    # fail to parse. In that case, we already have the value we want in place.
-                    except json.JSONDecodeError:
-                        pass
-            results.append(dict(zip(colnames, rowvals)))
-        return results
+        return json_fetch_all_as_dict(cursor)
 
 
 class QueryWindow(Query):
