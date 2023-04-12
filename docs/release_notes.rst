@@ -1,6 +1,11 @@
 Release Notes
 =============
 
+v3.0.4
+------
+* Adjusted querybuilder select functionality to process json values as needed in the result set
+  rather than tweak the deep cursor settings. This was observed to interfere with complex query chains.
+
 v3.0.3
 ------
 * Addressed bug in `json_cursor` if Django cursor has extra wrappers

@@ -38,3 +38,4 @@ docs/_build/
 test_ambition_dev
 
 .tox/
+tmp/

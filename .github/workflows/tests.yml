@@ -25,10 +25,10 @@ jobs:
         - 'Django~=4.0.0'
         - 'Django~=4.1.0'
         experimental: [false]
-        include:
-        - python: '3.9'
-          django: 'https://github.com/django/django/archive/refs/heads/main.zip#egg=Django'
-          experimental: true
+        # include:
+        # - python: '3.9'
+        #   django: 'https://github.com/django/django/archive/refs/heads/main.zip#egg=Django'
+        #   experimental: true
           # NOTE this job will appear to pass even when it fails because of
           # `continue-on-error: true`. Github Actions apparently does not
           # have this feature, similar to Travis' allow-failure, yet.
@@ -53,8 +53,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python }}
     - name: Setup
