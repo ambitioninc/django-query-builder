@@ -1,7 +1,6 @@
-import abc
+from abc import ABCMeta
 
 from django.db.models.base import ModelBase
-from six import string_types, with_metaclass
 
 import querybuilder
 from querybuilder.fields import FieldFactory
@@ -31,7 +30,7 @@ class TableFactory(object):
             kwargs.update(alias=list(table.keys())[0])
             table = list(table.values())[0]
             table_type = type(table)
-        if isinstance(table, string_types):
+        if isinstance(table, str):
             return SimpleTable(table, **kwargs)
         elif issubclass(table_type, ModelBase):
             return ModelTable(table, **kwargs)
@@ -44,7 +43,7 @@ class TableFactory(object):
         return None
 
 
-class Table(with_metaclass(abc.ABCMeta, object)):
+class Table(object, metaclass=ABCMeta):
     """
     Abstract table class that all table types extend.
 
@@ -259,7 +258,7 @@ class Table(with_metaclass(abc.ABCMeta, object)):
             or ``Field`` instance
         :type fields: str or tuple or list of str or list of Field or :class:`Field <querybuilder.fields.Field>`
         """
-        if isinstance(fields, string_types):
+        if isinstance(fields, str):
             fields = [fields]
         elif type(fields) is tuple:
             fields = list(fields)
