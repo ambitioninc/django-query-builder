@@ -9,10 +9,11 @@ from django.apps import apps
 get_model = apps.get_model
 import six
 
-
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath, copy_instance
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
+from querybuilder.cursor import json_fetch_all_as_dict
+
 
 SERIAL_DTYPES = ['serial', 'bigserial']
 
@@ -640,7 +641,11 @@ class Query(object):
         :rtype: :class:`CursorDebugWrapper <django:django.db.backends.util.CursorDebugWrapper>`
         :returns: A database cursor
         """
-        return self.connection.cursor()
+        cursor = self.connection.cursor()
+        # Do not set up the cursor in psycopg2 to run json.loads on jsonb columns here. Do it
+        # right before we run a select, and then set it back after that.
+        # jsonify_cursor(cursor)
+        return cursor
 
     def from_table(self, table=None, fields='*', schema=None, **kwargs):
         """
@@ -1936,11 +1941,7 @@ class Query(object):
         :return: A list of dictionaries where each row is a dictionary
         :rtype: list of dict
         """
-        desc = cursor.description
-        return [
-            dict(zip([col[0] for col in desc], row))
-            for row in cursor.fetchall()
-        ]
+        return json_fetch_all_as_dict(cursor)
 
 
 class QueryWindow(Query):

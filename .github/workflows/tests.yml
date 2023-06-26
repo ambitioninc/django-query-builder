@@ -18,17 +18,15 @@ jobs:
         # AttributeError: module 'collections' has no attribute 'Callable'
         # https://github.com/nose-devs/nose/issues/1099
         django:
-        - 'Django~=2.2.0'
-        - 'Django~=3.0.0'
-        - 'Django~=3.1.0'
         - 'Django~=3.2.0'
         - 'Django~=4.0.0'
         - 'Django~=4.1.0'
+        - 'Django~=4.2.0'
         experimental: [false]
-        include:
-        - python: '3.9'
-          django: 'https://github.com/django/django/archive/refs/heads/main.zip#egg=Django'
-          experimental: true
+        # include:
+        # - python: '3.9'
+        #   django: 'https://github.com/django/django/archive/refs/heads/main.zip#egg=Django'
+        #   experimental: true
           # NOTE this job will appear to pass even when it fails because of
           # `continue-on-error: true`. Github Actions apparently does not
           # have this feature, similar to Travis' allow-failure, yet.
@@ -38,6 +36,8 @@ jobs:
           django: 'Django~=4.0.0'
         - python: '3.7'
           django: 'Django~=4.1.0'
+        - python: '3.7'
+          django: 'Django~=4.2.0'
     services:
       postgres:
         image: postgres:latest
@@ -53,8 +53,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python }}
     - name: Setup
@@ -69,7 +69,7 @@ jobs:
       env:
         DB_SETTINGS: >-
           {
-            "ENGINE":"django.db.backends.postgresql_psycopg2",
+            "ENGINE":"django.db.backends.postgresql",
             "NAME":"querybuilder",
             "USER":"postgres",
             "PASSWORD":"postgres",
@@ -78,7 +78,7 @@ jobs:
           }
         DB_SETTINGS2: >-
           {
-            "ENGINE":"django.db.backends.postgresql_psycopg2",
+            "ENGINE":"django.db.backends.postgresql",
             "NAME":"querybuilder2",
             "USER":"postgres",
             "PASSWORD":"postgres",
