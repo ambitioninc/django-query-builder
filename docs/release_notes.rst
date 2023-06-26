@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v3.1.0
+------
+* django 4.2 support
+
 v3.0.4
 ------
 * Adjusted querybuilder select functionality to process json values as needed in the result set

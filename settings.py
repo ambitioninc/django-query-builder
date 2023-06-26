@@ -51,7 +51,6 @@ def configure_settings():
         settings.configure(
             TEST_RUNNER='django_nose.NoseTestSuiteRunner',
             NOSE_ARGS=['--nocapture', '--nologcapture', '--verbosity=1'],
-            MIDDLEWARE_CLASSES=(),
             DATABASES={
                 'default': db_config,
                 'mock-second-database': db_config2,
@@ -65,4 +64,5 @@ def configure_settings():
             ROOT_URLCONF='querybuilder.urls',
             TIME_ZONE='UTC',
             USE_TZ=False,
+            DEFAULT_AUTO_FIELD='django.db.models.AutoField',
         )
