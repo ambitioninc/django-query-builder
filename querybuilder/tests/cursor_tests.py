@@ -1,6 +1,6 @@
 from django.db import connection
 
-from querybuilder.cursor import json_cursor
+# from querybuilder.cursor import json_cursor
 from querybuilder.tests.base import QuerybuilderTestCase
 from querybuilder.tests.models import MetricRecord
 
