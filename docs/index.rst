@@ -18,5 +18,3 @@ for the developer to build the query dynamically. Users lacking experience
 writing "raw" sql should avoid using querybuilder and stick with django's
 querysets. The querybuilder's query construction closely mirrors writing sql,
 where django querysets simplify the sql generation process for simple queries.
-
-Force Build
