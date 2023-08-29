@@ -54,6 +54,8 @@ def jsonify_cursor(django_cursor, enabled=True):
             register_default_jsonb(conn_or_curs=inner_cursor, loads=loads_func)
         elif psycopg_version == 3:
             set_json_loads(loads_func, inner_cursor)
+        else:
+            raise Exception('Unsupported psycopg version')
     except TypeError as e:
         raise Exception(f'jsonify_cursor: conn_or_curs was actually a {type(inner_cursor)}: {e}')
 

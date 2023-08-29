@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-v3.1.1
+v3.2.0
 ------
 * psycopg3 support
 
