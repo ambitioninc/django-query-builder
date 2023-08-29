@@ -1,5 +1,7 @@
 import contextlib
 import json
+# function moved, adding import for backwards-compatibility
+from .utils import json_fetch_all_as_dict  # noqa: F401
 
 try:
     from psycopg2.extras import register_default_jsonb
