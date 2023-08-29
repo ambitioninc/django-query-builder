@@ -79,6 +79,3 @@ def json_cursor(django_database_connection):
         # This should really not be necessary, because the cursor context manager will
         # be closing the cursor on __exit__ anyway. But just in case.
         dejsonify_cursor(cursor)
-
-
-
