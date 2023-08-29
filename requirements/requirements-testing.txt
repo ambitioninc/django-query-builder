@@ -1,7 +1,6 @@
 pytz
 fleming
 six
-psycopg2
 django-nose>=1.4
 django-dynamic-fixture
 coverage

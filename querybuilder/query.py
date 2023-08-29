@@ -12,7 +12,7 @@ import six
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath, copy_instance
 from querybuilder.tables import TableFactory, ModelTable, QueryTable
-from querybuilder.cursor import json_fetch_all_as_dict
+from querybuilder.utils import json_fetch_all_as_dict
 
 
 SERIAL_DTYPES = ['serial', 'bigserial']
