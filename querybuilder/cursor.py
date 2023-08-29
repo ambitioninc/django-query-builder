@@ -1,7 +1,12 @@
 import contextlib
 import json
-from psycopg2.extras import register_default_jsonb
-from psycopg2._json import JSONB_OID
+
+try:
+    from psycopg2.extras import register_default_jsonb
+    psycopg_version = 2
+except ImportError:
+    from psycopg.types.json import set_json_loads
+    psycopg_version = 3
 
 
 def jsonify_cursor(django_cursor, enabled=True):
@@ -45,7 +50,10 @@ def jsonify_cursor(django_cursor, enabled=True):
     # Hopefully we have the right thing now, but try/catch so we can get a little better info
     # if it is not. Another option might be an isinstance, or another function that tests the cursor?
     try:
-        register_default_jsonb(conn_or_curs=inner_cursor, loads=loads_func)
+        if psycopg_version == 2:
+            register_default_jsonb(conn_or_curs=inner_cursor, loads=loads_func)
+        elif psycopg_version == 3:
+            set_json_loads(loads_func, inner_cursor)
     except TypeError as e:
         raise Exception(f'jsonify_cursor: conn_or_curs was actually a {type(inner_cursor)}: {e}')
 
@@ -73,55 +81,4 @@ def json_cursor(django_database_connection):
         dejsonify_cursor(cursor)
 
 
-def json_fetch_all_as_dict(cursor):
-    """
-    Iterates over a result set and converts each row to a dictionary.
-    The cursor passed in is assumed to have just executed a raw Postgresql query.
-    If the cursor's columns include any with the jsonb type, the process includes
-    examining every value from those columns. If the value is a string, a json.loads()
-    is attempted on the value, because in Django 3.1.1 and later, this is not
-    handled automatically for raw sql as it was before. There is no compatibility
-    issue running with older Django versions because if the value is not a string,
-    (e.g. it has already been converted to a list or dict), the loads() is skipped.
-    Note that JSON decoding errors are ignored (and the original result value is provided)
-    because it is possible that the query involved an actual json query, say on a single
-    string property of the underlying column data. In that case, the column type is
-    still jsonb, but the result value is a string as it should be. This ignoring of
-    errors is the same logic used in json handling in Django's from_db_value() method.
 
-    :return: A list of dictionaries where each row is a dictionary
-    :rtype: list of dict
-    """
-
-    colnames = [col.name for col in cursor.description]
-    coltypes = [col.type_code for col in cursor.description]
-    # Identify any jsonb columns in the query, by column index
-    jsonbcols = [i for i, x in enumerate(coltypes) if x == JSONB_OID]
-
-    # Optimize with a simple comprehension if we know there are no jsonb columns to handle.
-    if not jsonbcols:
-        return [
-            dict(zip(colnames, row))
-            for row in cursor.fetchall()
-        ]
-
-    # If there are jsonb columns, intercept the result rows and run a json.loads() on any jsonb
-    # columns that are presenting as strings.
-    # In Django 3.1.0 they would already be a json type (e.g. dict or list) but in Django 3.1.1 it changes
-    # and raw sql queries return strings for jsonb columns.
-    # https://docs.djangoproject.com/en/4.0/releases/3.1.1/
-    results = []
-
-    for row in cursor.fetchall():
-        rowvals = list(row)
-        for colindex in jsonbcols:
-            if type(rowvals[colindex]) is str:  # need to check type to avoid attempting to jsonify a None
-                try:
-                    rowvals[colindex] = json.loads(rowvals[colindex])
-                # It is possible that we are selecting a sub-value from the json in the column. I.e.
-                # we got here because it IS a jsonb column, but what we selected is not json and will
-                # fail to parse. In that case, we already have the value we want in place.
-                except json.JSONDecodeError:
-                    pass
-        results.append(dict(zip(colnames, rowvals)))
-    return results
