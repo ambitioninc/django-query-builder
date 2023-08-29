@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v3.1.1
+------
+* psycopg3 support
+
 v3.1.0
 ------
 * django 4.2 support
