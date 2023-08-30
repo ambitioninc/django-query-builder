@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+v3.2.1
+------
+* Read the docs config v2
+
 v3.2.0
 ------
 * psycopg3 support
