@@ -7,7 +7,6 @@ from django.db.models.query import QuerySet
 from django.db.models.constants import LOOKUP_SEP
 from django.apps import apps
 get_model = apps.get_model
-import six
 
 from querybuilder.fields import FieldFactory, CountField, MaxField, MinField, SumField, AvgField
 from querybuilder.helpers import set_value_for_keypath, copy_instance
@@ -498,7 +497,7 @@ class Sorter(object):
         # if the specified field is a string with '-' at the beginning
         # the '-' needs to be removed and this sorter needs to be
         # set to desc
-        if isinstance(self.field.field, six.string_types) and str(self.field.field[0]) == '-':
+        if isinstance(self.field.field, str) and str(self.field.field[0]) == '-':
             self.desc = True
             self.field.field = self.field.field[1:]
             self.field.name = self.field.name[1:]
@@ -2058,7 +2057,7 @@ class QueryBuilderQuerySet(QuerySet):
         pass
 
     def filter(self, *args, **kwargs):
-        for field, value in six.iteritems(kwargs):
+        for field, value in kwargs.items():
             self.call_field_filter_method(field, value, type='filter')
         return self
 
@@ -2066,7 +2065,7 @@ class QueryBuilderQuerySet(QuerySet):
         pass
 
     def exclude(self, *args, **kwargs):
-        for field, value in six.iteritems(kwargs):
+        for field, value in kwargs.items():
             self.call_field_filter_method(field, value, type='exclude')
         return self
 
@@ -2138,7 +2137,7 @@ class JsonQueryset(QueryBuilderQuerySet):
                 else:
                     key = '{0}->>\'{1}\''.format(parts[0], '__'.join(field_key_parts[0:-1]))
                     key = '__'.join([key, field_key_parts[-1]])
-                value = six.u('{0}'.format(value))
+                value = '{0}'.format(value)
             if hasattr(value, 'id'):
                 key = '{0}_id'.format(key)
                 self.json_query.where(**{'{0}'.format(key): value.id})

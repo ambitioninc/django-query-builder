@@ -12,41 +12,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.7', '3.8', '3.9']
-        # Time to switch to pytest or nose2?
-        # nosetests is broken on 3.10
-        # AttributeError: module 'collections' has no attribute 'Callable'
-        # https://github.com/nose-devs/nose/issues/1099
+        # Track the Django versions with upstream support (currently 5.2 LTS and
+        # 6.0) and the python versions each of them supports.
+        python: ['3.10', '3.11', '3.12', '3.13', '3.14']
         django:
-        - 'Django~=3.2.0'
-        - 'Django~=4.0.0'
-        - 'Django~=4.1.0'
-        - 'Django~=4.2.0'
+        - 'Django~=5.2.0'
+        - 'Django~=6.0.0'
         psycopg:
-        - 'psycopg2==2.9.6'
-        - 'psycopg==3.1.10'
+        - 'psycopg2~=2.9.10'
+        - 'psycopg~=3.2.0'
         experimental: [false]
-        # include:
-        # - python: '3.9'
-        #   django: 'https://github.com/django/django/archive/refs/heads/main.zip#egg=Django'
-        #   experimental: true
-          # NOTE this job will appear to pass even when it fails because of
-          # `continue-on-error: true`. Github Actions apparently does not
-          # have this feature, similar to Travis' allow-failure, yet.
-          # https://github.com/actions/toolkit/issues/399
         exclude:
-        - python: '3.7'
-          django: 'Django~=4.0.0'
-        - python: '3.7'
-          django: 'Django~=4.1.0'
-        - python: '3.7'
-          django: 'Django~=4.2.0'
-        - psycopg: 'psycopg==3.1.10'
-          django: 'Django~=3.2.0'
-        - psycopg: 'psycopg==3.1.10'
-          django: 'Django~=4.0.0'
-        - psycopg: 'psycopg==3.1.10'
-          django: 'Django~=4.1.0'
+        # Django 6.0 supports python 3.12+
+        - python: '3.10'
+          django: 'Django~=6.0.0'
+        - python: '3.11'
+          django: 'Django~=6.0.0'
     services:
       postgres:
         image: postgres:latest
@@ -62,8 +43,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python }}
     - name: Setup
@@ -96,7 +77,7 @@ jobs:
             "PORT":"5432"
           }
       run: |
-        coverage run manage.py test querybuilder
+        coverage run manage.py test querybuilder --pattern="*_tests.py"
         coverage report --fail-under=90
       continue-on-error: ${{ matrix.experimental }}
     - name: Check style
