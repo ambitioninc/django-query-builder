@@ -1,7 +1,4 @@
-pytz
-fleming
-six
-django-nose>=1.4
-django-dynamic-fixture
 coverage
+django-dynamic-fixture
+fleming
 flake8

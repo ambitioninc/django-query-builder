@@ -9,6 +9,18 @@ except ImportError:
     psycopg_version = 3
 
 
+def _passthrough_loads(value):
+    """
+    A do-nothing json loads used to effectively deregister json loading on a cursor.
+
+    A module-level function rather than the str builtin: psycopg 3.2+ fingerprints
+    custom loads functions by their __code__ to cache the generated loader classes,
+    and builtins have no __code__, which makes psycopg emit a RuntimeWarning and
+    skip caching on every dejsonify_cursor() call.
+    """
+    return value
+
+
 def jsonify_cursor(django_cursor, enabled=True):
     """
     Adjust an already existing cursor to ensure it will return structured types (list or dict)
@@ -35,10 +47,10 @@ def jsonify_cursor(django_cursor, enabled=True):
 
     # This register_default_jsonb functionality in psycopg2 does not itself have a "deregister"
     # capability. So to deregister, we pass in a different value for the loads method; in this
-    # case just the str() built-in, which just returns the value passed in. Note that passing
+    # case a passthrough function that just returns the value passed in. Note that passing
     # None for loads does NOT do a deregister; it uses the default value, which as it turns out
     # is json.loads anyway!
-    loads_func = json.loads if enabled else str
+    loads_func = json.loads if enabled else _passthrough_loads
 
     # We expect that there is always at least one wrapper, but we might as well handle
     # the possibility that we get passed the inner cursor.
