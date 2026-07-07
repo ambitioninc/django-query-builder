@@ -10,8 +10,8 @@ from settings import configure_settings
 configure_settings()
 
 
-# Django nose must be imported here since it depends on the settings being configured
-from django_nose import NoseTestSuiteRunner
+# The test runner must be imported here since it depends on the settings being configured
+from django.test.runner import DiscoverRunner
 
 
 def run_tests(*test_args, **kwargs):
@@ -19,8 +19,9 @@ def run_tests(*test_args, **kwargs):
         test_args = ['querybuilder']
 
     kwargs.setdefault('interactive', False)
+    kwargs.setdefault('pattern', '*_tests.py')
 
-    test_runner = NoseTestSuiteRunner(**kwargs)
+    test_runner = DiscoverRunner(**kwargs)
 
     failures = test_runner.run_tests(test_args)
     sys.exit(failures)

@@ -38,7 +38,7 @@ def configure_settings():
 
         db_config2 = copy.copy(db_config)
         db_config2['NAME'] = f'{db_config2["NAME"]}2'
-        db_config2['TEST_MIRROR'] = 'default'
+        db_config2['TEST'] = {'MIRROR': 'default'}
 
         # Check env for db override (used for github actions)
         if os.environ.get('DB_SETTINGS'):
@@ -49,8 +49,6 @@ def configure_settings():
             db_config2 = json.loads(os.environ.get('DB_SETTINGS2'))
 
         settings.configure(
-            TEST_RUNNER='django_nose.NoseTestSuiteRunner',
-            NOSE_ARGS=['--nocapture', '--nologcapture', '--verbosity=1'],
             DATABASES={
                 'default': db_config,
                 'mock-second-database': db_config2,

@@ -34,9 +34,9 @@ where django querysets simplify the sql generation process for simple queries.
 
 Requirements
 ------------
-* Python 3.8 - 3.9
-* Django 2.2 - 4.1
-* Postgres 9.3+
+* Python 3.10 - 3.14
+* Django 5.2 - 6.0
+* Postgres 14+
 
 Installation
 ------------

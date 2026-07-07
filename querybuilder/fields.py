@@ -1,7 +1,5 @@
 import abc
 
-from six import string_types, with_metaclass
-
 
 class FieldFactory(object):
     """
@@ -26,7 +24,7 @@ class FieldFactory(object):
             field = list(field.values())[0]
             field_type = type(field)
 
-        if isinstance(field, string_types):
+        if isinstance(field, str):
             return SimpleField(field, **kwargs)
         elif isinstance(field, Field):
             for key, value in kwargs.items():
@@ -35,7 +33,7 @@ class FieldFactory(object):
         return None
 
 
-class Field(with_metaclass(abc.ABCMeta, object)):
+class Field(metaclass=abc.ABCMeta):
     """
     Abstract field class that all field types extend.
 
@@ -307,7 +305,7 @@ class AggregateField(MultiField):
         self.over = over
 
         field_name = None
-        if self.field and isinstance(self.field.field, string_types):
+        if self.field and isinstance(self.field.field, str):
             field_name = self.field.field
             if field_name == '*':
                 field_name = 'all'
