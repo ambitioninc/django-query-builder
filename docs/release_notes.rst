@@ -1,6 +1,17 @@
 Release Notes
 =============
 
+v4.0.0
+------
+* Support django 5.2 and 6.0, python 3.10 - 3.14
+* Drop support for python < 3.10 and django < 5.2
+* Fix psycopg 3.2+ RuntimeWarning from ``dejsonify_cursor`` (use a passthrough
+  function instead of the ``str`` builtin so psycopg can cache the loader)
+* Remove the ``six`` compatibility shims
+* Drop the unused ``pytz`` install dependency; ``fleming`` is now a test-only
+  dependency
+* Replace django-nose with Django's ``DiscoverRunner``
+
 v3.2.1
 ------
 * Read the docs config v2
